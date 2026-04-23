@@ -15,6 +15,8 @@ class BridgeInspector {
   
   final List<InspectorEntry> _log = [];
   final _logController = StreamController<InspectorEntry>.broadcast();
+  StreamSubscription<BridgeMessage>? _bridgeSub;
+  StreamSubscription<PluginTrace>? _traceSub;
   
   Stream<InspectorEntry> get logStream => _logController.stream;
   List<InspectorEntry> get log => List.unmodifiable(_log);
@@ -27,7 +29,7 @@ class BridgeInspector {
   }
 
   void _attachListeners() {
-    bridge.messageStream.listen((message) {
+    _bridgeSub = bridge.messageStream.listen((message) {
       final entry = InspectorEntry(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         direction: message.direction == BridgeMessageDirection.incoming
@@ -43,7 +45,7 @@ class BridgeInspector {
       _logController.add(entry);
     });
     
-    manager.traces.listen((trace) {
+    _traceSub = manager.traces.listen((trace) {
       BridgeLogger.debug(
         'Inspector',
         '${trace.plugin}.${trace.method} — '
@@ -72,7 +74,11 @@ class BridgeInspector {
     };
   }
 
-  void dispose() => _logController.close();
+  Future<void> dispose() async {
+    await _bridgeSub?.cancel();
+    await _traceSub?.cancel();
+    await _logController.close();
+  }
 }
 
 // ============================================================
@@ -247,8 +253,6 @@ class _BridgeInspectorWidgetState extends State<BridgeInspectorWidget> {
   }
 
   Widget _buildStats() {
-    final report = widget.inspector.getReport();
-    
     return Container(
       color: const Color(0xFF0F3460),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

@@ -66,8 +66,8 @@ void main() {
     await registry.register(mockPlugin);
   });
 
-  tearDown(() {
-    registry.dispose();
+  tearDown(() async {
+    await registry.dispose();
     manager.dispose();
   });
 

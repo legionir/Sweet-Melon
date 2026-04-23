@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:geolocator/geolocator.dart';
 import '../../../packages/plugin_engine/lib/src/plugin_interface.dart';
-import '../../../packages/security/lib/src/execution_guard.dart';
 
 // ============================================================
 // GEOLOCATION PLUGIN

@@ -1,7 +1,5 @@
 import 'dart:io';
 import 'package:args/args.dart';
-import 'package:mustache_template/mustache.dart';
-import 'package:path/path.dart' as path;
 
 // ============================================================
 // BRIDGE CLI — ابزار خط فرمان
@@ -33,14 +31,13 @@ void main(List<String> args) async {
   }
 }
 
-Future<void> _createPlugin(ArgResults args) async {
+Future<void> _createPlugin(ArgResults _) async {
   stdout.write('Plugin name: ');
   final name = stdin.readLineSync()!.trim();
   
   stdout.write('Version (1.0.0): ');
-  final version = stdin.readLineSync()!.trim().isEmpty 
-      ? '1.0.0' 
-      : stdin.readLineSync()!.trim();
+  final versionInput = stdin.readLineSync()?.trim() ?? '';
+  final version = versionInput.isEmpty ? '1.0.0' : versionInput;
   
   stdout.write('Description: ');
   final description = stdin.readLineSync()!.trim();
@@ -231,7 +228,6 @@ Future<void> _listPlugins() async {
     if (entity is Directory) {
       final manifestFile = File('${entity.path}/manifest.json');
       if (await manifestFile.exists()) {
-        final content = await manifestFile.readAsString();
         print('  ✓ ${entity.path.split('/').last}');
       }
     }

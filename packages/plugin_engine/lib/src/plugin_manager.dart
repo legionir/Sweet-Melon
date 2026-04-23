@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'plugin_interface.dart';
 import 'plugin_registry.dart';
 import '../../../core/lib/src/protocol/message_protocol.dart';
@@ -280,7 +281,27 @@ class PluginManager {
   }
 
   String _buildCacheKey(PluginRequest request) {
-    return '${request.plugin}:${request.method}:${request.args.toString()}';
+    final canonicalArgs = _canonicalJson(request.args);
+    return '${request.plugin}:${request.method}:$canonicalArgs';
+  }
+
+  String _canonicalJson(dynamic value) {
+    return switch (value) {
+      Map _ => _mapToCanonicalJson(value),
+      List _ => '[${value.map(_canonicalJson).join(',')}]',
+      _ => jsonEncode(value),
+    };
+  }
+
+  String _mapToCanonicalJson(Map<dynamic, dynamic> map) {
+    final keys = map.keys.map((k) => k.toString()).toList()..sort();
+    final entries = keys.map((key) {
+      final originalValue = map.entries
+          .firstWhere((entry) => entry.key.toString() == key)
+          .value;
+      return '${jsonEncode(key)}:${_canonicalJson(originalValue)}';
+    });
+    return '{${entries.join(',')}}';
   }
 
   void _recordStats(

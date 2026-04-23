@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'di/service_locator.dart';
 import 'screens/home_screen.dart';
-import '../packages/core/lib/src/utils/logger.dart';
 
 // ============================================================
 // ROOT APP

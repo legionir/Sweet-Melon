@@ -98,7 +98,7 @@ Flutter Native Bridge یک پلتفرم enterprise-grade است که امکان 
 - **Args Validation**: اعتبارسنجی ورودی‌ها قبل از اجرا
 
 ### ⚡ Performance
-- **LRU Cache**: کش نتایج با TTL قابل تنظیم
+- **LFU-like Cache**: کش نتایج با TTL + حذف بر اساس کم‌استفاده‌ترین رکورد
 - **Parallel Batch**: اجرای موازی درخواست‌های دسته‌ای
 - **Lazy Plugin Loading**: بارگذاری پلاگین فقط در صورت نیاز
 - **Message Compression**: کاهش حجم داده‌های انتقالی
@@ -513,7 +513,7 @@ const results = await Native.batch(
   options: {
     parallel: boolean,    // اجرای موازی (پیش‌فرض: true)
     stopOnError: boolean, // توقف در صورت خطا (پیش‌فرض: false)
-    timeout: number       // timeout کل (اختیاری)
+    timeout: number       // timeout کل (اختیاری؛ پیش‌فرض: WebViewHostConfig.defaultTimeoutMs)
   }
 );
 // returns: Array<{ success, data | error, requestId }>
@@ -1790,9 +1790,9 @@ final config = WebViewHostConfig.production();
 // سفارشی
 final config = WebViewHostConfig(
   enableDebugging: false,
-  allowFileAccess: true,
+  allowFileAccess: false, // اگر false باشد navigation با file:// بلاک می‌شود
   defaultTimeoutMs: 45000,
-  allowedHosts: ['api.myapp.com', 'cdn.myapp.com'],
+  allowedHosts: ['api.myapp.com', 'cdn.myapp.com'], // برای http/https enforce می‌شود
 );
 ```
 

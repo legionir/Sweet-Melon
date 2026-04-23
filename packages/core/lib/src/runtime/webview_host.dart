@@ -1,9 +1,8 @@
-import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import '../bridge/message_bridge.dart';
-import '../protocol/message_protocol.dart';
 import '../utils/logger.dart';
 
 // ============================================================
@@ -43,6 +42,10 @@ class _WebViewHostState extends State<WebViewHost> {
   }
 
   void _initController() {
+    if (widget.config.enableDebugging && Platform.isAndroid) {
+      WebViewController.enableDebugging(true);
+    }
+
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setNavigationDelegate(_buildNavigationDelegate())
@@ -67,6 +70,29 @@ class _WebViewHostState extends State<WebViewHost> {
 
   NavigationDelegate _buildNavigationDelegate() {
     return NavigationDelegate(
+      onNavigationRequest: (request) {
+        final uri = Uri.tryParse(request.url);
+        if (uri == null) {
+          BridgeLogger.warn('WebView', 'Blocked invalid URL: ${request.url}');
+          return NavigationDecision.prevent;
+        }
+
+        if (!widget.config.allowFileAccess && uri.scheme == 'file') {
+          BridgeLogger.warn('WebView', 'Blocked file:// navigation: ${request.url}');
+          return NavigationDecision.prevent;
+        }
+
+        if (widget.config.allowedHosts.isNotEmpty &&
+            (uri.scheme == 'http' || uri.scheme == 'https')) {
+          final isAllowed = widget.config.allowedHosts.contains(uri.host);
+          if (!isAllowed) {
+            BridgeLogger.warn('WebView', 'Blocked host: ${uri.host}');
+            return NavigationDecision.prevent;
+          }
+        }
+
+        return NavigationDecision.navigate;
+      },
       onPageStarted: (url) {
         BridgeLogger.info('WebView', 'Page started: $url');
       },
@@ -88,7 +114,14 @@ class _WebViewHostState extends State<WebViewHost> {
 
   // تزریق JS SDK به WebView
   Future<void> _injectBridgeScript() async {
-    const script = r'''
+    final script = _buildBridgeScript();
+    await _controller.runJavaScript(script);
+    BridgeLogger.info('WebView', 'Bridge script injected');
+  }
+
+  String _buildBridgeScript() {
+    final defaultTimeoutMs = widget.config.defaultTimeoutMs;
+    const template = r'''
       (function() {
         'use strict';
 
@@ -190,6 +223,9 @@ class _WebViewHostState extends State<WebViewHost> {
            */
           batch(requests, options = {}) {
             const batchId = generateId();
+            const timeout = typeof options.timeout === 'number'
+              ? options.timeout
+              : __DEFAULT_TIMEOUT_MS__;
             const batchMessage = JSON.stringify({
               type: 'batch',
               batchId,
@@ -202,12 +238,35 @@ class _WebViewHostState extends State<WebViewHost> {
               options: {
                 parallel: options.parallel !== false,
                 stopOnError: options.stopOnError || false,
-                timeoutMs: options.timeout
+                timeoutMs: timeout
               }
             });
             
             return new Promise((resolve, reject) => {
-              window.__pending[batchId] = { resolve, reject };
+              let timeoutHandle = null;
+              if (timeout > 0) {
+                timeoutHandle = setTimeout(() => {
+                  if (window.__pending[batchId]) {
+                    delete window.__pending[batchId];
+                    reject({
+                      code: 'TIMEOUT',
+                      message: `Batch timed out after ${timeout}ms`,
+                      batchId
+                    });
+                  }
+                }, timeout);
+              }
+
+              window.__pending[batchId] = {
+                resolve: (data) => {
+                  clearTimeout(timeoutHandle);
+                  resolve(data);
+                },
+                reject: (error) => {
+                  clearTimeout(timeoutHandle);
+                  reject(error);
+                }
+              };
               window.flutterBridge.postMessage(batchMessage);
             });
           },
@@ -337,9 +396,7 @@ class _WebViewHostState extends State<WebViewHost> {
         
       })();
     ''';
-
-    await _controller.runJavaScript(script);
-    BridgeLogger.info('WebView', 'Bridge script injected');
+    return template.replaceAll('__DEFAULT_TIMEOUT_MS__', '$defaultTimeoutMs');
   }
 
   // دریافت پیام از JS

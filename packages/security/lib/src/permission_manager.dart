@@ -21,6 +21,9 @@ class PermissionManager {
   final Map<String, PermissionPolicy> _policies = {};
   final Map<String, PermissionStatus> _cache = {};
   PermissionProvider? _provider;
+  final bool allowWhenNoProvider;
+
+  PermissionManager({this.allowWhenNoProvider = false});
 
   void setProvider(PermissionProvider provider) {
     _provider = provider;
@@ -37,11 +40,8 @@ class PermissionManager {
     }
 
     if (_provider == null) {
-      BridgeLogger.warn(
-        'PermissionManager',
-        'No provider set, defaulting to granted for: $permission',
-      );
-      return true;
+      BridgeLogger.warn('PermissionManager', 'No provider set for: $permission');
+      return allowWhenNoProvider;
     }
 
     final status = await _provider!.checkPermission(permission);
@@ -56,7 +56,7 @@ class PermissionManager {
   }
 
   Future<bool> request(String permission) async {
-    if (_provider == null) return true;
+    if (_provider == null) return allowWhenNoProvider;
 
     final status = await _provider!.requestPermission(permission);
     _cache[permission] = status;
