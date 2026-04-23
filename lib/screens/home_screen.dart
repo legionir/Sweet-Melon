@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../../di/service_locator.dart';
 import '../../../packages/core/lib/src/bridge/message_bridge.dart';

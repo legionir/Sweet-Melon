@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../packages/plugin_engine/lib/src/plugin_interface.dart';
-import '../../../packages/security/lib/src/execution_guard.dart';
 
 // ============================================================
 // STORAGE PLUGIN
@@ -129,7 +128,7 @@ class StoragePlugin extends Plugin {
   Future<String> _readFile(Map<String, dynamic> args) async {
     final path = args['path'] as String;
     final dir = await _getAppDir();
-    final file = File('${dir.path}/$path');
+    final file = _safeFile(dir, path);
     
     if (!await file.exists()) {
       throw FileSystemException('File not found', path);
@@ -150,8 +149,8 @@ class StoragePlugin extends Plugin {
     final content = args['content'] as String;
     final encoding = args['encoding'] as String? ?? 'utf8';
     final dir = await _getAppDir();
-    
-    final file = File('${dir.path}/$path');
+
+    final file = _safeFile(dir, path);
     await file.parent.create(recursive: true);
     
     if (encoding == 'base64') {
@@ -167,7 +166,7 @@ class StoragePlugin extends Plugin {
   Future<bool> _deleteFile(Map<String, dynamic> args) async {
     final path = args['path'] as String;
     final dir = await _getAppDir();
-    final file = File('${dir.path}/$path');
+    final file = _safeFile(dir, path);
     
     if (await file.exists()) {
       await file.delete();
@@ -179,7 +178,8 @@ class StoragePlugin extends Plugin {
   Future<bool> _fileExists(Map<String, dynamic> args) async {
     final path = args['path'] as String;
     final dir = await _getAppDir();
-    return File('${dir.path}/$path').exists();
+    final file = _safeFile(dir, path);
+    return file.exists();
   }
 
   Future<List<Map<String, dynamic>>> _listFiles(
@@ -187,7 +187,7 @@ class StoragePlugin extends Plugin {
   ) async {
     final path = args['path'] as String? ?? '';
     final dir = await _getAppDir();
-    final targetDir = Directory('${dir.path}/$path');
+    final targetDir = _safeDirectory(dir, path);
     
     if (!await targetDir.exists()) return [];
     
@@ -205,5 +205,49 @@ class StoragePlugin extends Plugin {
         };
       }),
     );
+  }
+
+  File _safeFile(Directory baseDir, String userPath) {
+    final sanitized = _sanitizeRelativePath(userPath);
+    final targetPath = '${baseDir.path}${Platform.pathSeparator}$sanitized';
+    final target = File(targetPath);
+    final resolvedBase = baseDir.resolveSymbolicLinksSync();
+    final resolvedTargetDir = target.parent.existsSync()
+        ? target.parent.resolveSymbolicLinksSync()
+        : target.parent.absolute.path;
+
+    if (!_isWithinBase(resolvedBase, resolvedTargetDir)) {
+      throw const FileSystemException('Path traversal detected');
+    }
+    return target;
+  }
+
+  Directory _safeDirectory(Directory baseDir, String userPath) {
+    final sanitized = _sanitizeRelativePath(userPath);
+    final targetPath = '${baseDir.path}${Platform.pathSeparator}$sanitized';
+    final target = Directory(targetPath);
+    final resolvedBase = baseDir.resolveSymbolicLinksSync();
+    final resolvedTarget = target.existsSync()
+        ? target.resolveSymbolicLinksSync()
+        : target.absolute.path;
+
+    if (!_isWithinBase(resolvedBase, resolvedTarget)) {
+      throw const FileSystemException('Path traversal detected');
+    }
+    return target;
+  }
+
+  String _sanitizeRelativePath(String path) {
+    final normalized = path.replaceAll('\\', '/').trim();
+    if (normalized.startsWith('/') || normalized.contains('..')) {
+      throw const FileSystemException('Invalid relative path');
+    }
+    return normalized;
+  }
+
+  bool _isWithinBase(String basePath, String targetPath) {
+    final base = basePath.replaceAll('\\', '/');
+    final target = targetPath.replaceAll('\\', '/');
+    return target == base || target.startsWith('$base/');
   }
 }

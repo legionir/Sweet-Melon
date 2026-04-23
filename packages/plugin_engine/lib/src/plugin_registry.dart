@@ -155,7 +155,13 @@ class PluginRegistry {
     return infos;
   }
 
-  void dispose() {
+  Future<void> dispose() async {
+    for (final versions in _plugins.values) {
+      for (final plugin in versions.values) {
+        await plugin.dispose();
+      }
+    }
+    _plugins.clear();
     _registrationController.close();
   }
 }

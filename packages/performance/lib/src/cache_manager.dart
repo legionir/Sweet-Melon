@@ -55,9 +55,9 @@ class CacheManager {
     dynamic value, {
     Duration ttl = const Duration(minutes: 5),
   }) async {
-    // LRU eviction اگر پر است
+    // LFU-like eviction اگر پر است (بر اساس hitCount)
     if (_cache.length >= maxEntries) {
-      _evictLRU();
+      _evictLeastFrequentlyUsed();
     }
     
     _cache[key] = CacheEntry(
@@ -83,7 +83,7 @@ class CacheManager {
     _misses = 0;
   }
 
-  void _evictLRU() {
+  void _evictLeastFrequentlyUsed() {
     if (_cache.isEmpty) return;
     
     String? lruKey;
@@ -98,7 +98,7 @@ class CacheManager {
     
     if (lruKey != null) {
       _cache.remove(lruKey);
-      BridgeLogger.debug('Cache', 'Evicted LRU: $lruKey');
+      BridgeLogger.debug('Cache', 'Evicted LFU-like: $lruKey');
     }
   }
 

@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import '../../../packages/plugin_engine/lib/src/plugin_interface.dart';
-import '../../../packages/security/lib/src/execution_guard.dart';
 
 // ============================================================
 // CAMERA PLUGIN — نمونه پلاگین دوربین
