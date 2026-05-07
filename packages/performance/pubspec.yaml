@@ -1,0 +1,13 @@
+name: performance
+description: Performance module for Flutter Native Bridge
+version: 1.0.0
+
+environment:
+  sdk: ^3.0.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  core:
+    path: ../core

@@ -1,5 +1,5 @@
-name: sweet_melon
-description: A new Flutter project.
+name: sweetmelon
+description: Flutter Native Bridge - JS to Native communication platform
 publish_to: 'none'
 
 version: 1.0.0+1
@@ -11,24 +11,50 @@ dependencies:
   flutter:
     sdk: flutter
 
+  # WebView
+  webview_flutter: ^4.4.0
+
+  # Storage
+  shared_preferences: ^2.2.2
+  path_provider: ^2.1.1
+
+  # Utilities
+  uuid: ^4.2.1
+  get_it: ^7.6.4
+
+  # Network
+  http: ^1.1.2
+
+  # Local packages
+  core:
+    path: packages/core
+
+  devtools:
+    path: packages/devtools
+
+  performance:
+    path: packages/performance
+
+  plugin_engine:
+    path: packages/plugin_engine
+
+  security:
+    path: packages/security
+
+  # Plugins
+  camera_plugin:
+    path: plugins/camera
+
+  geolocation_plugin:
+    path: plugins/geolocation
+
+  storage_plugin:
+    path: plugins/storage
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^4.0.0
+  flutter_lints: ^3.0.0
 
 flutter:
   uses-material-design: true
-  # assets:
-  #  - images/a_dot_burr.jpeg
-  #  - images/a_dot_ham.jpeg
-  # fonts:
-  #   - family: Schyler
-  #     fonts:
-  #       - asset: fonts/Schyler-Regular.ttf
-  #       - asset: fonts/Schyler-Italic.ttf
-  #         style: italic
-  #   - family: Trajan Pro
-  #     fonts:
-  #       - asset: fonts/TrajanPro.ttf
-  #       - asset: fonts/TrajanPro_Bold.ttf
-  #         weight: 700

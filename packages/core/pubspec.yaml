@@ -1,0 +1,12 @@
+name: core
+description: Core module for Flutter Native Bridge
+version: 1.0.0
+
+environment:
+  sdk: ^3.0.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  webview_flutter: ^4.4.0
+  uuid: ^4.2.1
