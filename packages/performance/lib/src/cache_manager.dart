@@ -1,9 +1,9 @@
 import 'dart:async';
 
-import 'package:core/src/utils/logger.dart';
+import 'package:core/core.dart';
 
 // ============================================================
-// CACHE MANAGER — مدیریت کش نتایج پلاگین (LRU واقعی)
+// CACHE MANAGER — LRU واقعی
 // ============================================================
 
 class CacheEntry {
@@ -20,7 +20,6 @@ class CacheEntry {
 
   bool get isExpired => DateTime.now().isAfter(expiresAt);
 
-  /// به‌روزرسانی زمان آخرین دسترسی
   void touch() {
     lastAccessedAt = DateTime.now();
     hitCount++;
@@ -35,16 +34,11 @@ class CacheManager {
   int _hits = 0;
   int _misses = 0;
 
-  /// مجموعه‌ی کلیدهایی (پلاگین:متد) که نباید کش شوند
   final Set<String> _noCachePatterns = {};
 
   CacheManager({this.maxEntries = 500}) {
     _startCleanupTimer();
   }
-
-  // ============================================================
-  // PUBLIC API
-  // ============================================================
 
   Future<dynamic> get(String key) async {
     final entry = _cache[key];
@@ -71,13 +65,11 @@ class CacheManager {
     dynamic value, {
     Duration ttl = const Duration(minutes: 5),
   }) async {
-    // بررسی اینکه آیا این کلید مجاز به کش شدن است
     if (_shouldSkipCache(key)) {
       BridgeLogger.debug('Cache', 'Skipped (no-cache): $key');
       return;
     }
 
-    // LRU eviction اگر پر است
     if (_cache.length >= maxEntries) {
       _evictLRU();
     }
@@ -99,8 +91,7 @@ class CacheManager {
   }
 
   Future<void> invalidatePattern(String pattern) async {
-    final regex = RegExp(pattern);
-    _cache.removeWhere((key, _) => regex.hasMatch(key));
+    _cache.removeWhere((key, _) => key.contains(pattern));
   }
 
   Future<void> clear() async {
@@ -109,7 +100,6 @@ class CacheManager {
     _misses = 0;
   }
 
-  /// مشخص کردن پلاگین/متدهایی که نباید کش شوند
   void addNoCachePattern(String pattern) {
     _noCachePatterns.add(pattern);
   }
@@ -117,10 +107,6 @@ class CacheManager {
   void removeNoCachePattern(String pattern) {
     _noCachePatterns.remove(pattern);
   }
-
-  // ============================================================
-  // LRU EVICTION — بر اساس آخرین زمان دسترسی
-  // ============================================================
 
   void _evictLRU() {
     if (_cache.isEmpty) return;
@@ -141,10 +127,6 @@ class CacheManager {
       BridgeLogger.debug('Cache', 'Evicted LRU: $lruKey');
     }
   }
-
-  // ============================================================
-  // CLEANUP
-  // ============================================================
 
   void _startCleanupTimer() {
     _cleanupTimer = Timer.periodic(
@@ -177,10 +159,6 @@ class CacheManager {
     return false;
   }
 
-  // ============================================================
-  // STATS
-  // ============================================================
-
   CacheStats get stats => CacheStats(
         entries: _cache.length,
         hits: _hits,
@@ -193,10 +171,6 @@ class CacheManager {
     _cache.clear();
   }
 }
-
-// ============================================================
-// CACHE STATS
-// ============================================================
 
 class CacheStats {
   final int entries;

@@ -1,6 +1,5 @@
-import 'package:core/src/bridge/message_bridge.dart';
-import 'package:core/src/runtime/webview_host.dart';
-import 'package:devtools/src/bridge_inspector.dart';
+import 'package:core/core.dart';
+import 'package:devtools/devtools.dart';
 import 'package:flutter/material.dart';
 
 import '../di/service_locator.dart';
@@ -37,7 +36,6 @@ class _HomeScreenState extends State<HomeScreen> {
             },
           ),
 
-          // Inspector overlay
           if (_showInspector)
             DraggableScrollableSheet(
               initialChildSize: 0.5,
@@ -51,7 +49,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.5),
+                      color: Colors.black.withValues(alpha: 0.5),
                       blurRadius: 20,
                     ),
                   ],
@@ -62,7 +60,6 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
 
-      // FAB برای inspector
       floatingActionButton: FloatingActionButton.small(
         onPressed: () => setState(() => _showInspector = !_showInspector),
         backgroundColor: const Color(0xFF6C63FF),
@@ -74,8 +71,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // ── Demo HTML App ──────────────────────────────────────────
-
   String _buildDemoHtml() => '''
 <!DOCTYPE html>
 <html lang="en">
@@ -85,25 +80,14 @@ class _HomeScreenState extends State<HomeScreen> {
   <title>Flutter Native Bridge Demo</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       background: #0a0a1a;
       color: #e0e0e0;
       min-height: 100vh;
     }
-    
-    .container {
-      max-width: 600px;
-      margin: 0 auto;
-      padding: 20px;
-    }
-    
-    header {
-      text-align: center;
-      padding: 30px 0 20px;
-    }
-    
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    header { text-align: center; padding: 30px 0 20px; }
     header h1 {
       font-size: 24px;
       background: linear-gradient(135deg, #6C63FF, #03DAC6);
@@ -111,111 +95,42 @@ class _HomeScreenState extends State<HomeScreen> {
       -webkit-text-fill-color: transparent;
       font-weight: 800;
     }
-    
-    header p {
-      color: #888;
-      font-size: 13px;
-      margin-top: 8px;
-    }
-    
+    header p { color: #888; font-size: 13px; margin-top: 8px; }
     .card {
-      background: #1a1a2e;
-      border: 1px solid #2a2a4a;
-      border-radius: 12px;
-      padding: 20px;
-      margin-bottom: 16px;
+      background: #1a1a2e; border: 1px solid #2a2a4a;
+      border-radius: 12px; padding: 20px; margin-bottom: 16px;
     }
-    
     .card-title {
-      font-size: 14px;
-      font-weight: 700;
-      color: #6C63FF;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      font-size: 14px; font-weight: 700; color: #6C63FF;
+      text-transform: uppercase; letter-spacing: 1px;
+      margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
     }
-    
-    .btn-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-    
+    .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     button {
       background: linear-gradient(135deg, #6C63FF22, #6C63FF44);
-      border: 1px solid #6C63FF66;
-      color: #c0b8ff;
-      padding: 12px 16px;
-      border-radius: 8px;
-      font-size: 13px;
-      cursor: pointer;
-      transition: all 0.2s;
-      font-weight: 600;
+      border: 1px solid #6C63FF66; color: #c0b8ff;
+      padding: 12px 16px; border-radius: 8px; font-size: 13px;
+      cursor: pointer; transition: all 0.2s; font-weight: 600;
     }
-    
-    button:hover {
-      background: linear-gradient(135deg, #6C63FF44, #6C63FF66);
-      transform: translateY(-1px);
-    }
-    
-    button:active {
-      transform: translateY(0);
-    }
-    
-    button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      transform: none;
-    }
-    
+    button:active { transform: translateY(0); }
     .log-container {
-      background: #0d0d1f;
-      border: 1px solid #2a2a4a;
-      border-radius: 8px;
-      padding: 12px;
-      height: 200px;
-      overflow-y: auto;
-      font-family: monospace;
-      font-size: 11px;
+      background: #0d0d1f; border: 1px solid #2a2a4a;
+      border-radius: 8px; padding: 12px; height: 200px;
+      overflow-y: auto; font-family: monospace; font-size: 11px;
     }
-    
-    .log-entry {
-      padding: 3px 0;
-      border-bottom: 1px solid #1a1a2e;
-      line-height: 1.6;
-    }
-    
+    .log-entry { padding: 3px 0; border-bottom: 1px solid #1a1a2e; line-height: 1.6; }
     .log-entry.success { color: #4CAF50; }
     .log-entry.error { color: #f44336; }
     .log-entry.info { color: #2196F3; }
     .log-entry.pending { color: #FF9800; }
-    
     .status-bar {
-      display: flex;
-      gap: 16px;
-      font-size: 12px;
-      color: #888;
-      margin-top: 16px;
-      padding: 12px;
-      background: #1a1a2e;
-      border-radius: 8px;
+      display: flex; gap: 16px; font-size: 12px; color: #888;
+      margin-top: 16px; padding: 12px; background: #1a1a2e; border-radius: 8px;
     }
-    
-    .status-item span {
-      color: #03DAC6;
-      font-weight: bold;
-    }
-    
+    .status-item span { color: #03DAC6; font-weight: bold; }
     .progress {
-      height: 2px;
-      background: #6C63FF;
-      width: 0%;
-      transition: width 0.3s;
-      border-radius: 2px;
-      margin-bottom: 16px;
+      height: 2px; background: #6C63FF; width: 0%;
+      transition: width 0.3s; border-radius: 2px; margin-bottom: 16px;
     }
   </style>
 </head>
@@ -225,10 +140,7 @@ class _HomeScreenState extends State<HomeScreen> {
     <h1>Native Bridge</h1>
     <p>Flutter JS Bridge Demo Application</p>
   </header>
-
   <div class="progress" id="progress"></div>
-
-  <!-- CAMERA -->
   <div class="card">
     <div class="card-title">Camera Plugin</div>
     <div class="btn-grid">
@@ -236,8 +148,6 @@ class _HomeScreenState extends State<HomeScreen> {
       <button onclick="testGallery()">Pick Gallery</button>
     </div>
   </div>
-
-  <!-- STORAGE -->
   <div class="card">
     <div class="card-title">Storage Plugin</div>
     <div class="btn-grid">
@@ -247,8 +157,6 @@ class _HomeScreenState extends State<HomeScreen> {
       <button onclick="testRemove()">Remove</button>
     </div>
   </div>
-
-  <!-- GEOLOCATION -->
   <div class="card">
     <div class="card-title">Geolocation Plugin</div>
     <div class="btn-grid">
@@ -256,8 +164,6 @@ class _HomeScreenState extends State<HomeScreen> {
       <button onclick="testPermission()">Check Permission</button>
     </div>
   </div>
-
-  <!-- BATCH -->
   <div class="card">
     <div class="card-title">Batch and Advanced</div>
     <div class="btn-grid">
@@ -267,246 +173,82 @@ class _HomeScreenState extends State<HomeScreen> {
       <button onclick="clearLog()">Clear Log</button>
     </div>
   </div>
-
-  <!-- STATS -->
   <div class="status-bar">
-    <div class="status-item">
-      Requests: <span id="reqCount">0</span>
-    </div>
-    <div class="status-item">
-      Errors: <span id="errCount">0</span>
-    </div>
-    <div class="status-item">
-      Pending: <span id="pendCount">0</span>
-    </div>
+    <div class="status-item">Requests: <span id="reqCount">0</span></div>
+    <div class="status-item">Errors: <span id="errCount">0</span></div>
+    <div class="status-item">Pending: <span id="pendCount">0</span></div>
   </div>
-
-  <!-- LOG -->
   <div class="card" style="margin-top:16px">
     <div class="card-title">Console Log</div>
     <div class="log-container" id="log"></div>
   </div>
 </div>
-
 <script>
-  // ============================================================
-  // LOG SYSTEM
-  // ============================================================
-
   var errorCount = 0;
-  
   function log(msg, type) {
     type = type || 'info';
     var container = document.getElementById('log');
     var entry = document.createElement('div');
     entry.className = 'log-entry ' + type;
-    
     var now = new Date();
-    var time = now.toLocaleTimeString('en-US', { 
-      hour12: false,
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    });
-    
+    var time = now.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
     entry.textContent = '[' + time + '] ' + msg;
     container.insertBefore(entry, container.firstChild);
-    
     if (type === 'error') errorCount++;
     updateStats();
   }
-
   function updateStats() {
     var info = (window.Native && window.Native.info) ? window.Native.info() : {};
     document.getElementById('reqCount').textContent = info.totalRequests || 0;
     document.getElementById('errCount').textContent = errorCount;
     document.getElementById('pendCount').textContent = info.pendingRequests || 0;
   }
-
-  function clearLog() {
-    document.getElementById('log').innerHTML = '';
-    errorCount = 0;
-    updateStats();
-  }
-
-  function showProgress(show) {
-    var bar = document.getElementById('progress');
-    bar.style.width = show ? '60%' : '0%';
-  }
-
-  // ============================================================
-  // WRAPPER
-  // ============================================================
-
+  function clearLog() { document.getElementById('log').innerHTML = ''; errorCount = 0; updateStats(); }
+  function showProgress(show) { document.getElementById('progress').style.width = show ? '60%' : '0%'; }
   function callPlugin(plugin, method, args, label) {
     args = args || {};
     var display = label || (plugin + '.' + method);
     log('-> Calling ' + display + '...', 'pending');
     showProgress(true);
-    
     return Native.call({ plugin: plugin, method: method, args: args })
-      .then(function(result) {
-        var text = JSON.stringify(result);
-        if (text && text.length > 100) text = text.substring(0, 100) + '...';
-        log('OK ' + display + ': ' + text, 'success');
-        return result;
-      })
-      .catch(function(err) {
-        var detail = err.message || err.code || JSON.stringify(err);
-        log('FAIL ' + display + ': ' + detail, 'error');
-        throw err;
-      })
-      .finally(function() {
-        showProgress(false);
-        updateStats();
-      });
+      .then(function(result) { var t = JSON.stringify(result); if (t && t.length > 100) t = t.substring(0, 100) + '...'; log('OK ' + display + ': ' + t, 'success'); return result; })
+      .catch(function(err) { log('FAIL ' + display + ': ' + (err.message || err.code || JSON.stringify(err)), 'error'); throw err; })
+      .finally(function() { showProgress(false); updateStats(); });
   }
-
-  // ============================================================
-  // CAMERA TESTS
-  // ============================================================
-
-  function testTakePhoto() {
-    callPlugin('camera', 'takePhoto', { quality: 80 });
-  }
-
-  function testGallery() {
-    callPlugin('camera', 'pickFromGallery', { multiple: false });
-  }
-
-  // ============================================================
-  // STORAGE TESTS
-  // ============================================================
-
-  function testSetStorage() {
-    var value = { 
-      timestamp: Date.now(), 
-      message: 'Hello from JS!',
-      data: [1, 2, 3]
-    };
-    callPlugin('storage', 'set', { key: 'test_key', value: value });
-  }
-
-  function testGetStorage() {
-    callPlugin('storage', 'get', { key: 'test_key' });
-  }
-
-  function testListKeys() {
-    callPlugin('storage', 'keys', {});
-  }
-
-  function testRemove() {
-    callPlugin('storage', 'remove', { key: 'test_key' });
-  }
-
-  // ============================================================
-  // GEOLOCATION TESTS
-  // ============================================================
-
-  function testLocation() {
-    callPlugin('geolocation', 'getCurrentPosition', { accuracy: 'high' });
-  }
-
-  function testPermission() {
-    callPlugin('geolocation', 'checkPermission', {});
-  }
-
-  // ============================================================
-  // BATCH TESTS
-  // ============================================================
-
+  function testTakePhoto() { callPlugin('camera', 'takePhoto', { quality: 80 }); }
+  function testGallery() { callPlugin('camera', 'pickFromGallery', { multiple: false }); }
+  function testSetStorage() { callPlugin('storage', 'set', { key: 'test_key', value: { timestamp: Date.now(), message: 'Hello from JS!', data: [1,2,3] } }); }
+  function testGetStorage() { callPlugin('storage', 'get', { key: 'test_key' }); }
+  function testListKeys() { callPlugin('storage', 'keys', {}); }
+  function testRemove() { callPlugin('storage', 'remove', { key: 'test_key' }); }
+  function testLocation() { callPlugin('geolocation', 'getCurrentPosition', { accuracy: 'high' }); }
+  function testPermission() { callPlugin('geolocation', 'checkPermission', {}); }
   function testBatch() {
-    log('-> Sending batch request...', 'pending');
-    showProgress(true);
-    
+    log('-> Sending batch request...', 'pending'); showProgress(true);
     Native.batch([
       { plugin: 'storage', method: 'keys', args: {} },
       { plugin: 'geolocation', method: 'checkPermission', args: {} },
       { plugin: 'camera', method: 'getInfo', args: {} }
     ], { parallel: true })
-    .then(function(results) {
-      log('OK Batch complete: ' + results.length + ' results', 'success');
-      results.forEach(function(r, i) {
-        var status = r.success ? 'OK' : 'FAIL';
-        var detail = JSON.stringify(r.data || r.error);
-        if (detail && detail.length > 80) detail = detail.substring(0, 80) + '...';
-        log('  [' + i + '] ' + status + ' ' + detail, r.success ? 'success' : 'error');
-      });
-    })
-    .catch(function(err) {
-      log('FAIL Batch failed: ' + JSON.stringify(err), 'error');
-    })
-    .finally(function() {
-      showProgress(false);
-      updateStats();
-    });
+    .then(function(results) { log('OK Batch complete: ' + results.length + ' results', 'success'); })
+    .catch(function(err) { log('FAIL Batch: ' + JSON.stringify(err), 'error'); })
+    .finally(function() { showProgress(false); updateStats(); });
   }
-
   function testParallel() {
     log('-> Running 5 parallel calls...', 'pending');
-    
     var promises = [];
-    for (var i = 0; i < 5; i++) {
-      (function(idx) {
-        promises.push(
-          Native.call({ plugin: 'storage', method: 'get', args: { key: 'key_' + idx } })
-            .then(function() { return 'OK key_' + idx; })
-            .catch(function(e) { return 'FAIL key_' + idx + ': ' + (e.code || ''); })
-        );
-      })(i);
-    }
-    
-    Promise.allSettled(promises).then(function(results) {
-      results.forEach(function(r) {
-        log(r.value || r.reason, 'info');
-      });
-      updateStats();
-    });
+    for (var i = 0; i < 5; i++) { (function(idx) { promises.push(Native.call({ plugin: 'storage', method: 'get', args: { key: 'key_' + idx } }).then(function() { return 'OK key_' + idx; }).catch(function(e) { return 'FAIL key_' + idx; })); })(i); }
+    Promise.allSettled(promises).then(function(results) { results.forEach(function(r) { log(r.value || r.reason, 'info'); }); updateStats(); });
   }
-
   function testTimeout() {
-    log('-> Testing with 1ms timeout (should fail)...', 'pending');
-    
-    Native.call({
-      plugin: 'geolocation',
-      method: 'getCurrentPosition',
-      args: {},
-      timeout: 1
-    })
-    .then(function() {
-      log('? Unexpectedly succeeded', 'info');
-    })
-    .catch(function(err) {
-      if (err.code === 'TIMEOUT') {
-        log('OK Timeout handled correctly: ' + err.message, 'success');
-      } else {
-        log('? Unexpected error: ' + JSON.stringify(err), 'error');
-      }
-    })
-    .finally(function() {
-      updateStats();
-    });
+    log('-> Testing with 1ms timeout...', 'pending');
+    Native.call({ plugin: 'geolocation', method: 'getCurrentPosition', args: {}, timeout: 1 })
+    .then(function() { log('? Unexpectedly succeeded', 'info'); })
+    .catch(function(err) { if (err.code === 'TIMEOUT') { log('OK Timeout handled correctly', 'success'); } else { log('? Unexpected error: ' + JSON.stringify(err), 'error'); } })
+    .finally(function() { updateStats(); });
   }
-
-  // ============================================================
-  // EVENTS
-  // ============================================================
-
-  if (window.Native && window.Native.on) {
-    Native.on('bridge_event', function(data) {
-      log('Event: ' + JSON.stringify(data), 'info');
-    });
-  }
-
-  // Init
-  window.addEventListener('load', function() {
-    setTimeout(function() {
-      log('Native Bridge initialized', 'success');
-      var info = (window.Native && window.Native.info) ? window.Native.info() : {};
-      log('Bridge version: ' + JSON.stringify(info), 'info');
-      updateStats();
-    }, 500);
-  });
+  if (window.Native && window.Native.on) { Native.on('bridge_event', function(data) { log('Event: ' + JSON.stringify(data), 'info'); }); }
+  window.addEventListener('load', function() { setTimeout(function() { log('Native Bridge initialized', 'success'); updateStats(); }, 500); });
 </script>
 </body>
 </html>

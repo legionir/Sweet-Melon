@@ -21,7 +21,6 @@ class MessageBridge {
   MessageHandler? _messageHandler;
   BatchHandler? _batchHandler;
 
-  // Stream برای observable بودن پیام‌ها
   final _messageStreamController =
       StreamController<BridgeMessage>.broadcast();
 
@@ -29,8 +28,6 @@ class MessageBridge {
       _messageStreamController.stream;
 
   bool _isReady = false;
-
-  // صف پیام‌های pending قبل از آماده شدن bridge
   final List<String> _pendingJsMessages = [];
 
   // ============================================================
@@ -51,8 +48,6 @@ class MessageBridge {
 
   void onBridgeReady() {
     _isReady = true;
-
-    // ارسال پیام‌های pending
     for (final message in _pendingJsMessages) {
       _controller.runJavaScript(message);
     }
@@ -74,19 +69,14 @@ class MessageBridge {
     final startTime = DateTime.now();
 
     try {
-      // تشخیص نوع پیام
       if (json.containsKey('type') && json['type'] == 'batch') {
         await _handleBatchRequest(json);
         return;
       }
 
-      // پیام معمولی
       final request = PluginRequest.fromJson(json);
 
-      // ثبت در stream
-      _messageStreamController.add(
-        BridgeMessage.incoming(request),
-      );
+      _messageStreamController.add(BridgeMessage.incoming(request));
 
       BridgeLogger.info(
         'Bridge',
@@ -96,7 +86,7 @@ class MessageBridge {
       if (_messageHandler == null) {
         await _sendError(
           request.requestId,
-          PluginError(
+          const PluginError(
             code: PluginErrorCode.executionError,
             message: 'No message handler registered',
           ),
@@ -106,10 +96,8 @@ class MessageBridge {
 
       final response = await _messageHandler!(request);
 
-      // محاسبه زمان پردازش
-      final processingTime = DateTime.now()
-          .difference(startTime)
-          .inMilliseconds;
+      final processingTime =
+          DateTime.now().difference(startTime).inMilliseconds;
 
       final responseWithMeta = PluginResponse(
         requestId: response.requestId,
@@ -125,11 +113,7 @@ class MessageBridge {
       );
 
       await _sendResponse(responseWithMeta);
-
-      // ثبت پاسخ در stream
-      _messageStreamController.add(
-        BridgeMessage.outgoing(responseWithMeta),
-      );
+      _messageStreamController.add(BridgeMessage.outgoing(responseWithMeta));
     } catch (e, stackTrace) {
       BridgeLogger.error('Bridge', 'Error handling message: $e');
 
@@ -172,7 +156,6 @@ class MessageBridge {
     if (_batchHandler != null) {
       responses = await _batchHandler!(requests, options);
     } else {
-      // Fallback: اجرای سریالی
       responses = [];
       for (final request in requests) {
         if (_messageHandler != null) {
@@ -206,7 +189,6 @@ class MessageBridge {
   Future<void> _sendResponse(PluginResponse response) async {
     final responseJson = jsonEncode(response.toJson());
     final escapedId = _escapeJsString(response.requestId);
-
     final js = 'window.__resolveCall("$escapedId", $responseJson);';
     await _runJs(js);
   }
@@ -227,16 +209,13 @@ class MessageBridge {
     final resultsJson = jsonEncode({
       'results': responses.map((r) => r.toJson()).toList(),
     });
-
     final js = 'window.__resolveBatch("$escapedId", $resultsJson);';
     await _runJs(js);
   }
 
-  /// ارسال رویداد از Flutter به JS
   Future<void> emitEvent(String event, dynamic data) async {
     final escapedEvent = _escapeJsString(event);
     final dataJson = jsonEncode(data);
-
     final js = 'window.__emitEvent("$escapedEvent", $dataJson);';
     await _runJs(js);
   }
@@ -245,7 +224,6 @@ class MessageBridge {
   // HELPERS
   // ============================================================
 
-  /// Escape رشته‌ها برای جلوگیری از JS injection
   String _escapeJsString(String value) {
     return value
         .replaceAll('\\', '\\\\')
@@ -255,13 +233,11 @@ class MessageBridge {
         .replaceAll('\r', '\\r');
   }
 
-  /// اجرای JS روی WebView
   Future<void> _runJs(String script) async {
     if (!_isReady) {
       _pendingJsMessages.add(script);
       return;
     }
-
     try {
       await _controller.runJavaScript(script);
     } catch (e) {
@@ -275,7 +251,7 @@ class MessageBridge {
 }
 
 // ============================================================
-// BRIDGE MESSAGE — برای observability
+// BRIDGE MESSAGE
 // ============================================================
 
 enum BridgeMessageDirection { incoming, outgoing }

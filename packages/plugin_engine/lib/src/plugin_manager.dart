@@ -1,18 +1,15 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:core/src/protocol/message_protocol.dart';
-import 'package:core/src/utils/logger.dart';
-import 'package:performance/src/cache_manager.dart';
-import 'package:security/src/execution_guard.dart';
-import 'package:security/src/permission_manager.dart';
-import 'package:security/src/rate_limiter.dart';
+import 'package:core/core.dart';
+import 'package:performance/performance.dart';
+import 'package:security/security.dart';
 
 import 'plugin_interface.dart';
 import 'plugin_registry.dart';
 
 // ============================================================
-// PLUGIN MANAGER — مرکز هماهنگی و اجرا
+// PLUGIN MANAGER
 // ============================================================
 
 class PluginManager {
@@ -22,11 +19,9 @@ class PluginManager {
   final ExecutionGuard executionGuard;
   final CacheManager cacheManager;
 
-  // آمار عملکرد
   final Map<String, PluginStats> _stats = {};
-
-  // Stream برای trace
   final _traceController = StreamController<PluginTrace>.broadcast();
+
   Stream<PluginTrace> get traces => _traceController.stream;
 
   PluginManager({
@@ -51,12 +46,11 @@ class PluginManager {
     );
 
     try {
-      // ── Step 1: Rate Limit Check ─────────────────────────
+      // Step 1: Rate Limit
       final rateLimitResult = await rateLimiter.check(
         request.plugin,
         request.method,
       );
-
       if (!rateLimitResult.allowed) {
         return _errorResponse(
           request.requestId,
@@ -65,12 +59,11 @@ class PluginManager {
         );
       }
 
-      // ── Step 2: Plugin Resolution ─────────────────────────
+      // Step 2: Plugin Resolution
       final plugin = registry.resolve(
         request.plugin,
         version: request.version == '1.0.0' ? null : request.version,
       );
-
       if (plugin == null) {
         return _errorResponse(
           request.requestId,
@@ -79,7 +72,7 @@ class PluginManager {
         );
       }
 
-      // ── Step 3: Method Check ──────────────────────────────
+      // Step 3: Method Check
       if (!plugin.supportsMethod(request.method)) {
         return _errorResponse(
           request.requestId,
@@ -88,7 +81,7 @@ class PluginManager {
         );
       }
 
-      // ── Step 4: Permission Check ──────────────────────────
+      // Step 4: Permission Check
       for (final permission in plugin.requiredPermissions) {
         final hasPermission = await permissionManager.check(permission);
         if (!hasPermission) {
@@ -100,12 +93,11 @@ class PluginManager {
         }
       }
 
-      // ── Step 5: Args Validation ───────────────────────────
+      // Step 5: Args Validation
       final validation = await plugin.validateArgs(
         request.method,
         request.args,
       );
-
       if (!validation.isValid) {
         return _errorResponse(
           request.requestId,
@@ -114,15 +106,13 @@ class PluginManager {
         );
       }
 
-      // ── Step 6: Cache Check ───────────────────────────────
+      // Step 6: Cache Check
       if (plugin.cacheable) {
         final cacheKey = _buildCacheKey(request);
         final cached = await cacheManager.get(cacheKey);
-
         if (cached != null) {
           BridgeLogger.debug('Manager', 'Cache hit: $cacheKey');
           _recordStats(request.plugin, request.method, 0, true);
-
           return PluginResponse.success(
             requestId: request.requestId,
             data: cached,
@@ -135,7 +125,7 @@ class PluginManager {
         }
       }
 
-      // ── Step 7: Execute with Guard ────────────────────────
+      // Step 7: Execute with Guard
       final result = await executionGuard.execute(
         requestId: request.requestId,
         timeoutMs: 30000,
@@ -145,7 +135,7 @@ class PluginManager {
       final processingTime =
           DateTime.now().difference(startTime).inMilliseconds;
 
-      // ── Step 8: Cache Result ──────────────────────────────
+      // Step 8: Cache Result
       if (plugin.cacheable && result != null) {
         final cacheKey = _buildCacheKey(request);
         await cacheManager.set(
@@ -155,15 +145,10 @@ class PluginManager {
         );
       }
 
-      // ── Step 9: Record Stats ──────────────────────────────
-      _recordStats(
-        request.plugin,
-        request.method,
-        processingTime,
-        false,
-      );
+      // Step 9: Record Stats
+      _recordStats(request.plugin, request.method, processingTime, false);
 
-      // ── Step 10: Emit Trace ───────────────────────────────
+      // Step 10: Emit Trace
       _emitTrace(
         traceId: traceId,
         requestId: request.requestId,
@@ -186,10 +171,7 @@ class PluginManager {
       final processingTime =
           DateTime.now().difference(startTime).inMilliseconds;
 
-      BridgeLogger.error(
-        'Manager',
-        'Execution error: $e',
-      );
+      BridgeLogger.error('Manager', 'Execution error: $e');
 
       _emitTrace(
         traceId: traceId,
@@ -232,15 +214,12 @@ class PluginManager {
     );
 
     if (options.parallel) {
-      final futures = requests.map(execute).toList();
-      return Future.wait(futures);
+      return Future.wait(requests.map(execute).toList());
     } else {
       final responses = <PluginResponse>[];
-
       for (final request in requests) {
         final response = await execute(request);
         responses.add(response);
-
         if (options.stopOnError && !response.success) {
           BridgeLogger.warn(
             'Manager',
@@ -249,7 +228,6 @@ class PluginManager {
           break;
         }
       }
-
       return responses;
     }
   }
@@ -264,8 +242,6 @@ class PluginManager {
     String message, {
     String? stackTrace,
   }) {
-    _recordError(requestId);
-
     return PluginResponse.failure(
       requestId: requestId,
       error: PluginError(
@@ -276,13 +252,11 @@ class PluginManager {
     );
   }
 
-  /// ساخت cache key با ترتیب تضمین‌شده
   String _buildCacheKey(PluginRequest request) {
     final sortedArgs = _sortedJsonEncode(request.args);
     return '${request.plugin}:${request.method}:$sortedArgs';
   }
 
-  /// Encode JSON با ترتیب الفبایی کلیدها
   String _sortedJsonEncode(Map<String, dynamic> map) {
     final sortedKeys = map.keys.toList()..sort();
     final sortedMap = <String, dynamic>{};
@@ -306,10 +280,6 @@ class PluginManager {
     final key = '$plugin.$method';
     _stats[key] ??= PluginStats(plugin: plugin, method: method);
     _stats[key]!.record(timeMs, fromCache);
-  }
-
-  void _recordError(String requestId) {
-    // عمومی — برای آمار کلی
   }
 
   void _emitTrace({
@@ -366,7 +336,6 @@ class PluginStats {
   }
 
   void recordError() => errorCount++;
-
   double get avgTimeMs => totalCalls > 0 ? totalTimeMs / totalCalls : 0;
   double get cacheHitRate => totalCalls > 0 ? cacheHits / totalCalls : 0;
 

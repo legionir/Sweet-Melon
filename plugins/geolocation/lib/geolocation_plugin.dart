@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:geolocator/geolocator.dart';
-import 'package:plugin_engine/src/plugin_interface.dart';
+import 'package:plugin_engine/plugin_engine.dart';
 
 // ============================================================
 // GEOLOCATION PLUGIN
@@ -20,7 +20,7 @@ class GeolocationPlugin extends Plugin {
   String get description => 'Geolocation and GPS plugin';
 
   @override
-  bool get cacheable => false; // موقعیت مکانی نباید کش شود
+  bool get cacheable => false;
 
   @override
   List<String> get supportedMethods => [
@@ -55,16 +55,10 @@ class GeolocationPlugin extends Plugin {
     }
   }
 
-  // ============================================================
-  // METHODS
-  // ============================================================
-
   Future<Map<String, dynamic>> _getCurrentPosition(
     Map<String, dynamic> args,
   ) async {
-    final accuracy = _parseAccuracy(
-      args['accuracy'] as String? ?? 'high',
-    );
+    final accuracy = _parseAccuracy(args['accuracy'] as String? ?? 'high');
 
     final position = await Geolocator.getCurrentPosition(
       desiredAccuracy: accuracy,
@@ -74,13 +68,10 @@ class GeolocationPlugin extends Plugin {
   }
 
   Future<String> _watchPosition(Map<String, dynamic> args) async {
-    final accuracy = _parseAccuracy(
-      args['accuracy'] as String? ?? 'high',
-    );
+    final accuracy = _parseAccuracy(args['accuracy'] as String? ?? 'high');
     final distanceFilter =
         (args['distanceFilter'] as num?)?.toDouble() ?? 10;
 
-    // قبل از شروع جدید، قبلی را متوقف کن
     await _clearWatch();
 
     final settings = LocationSettings(
@@ -92,11 +83,9 @@ class GeolocationPlugin extends Plugin {
       locationSettings: settings,
     ).listen(
       (position) {
-        // در نسخه کامل، رویداد از طریق bridge به JS ارسال می‌شود
+        // در نسخه کامل رویداد از طریق bridge ارسال می‌شود
       },
-      onError: (error) {
-        // مدیریت خطا
-      },
+      onError: (error) {},
     );
 
     return 'watch_started';
@@ -121,10 +110,6 @@ class GeolocationPlugin extends Plugin {
   Future<bool> _isLocationEnabled() async {
     return Geolocator.isLocationServiceEnabled();
   }
-
-  // ============================================================
-  // HELPERS
-  // ============================================================
 
   LocationAccuracy _parseAccuracy(String accuracy) {
     switch (accuracy) {
@@ -158,10 +143,6 @@ class GeolocationPlugin extends Plugin {
     };
   }
 
-  // ============================================================
-  // VALIDATION
-  // ============================================================
-
   @override
   Future<ValidationResult> validateArgs(
     String method,
@@ -182,13 +163,8 @@ class GeolocationPlugin extends Plugin {
       return ValidationResult.invalid('accuracy must be a string');
     }
 
-    final validAccuracies = [
-      'lowest',
-      'low',
-      'medium',
-      'high',
-      'best',
-      'bestForNavigation',
+    const validAccuracies = [
+      'lowest', 'low', 'medium', 'high', 'best', 'bestForNavigation',
     ];
     if (accuracy != null && !validAccuracies.contains(accuracy)) {
       return ValidationResult.invalid(
@@ -198,17 +174,11 @@ class GeolocationPlugin extends Plugin {
 
     final distanceFilter = args['distanceFilter'];
     if (distanceFilter != null && distanceFilter is! num) {
-      return ValidationResult.invalid(
-        'distanceFilter must be a number',
-      );
+      return ValidationResult.invalid('distanceFilter must be a number');
     }
 
     return ValidationResult.valid();
   }
-
-  // ============================================================
-  // LIFECYCLE
-  // ============================================================
 
   @override
   Future<void> onDispose() async {

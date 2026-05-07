@@ -1,19 +1,17 @@
 import 'dart:async';
 
-import 'package:core/src/utils/logger.dart';
+import 'package:core/core.dart';
 
 import 'plugin_interface.dart';
 
 // ============================================================
-// PLUGIN REGISTRY — ثبت و مدیریت پلاگین‌ها
+// PLUGIN REGISTRY
 // ============================================================
 
-/// تایپ callback برای ارسال رویداد به JS
 typedef EventEmitter = Future<void> Function(String event, dynamic data);
 
 class PluginRegistry {
   final Map<String, Map<String, Plugin>> _plugins = {};
-  // _plugins[name][version] = plugin
 
   final _registrationController =
       StreamController<PluginRegistrationEvent>.broadcast();
@@ -23,30 +21,21 @@ class PluginRegistry {
 
   EventEmitter? _eventEmitter;
 
-  /// تنظیم event emitter برای ارسال رویداد از پلاگین‌ها به JS
   void setEventEmitter(EventEmitter emitter) {
     _eventEmitter = emitter;
   }
 
-  /// ارسال رویداد به JS (قابل استفاده توسط پلاگین‌ها)
   Future<void> emitEvent(String event, dynamic data) async {
     if (_eventEmitter != null) {
       await _eventEmitter!(event, data);
     }
   }
 
-  // ============================================================
-  // REGISTRATION
-  // ============================================================
-
   Future<void> register(Plugin plugin) async {
     final name = plugin.name;
     final version = plugin.version;
 
-    BridgeLogger.info(
-      'Registry',
-      'Registering plugin: $name@$version',
-    );
+    BridgeLogger.info('Registry', 'Registering plugin: $name@$version');
 
     if (!_plugins.containsKey(name)) {
       _plugins[name] = {};
@@ -57,20 +46,13 @@ class PluginRegistry {
         'Registry',
         'Plugin $name@$version already registered, replacing...',
       );
-
-      // dispose قدیمی
       await _plugins[name]![version]!.dispose();
     }
 
-    // Initialize پلاگین
     await plugin.initialize();
     _plugins[name]![version] = plugin;
 
-    _emitRegistrationEvent(
-      RegistrationEventType.registered,
-      name,
-      version,
-    );
+    _emitRegistrationEvent(RegistrationEventType.registered, name, version);
 
     BridgeLogger.info('Registry', 'Plugin $name@$version registered');
   }
@@ -88,7 +70,6 @@ class PluginRegistry {
         _plugins[name]!.remove(version);
       }
     } else {
-      // حذف تمام نسخه‌ها
       for (final plugin in _plugins[name]!.values) {
         await plugin.dispose();
       }
@@ -102,36 +83,22 @@ class PluginRegistry {
     );
   }
 
-  // ============================================================
-  // RESOLUTION
-  // ============================================================
-
   Plugin? resolve(String name, {String? version}) {
     if (!_plugins.containsKey(name)) return null;
-
-    if (version != null) {
-      return _plugins[name]![version];
-    }
-
-    // بازگرداندن آخرین نسخه
+    if (version != null) return _plugins[name]![version];
     return _getLatestVersion(name);
   }
 
   Plugin? _getLatestVersion(String name) {
     final versions = _plugins[name];
     if (versions == null || versions.isEmpty) return null;
-
-    // مرتب‌سازی بر اساس semver
-    final sortedVersions = versions.keys.toList()
-      ..sort(_compareVersions);
-
+    final sortedVersions = versions.keys.toList()..sort(_compareVersions);
     return versions[sortedVersions.last];
   }
 
   int _compareVersions(String v1, String v2) {
     final parts1 = v1.split('.').map((p) => int.tryParse(p) ?? 0).toList();
     final parts2 = v2.split('.').map((p) => int.tryParse(p) ?? 0).toList();
-
     for (var i = 0; i < 3; i++) {
       final p1 = i < parts1.length ? parts1[i] : 0;
       final p2 = i < parts2.length ? parts2[i] : 0;
@@ -139,10 +106,6 @@ class PluginRegistry {
     }
     return 0;
   }
-
-  // ============================================================
-  // QUERIES
-  // ============================================================
 
   bool isRegistered(String name, {String? version}) {
     if (!_plugins.containsKey(name)) return false;
@@ -154,7 +117,6 @@ class PluginRegistry {
 
   List<PluginInfo> getPluginInfos() {
     final infos = <PluginInfo>[];
-
     for (final entry in _plugins.entries) {
       for (final vEntry in entry.value.entries) {
         infos.add(PluginInfo(
@@ -166,13 +128,8 @@ class PluginRegistry {
         ));
       }
     }
-
     return infos;
   }
-
-  // ============================================================
-  // INTERNAL
-  // ============================================================
 
   void _emitRegistrationEvent(
     RegistrationEventType type,
@@ -191,7 +148,6 @@ class PluginRegistry {
   }
 
   Future<void> dispose() async {
-    // Dispose تمام پلاگین‌ها
     for (final versions in _plugins.values) {
       for (final plugin in versions.values) {
         await plugin.dispose();
@@ -201,10 +157,6 @@ class PluginRegistry {
     _registrationController.close();
   }
 }
-
-// ============================================================
-// EVENTS & INFO
-// ============================================================
 
 enum RegistrationEventType { registered, unregistered, updated }
 

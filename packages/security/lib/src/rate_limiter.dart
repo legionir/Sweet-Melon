@@ -1,9 +1,9 @@
 import 'dart:async';
 
-import 'package:core/src/utils/logger.dart';
+import 'package:core/core.dart';
 
 // ============================================================
-// RATE LIMITER — محدودسازی نرخ درخواست
+// RATE LIMITER
 // ============================================================
 
 class RateLimitResult {
@@ -41,7 +41,6 @@ class RateLimitRule {
 class RateLimiter {
   final Map<String, RateLimitRule> _rules = {};
   final Map<String, _BucketState> _buckets = {};
-
   RateLimitRule _defaultRule = RateLimitRule.perSecond(100);
 
   void setDefaultRule(RateLimitRule rule) {
@@ -56,17 +55,13 @@ class RateLimiter {
     );
   }
 
-  /// بررسی اجازه ارسال درخواست
   Future<RateLimitResult> check(String plugin, String method) async {
     final specificKey = '$plugin.$method';
     final pluginKey = plugin;
-
-    // اول rule خاص متد، بعد rule پلاگین، بعد پیش‌فرض
     final rule = _rules[specificKey] ?? _rules[pluginKey] ?? _defaultRule;
 
     _buckets[specificKey] ??= _BucketState(rule: rule);
     final bucket = _buckets[specificKey]!;
-
     final result = bucket.consume();
 
     if (!result.allowed) {
@@ -80,27 +75,15 @@ class RateLimiter {
     return result;
   }
 
-  /// ریست کردن یک bucket
-  void reset(String key) {
-    _buckets.remove(key);
-  }
+  void reset(String key) => _buckets.remove(key);
+  void resetAll() => _buckets.clear();
 
-  /// ریست کردن تمام bucket‌ها
-  void resetAll() {
-    _buckets.clear();
-  }
-
-  /// آمار وضعیت فعلی
   Map<String, dynamic> getStats() {
     return _buckets.map(
       (key, bucket) => MapEntry(key, bucket.toJson()),
     );
   }
 }
-
-// ============================================================
-// INTERNAL — Sliding Window Bucket
-// ============================================================
 
 class _BucketState {
   final RateLimitRule rule;
@@ -112,7 +95,6 @@ class _BucketState {
     final now = DateTime.now();
     final windowStart = now.subtract(rule.window);
 
-    // پاکسازی calls خارج از window
     _calls.removeWhere((time) => time.isBefore(windowStart));
 
     if (_calls.length >= rule.maxCalls) {

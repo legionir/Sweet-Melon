@@ -1,9 +1,9 @@
 import 'dart:async';
 
-import 'package:core/src/utils/logger.dart';
+import 'package:core/core.dart';
 
 // ============================================================
-// PERMISSION MANAGER — مدیریت مجوزها
+// PERMISSION MANAGER
 // ============================================================
 
 enum PermissionStatus {
@@ -13,13 +13,11 @@ enum PermissionStatus {
   notDetermined,
 }
 
-/// رابط برای ارائه‌دهنده مجوزها
 abstract class PermissionProvider {
   Future<PermissionStatus> checkPermission(String permission);
   Future<PermissionStatus> requestPermission(String permission);
 }
 
-/// ارائه‌دهنده استاتیک — برای تست و توسعه
 class StaticPermissionProvider implements PermissionProvider {
   final Map<String, PermissionStatus> grants;
   final PermissionStatus defaultStatus;
@@ -47,7 +45,6 @@ class PermissionManager {
 
   void setProvider(PermissionProvider provider) {
     _provider = provider;
-    // Provider جدید → cache قدیمی نامعتبر
     _cache.clear();
   }
 
@@ -55,9 +52,7 @@ class PermissionManager {
     _policies[plugin] = policy;
   }
 
-  /// بررسی مجوز
   Future<bool> check(String permission) async {
-    // بررسی cache
     if (_cache.containsKey(permission)) {
       final cached = _cache[permission]!;
       BridgeLogger.debug(
@@ -67,7 +62,6 @@ class PermissionManager {
       return cached == PermissionStatus.granted;
     }
 
-    // اگر provider تنظیم نشده → امنیت: denied
     if (_provider == null) {
       BridgeLogger.warn(
         'PermissionManager',
@@ -87,7 +81,6 @@ class PermissionManager {
     return status == PermissionStatus.granted;
   }
 
-  /// درخواست مجوز
   Future<bool> request(String permission) async {
     if (_provider == null) {
       BridgeLogger.warn(
@@ -108,31 +101,25 @@ class PermissionManager {
     return status == PermissionStatus.granted;
   }
 
-  /// بررسی چندین مجوز
   Future<Map<String, bool>> checkAll(List<String> permissions) async {
     final results = <String, bool>{};
-
     for (final permission in permissions) {
       results[permission] = await check(permission);
     }
-
     return results;
   }
 
-  /// بررسی تمام مجوزهای یک پلاگین
   Future<bool> checkPlugin(String pluginName) async {
     final policy = _policies[pluginName];
-    if (policy == null) return true; // بدون policy → مجاز
+    if (policy == null) return true;
 
     for (final permission in policy.required) {
       final granted = await check(permission);
       if (!granted) return false;
     }
-
     return true;
   }
 
-  /// پاک کردن cache مجوزها
   void invalidateCache([String? permission]) {
     if (permission != null) {
       _cache.remove(permission);
@@ -141,17 +128,11 @@ class PermissionManager {
     }
   }
 
-  /// وضعیت فعلی مجوزها
   Map<String, PermissionStatus> get currentStatus =>
       Map.unmodifiable(_cache);
 
-  /// بررسی اینکه آیا provider تنظیم شده
   bool get hasProvider => _provider != null;
 }
-
-// ============================================================
-// PERMISSION POLICY
-// ============================================================
 
 class PermissionPolicy {
   final List<String> required;

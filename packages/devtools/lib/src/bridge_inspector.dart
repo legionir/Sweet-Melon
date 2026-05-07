@@ -1,13 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:core/src/bridge/message_bridge.dart';
-import 'package:core/src/utils/logger.dart';
+import 'package:core/core.dart';
 import 'package:flutter/material.dart';
-import 'package:plugin_engine/src/plugin_manager.dart';
+import 'package:plugin_engine/plugin_engine.dart';
 
 // ============================================================
-// BRIDGE INSPECTOR — ابزار دیباگ
+// BRIDGE INSPECTOR
 // ============================================================
 
 class BridgeInspector {
@@ -63,7 +62,6 @@ class BridgeInspector {
 
   Map<String, dynamic> getReport() {
     final stats = manager.stats;
-
     return {
       'totalRequests': _log.length,
       'pluginStats': stats.map(
@@ -108,14 +106,9 @@ class InspectorEntry {
   String get summary {
     final plugin = content['plugin'] as String?;
     final method = content['method'] as String?;
-
-    if (plugin != null && method != null) {
-      return '$plugin.$method';
-    }
-
+    if (plugin != null && method != null) return '$plugin.$method';
     if (content['success'] == true) return 'response (ok)';
     if (content['success'] == false) return 'response (error)';
-
     return 'message';
   }
 
@@ -250,14 +243,11 @@ class _BridgeInspectorWidgetState extends State<BridgeInspectorWidget> {
           ),
           const SizedBox(width: 8),
           FilterChip(
-            label: const Text(
-              'Errors',
-              style: TextStyle(fontSize: 11),
-            ),
+            label: const Text('Errors', style: TextStyle(fontSize: 11)),
             selected: _showErrors,
             onSelected: (v) => setState(() => _showErrors = v),
             backgroundColor: Colors.transparent,
-            selectedColor: Colors.red.withOpacity(0.3),
+            selectedColor: Colors.red.withValues(alpha: 0.3),
             side: BorderSide(
               color: _showErrors ? Colors.red : Colors.white24,
             ),
@@ -280,10 +270,7 @@ class _BridgeInspectorWidgetState extends State<BridgeInspectorWidget> {
           children: [
             Icon(Icons.inbox, color: Colors.white24, size: 48),
             SizedBox(height: 8),
-            Text(
-              'No messages',
-              style: TextStyle(color: Colors.white38),
-            ),
+            Text('No messages', style: TextStyle(color: Colors.white38)),
           ],
         ),
       );
@@ -336,10 +323,6 @@ class _BridgeInspectorWidgetState extends State<BridgeInspectorWidget> {
   }
 }
 
-// ============================================================
-// ENTRY TILE
-// ============================================================
-
 class _EntryTile extends StatefulWidget {
   final InspectorEntry entry;
   const _EntryTile({required this.entry});
@@ -357,10 +340,10 @@ class _EntryTileState extends State<_EntryTile> {
     final isError = widget.entry.isError;
 
     final borderColor = isError
-        ? Colors.red.withOpacity(0.5)
+        ? Colors.red.withValues(alpha: 0.5)
         : isIncoming
-            ? Colors.blue.withOpacity(0.3)
-            : Colors.green.withOpacity(0.3);
+            ? Colors.blue.withValues(alpha: 0.3)
+            : Colors.green.withValues(alpha: 0.3);
 
     return InkWell(
       onTap: () => setState(() => _expanded = !_expanded),
@@ -403,7 +386,7 @@ class _EntryTileState extends State<_EntryTile> {
                         vertical: 1,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.red.withOpacity(0.2),
+                        color: Colors.red.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(3),
                       ),
                       child: const Text(

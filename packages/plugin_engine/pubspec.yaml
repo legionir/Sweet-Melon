@@ -8,12 +8,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-
   core:
     path: ../core
-
   security:
     path: ../security
-
   performance:
     path: ../performance

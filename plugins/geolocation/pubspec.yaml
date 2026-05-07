@@ -8,8 +8,6 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-
   geolocator: ^10.1.0
-
   plugin_engine:
     path: ../../packages/plugin_engine

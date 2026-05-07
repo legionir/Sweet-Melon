@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:image_picker/image_picker.dart';
-import 'package:plugin_engine/src/plugin_interface.dart';
+import 'package:plugin_engine/plugin_engine.dart';
 
 // ============================================================
 // CAMERA PLUGIN
@@ -21,7 +21,7 @@ class CameraPlugin extends Plugin {
   String get description => 'Camera and image picker plugin';
 
   @override
-  bool get cacheable => false; // نتایج دوربین نباید کش شوند
+  bool get cacheable => false;
 
   @override
   List<String> get supportedMethods => [
@@ -35,9 +35,7 @@ class CameraPlugin extends Plugin {
   List<String> get requiredPermissions => ['camera', 'storage'];
 
   @override
-  Future<void> onInitialize() async {
-    // آماده‌سازی اولیه در صورت نیاز
-  }
+  Future<void> onInitialize() async {}
 
   @override
   Future<dynamic> onCall(String method, Map<String, dynamic> args) async {
@@ -55,13 +53,7 @@ class CameraPlugin extends Plugin {
     }
   }
 
-  // ============================================================
-  // METHODS
-  // ============================================================
-
-  Future<Map<String, dynamic>> _takePhoto(
-    Map<String, dynamic> args,
-  ) async {
+  Future<Map<String, dynamic>> _takePhoto(Map<String, dynamic> args) async {
     final quality = (args['quality'] as num?)?.toInt() ?? 80;
     final maxWidth = (args['maxWidth'] as num?)?.toDouble();
     final maxHeight = (args['maxHeight'] as num?)?.toDouble();
@@ -73,10 +65,7 @@ class CameraPlugin extends Plugin {
       maxHeight: maxHeight,
     );
 
-    if (image == null) {
-      throw Exception('User cancelled photo capture');
-    }
-
+    if (image == null) throw Exception('User cancelled photo capture');
     return _xFileToMap(image);
   }
 
@@ -87,26 +76,16 @@ class CameraPlugin extends Plugin {
 
     if (multiple) {
       final images = await _picker.pickMultiImage();
-
-      if (images.isEmpty) {
-        throw Exception('No images selected');
-      }
+      if (images.isEmpty) throw Exception('No images selected');
 
       final imageList = <Map<String, dynamic>>[];
       for (final img in images) {
         imageList.add(await _xFileToMap(img));
       }
-
       return {'images': imageList};
     } else {
-      final image = await _picker.pickImage(
-        source: ImageSource.gallery,
-      );
-
-      if (image == null) {
-        throw Exception('User cancelled');
-      }
-
+      final image = await _picker.pickImage(source: ImageSource.gallery);
+      if (image == null) throw Exception('User cancelled');
       return _xFileToMap(image);
     }
   }
@@ -122,9 +101,7 @@ class CameraPlugin extends Plugin {
           maxDuration != null ? Duration(seconds: maxDuration) : null,
     );
 
-    if (video == null) {
-      throw Exception('User cancelled');
-    }
+    if (video == null) throw Exception('User cancelled');
 
     final file = File(video.path);
     final stat = await file.stat();
@@ -146,14 +123,9 @@ class CameraPlugin extends Plugin {
     };
   }
 
-  // ============================================================
-  // HELPERS
-  // ============================================================
-
   Future<Map<String, dynamic>> _xFileToMap(XFile xFile) async {
     final file = File(xFile.path);
     final stat = await file.stat();
-
     return {
       'path': xFile.path,
       'name': xFile.name,
@@ -161,10 +133,6 @@ class CameraPlugin extends Plugin {
       'mimeType': xFile.mimeType ?? 'image/jpeg',
     };
   }
-
-  // ============================================================
-  // VALIDATION
-  // ============================================================
 
   @override
   Future<ValidationResult> validateArgs(
@@ -185,9 +153,7 @@ class CameraPlugin extends Plugin {
     final quality = args['quality'];
     if (quality != null) {
       if (quality is! num) {
-        return ValidationResult.invalid(
-          'quality must be a number',
-        );
+        return ValidationResult.invalid('quality must be a number');
       }
       if (quality < 0 || quality > 100) {
         return ValidationResult.invalid(
@@ -195,17 +161,6 @@ class CameraPlugin extends Plugin {
         );
       }
     }
-
-    final maxWidth = args['maxWidth'];
-    if (maxWidth != null && maxWidth is! num) {
-      return ValidationResult.invalid('maxWidth must be a number');
-    }
-
-    final maxHeight = args['maxHeight'];
-    if (maxHeight != null && maxHeight is! num) {
-      return ValidationResult.invalid('maxHeight must be a number');
-    }
-
     return ValidationResult.valid();
   }
 
@@ -223,7 +178,6 @@ class CameraPlugin extends Plugin {
         );
       }
     }
-
     return ValidationResult.valid();
   }
 }

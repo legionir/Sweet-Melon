@@ -8,8 +8,6 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-
   image_picker: ^1.0.4
-
   plugin_engine:
     path: ../../packages/plugin_engine

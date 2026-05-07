@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:path_provider/path_provider.dart';
-import 'package:plugin_engine/src/plugin_interface.dart';
+import 'package:plugin_engine/plugin_engine.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // ============================================================
@@ -12,8 +12,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class StoragePlugin extends Plugin {
   SharedPreferences? _prefs;
-
-  /// پیشوند برای جلوگیری از تداخل کلیدها
   static const String _keyPrefix = 'bridge_';
 
   @override
@@ -33,17 +31,8 @@ class StoragePlugin extends Plugin {
 
   @override
   List<String> get supportedMethods => [
-        'get',
-        'set',
-        'remove',
-        'clear',
-        'keys',
-        'has',
-        'readFile',
-        'writeFile',
-        'deleteFile',
-        'fileExists',
-        'listFiles',
+        'get', 'set', 'remove', 'clear', 'keys', 'has',
+        'readFile', 'writeFile', 'deleteFile', 'fileExists', 'listFiles',
       ];
 
   @override
@@ -84,17 +73,12 @@ class StoragePlugin extends Plugin {
     }
   }
 
-  // ============================================================
-  // KEY-VALUE STORAGE (SharedPreferences)
-  // ============================================================
+  // ── Key-Value ──────────────────────────────────────────────
 
   dynamic _get(Map<String, dynamic> args) {
     final key = args['key'] as String;
     final raw = _prefs?.getString('$_keyPrefix$key');
-
     if (raw == null) return null;
-
-    // همیشه به صورت JSON ذخیره شده → همیشه decode
     try {
       return jsonDecode(raw);
     } catch (_) {
@@ -105,8 +89,6 @@ class StoragePlugin extends Plugin {
   Future<bool> _set(Map<String, dynamic> args) async {
     final key = args['key'] as String;
     final value = args['value'];
-
-    // همیشه به صورت JSON ذخیره کن — تضمین سازگاری get/set
     final encoded = jsonEncode(value);
     return await _prefs?.setString('$_keyPrefix$key', encoded) ?? false;
   }
@@ -119,12 +101,10 @@ class StoragePlugin extends Plugin {
   Future<int> _clear() async {
     final keys = _getBridgeKeys();
     int count = 0;
-
     for (final key in keys) {
       final removed = await _prefs?.remove(key) ?? false;
       if (removed) count++;
     }
-
     return count;
   }
 
@@ -139,7 +119,6 @@ class StoragePlugin extends Plugin {
     return _prefs?.containsKey('$_keyPrefix$key') ?? false;
   }
 
-  /// کلیدهای داخلی با پیشوند bridge_
   List<String> _getBridgeKeys() {
     return _prefs
             ?.getKeys()
@@ -148,42 +127,34 @@ class StoragePlugin extends Plugin {
         [];
   }
 
-  // ============================================================
-  // FILE SYSTEM
-  // ============================================================
+  // ── File System ────────────────────────────────────────────
 
   Future<Directory> _getAppDir() async {
     return getApplicationDocumentsDirectory();
   }
 
-  /// ساخت مسیر امن — جلوگیری از path traversal
   Future<File> _resolveFile(String path) async {
     final dir = await _getAppDir();
     final resolved = File('${dir.path}/$path');
-
-    // بررسی path traversal
     if (!resolved.path.startsWith(dir.path)) {
-      throw const FileSystemException('Invalid path: path traversal detected');
+      throw const FileSystemException(
+        'Invalid path: path traversal detected',
+      );
     }
-
     return resolved;
   }
 
   Future<String> _readFile(Map<String, dynamic> args) async {
     final path = args['path'] as String;
     final file = await _resolveFile(path);
-
     if (!await file.exists()) {
       throw FileSystemException('File not found', path);
     }
-
     final encoding = args['encoding'] as String? ?? 'utf8';
-
     if (encoding == 'base64') {
       final bytes = await file.readAsBytes();
       return base64Encode(bytes);
     }
-
     return file.readAsString();
   }
 
@@ -191,24 +162,20 @@ class StoragePlugin extends Plugin {
     final path = args['path'] as String;
     final content = args['content'] as String;
     final encoding = args['encoding'] as String? ?? 'utf8';
-
     final file = await _resolveFile(path);
     await file.parent.create(recursive: true);
-
     if (encoding == 'base64') {
       final bytes = base64Decode(content);
       await file.writeAsBytes(bytes);
     } else {
       await file.writeAsString(content);
     }
-
     return true;
   }
 
   Future<bool> _deleteFile(Map<String, dynamic> args) async {
     final path = args['path'] as String;
     final file = await _resolveFile(path);
-
     if (await file.exists()) {
       await file.delete();
       return true;
@@ -228,18 +195,13 @@ class StoragePlugin extends Plugin {
     final path = args['path'] as String? ?? '';
     final dir = await _getAppDir();
     final targetDir = Directory('${dir.path}/$path');
-
-    // بررسی path traversal
     if (!targetDir.path.startsWith(dir.path)) {
       throw const FileSystemException(
         'Invalid path: path traversal detected',
       );
     }
-
     if (!await targetDir.exists()) return [];
-
     final entities = await targetDir.list().toList();
-
     final results = <Map<String, dynamic>>[];
     for (final entity in entities) {
       final stat = await entity.stat();
@@ -251,13 +213,10 @@ class StoragePlugin extends Plugin {
         'modified': stat.modified.toIso8601String(),
       });
     }
-
     return results;
   }
 
-  // ============================================================
-  // VALIDATION
-  // ============================================================
+  // ── Validation ─────────────────────────────────────────────
 
   @override
   Future<ValidationResult> validateArgs(
@@ -284,10 +243,11 @@ class StoragePlugin extends Plugin {
 
   ValidationResult _validateKeyRequired(Map<String, dynamic> args) {
     if (!args.containsKey('key') || args['key'] is! String) {
-      return ValidationResult.invalid('key is required and must be a string');
+      return ValidationResult.invalid(
+        'key is required and must be a string',
+      );
     }
-    final key = args['key'] as String;
-    if (key.isEmpty) {
+    if ((args['key'] as String).isEmpty) {
       return ValidationResult.invalid('key cannot be empty');
     }
     return ValidationResult.valid();
@@ -296,11 +256,9 @@ class StoragePlugin extends Plugin {
   ValidationResult _validateSet(Map<String, dynamic> args) {
     final keyResult = _validateKeyRequired(args);
     if (!keyResult.isValid) return keyResult;
-
     if (!args.containsKey('value')) {
       return ValidationResult.invalid('value is required');
     }
-
     return ValidationResult.valid();
   }
 
@@ -314,7 +272,6 @@ class StoragePlugin extends Plugin {
     if (path.isEmpty) {
       return ValidationResult.invalid('path cannot be empty');
     }
-    // بررسی اولیه path traversal
     if (path.contains('..')) {
       return ValidationResult.invalid(
         'path cannot contain ".." (path traversal)',
@@ -326,20 +283,17 @@ class StoragePlugin extends Plugin {
   ValidationResult _validateWriteFile(Map<String, dynamic> args) {
     final pathResult = _validatePathRequired(args);
     if (!pathResult.isValid) return pathResult;
-
     if (!args.containsKey('content') || args['content'] is! String) {
       return ValidationResult.invalid(
         'content is required and must be a string',
       );
     }
-
     final encoding = args['encoding'] as String?;
     if (encoding != null && encoding != 'utf8' && encoding != 'base64') {
       return ValidationResult.invalid(
         'encoding must be "utf8" or "base64"',
       );
     }
-
     return ValidationResult.valid();
   }
 }
