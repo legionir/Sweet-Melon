@@ -1,14 +1,14 @@
-import 'package:camera_plugin/camera_plugin.dart';
-import 'package:core/core.dart';
-import 'package:devtools/devtools.dart';
 import 'package:flutter/foundation.dart';
-import 'package:geolocation_plugin/geolocation_plugin.dart';
 import 'package:get_it/get_it.dart';
-import 'package:performance/performance.dart';
-import 'package:plugin_engine/plugin_engine.dart';
-import 'package:security/security.dart';
-import 'package:storage_plugin/storage_plugin.dart';
 
+import 'package:sweetmelon/packages/core/lib/core.dart';
+import 'package:sweetmelon/packages/devtools/lib/devtools.dart';
+import 'package:sweetmelon/packages/performance/lib/performance.dart';
+import 'package:sweetmelon/packages/security/lib/security.dart';
+import 'package:sweetmelon/plugins/storage/lib/storage_plugin.dart';
+import 'package:sweetmelon/plugins/geolocation/lib/geolocation_plugin.dart';
+import 'package:sweetmelon/plugins/camera/lib/camera_plugin.dart';
+import 'package:sweetmelon/packages/plugin_engine/lib/plugin_engine.dart';
 // ============================================================
 // DEPENDENCY INJECTION
 // ============================================================
@@ -47,15 +47,14 @@ class ServiceLocator {
       final manager = PermissionManager();
 
       manager.setProvider(
-        StaticPermissionProvider(
+        const StaticPermissionProvider(
           grants: {
             'camera': PermissionStatus.granted,
             'storage': PermissionStatus.granted,
             'location': PermissionStatus.granted,
           },
-          defaultStatus: kReleaseMode
-              ? PermissionStatus.denied
-              : PermissionStatus.granted,
+          defaultStatus:
+              kReleaseMode ? PermissionStatus.denied : PermissionStatus.granted,
         ),
       );
 

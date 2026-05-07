@@ -1,6 +1,7 @@
-import 'package:core/core.dart';
-import 'package:devtools/devtools.dart';
 import 'package:flutter/material.dart';
+
+import 'package:sweetmelon/packages/core/lib/core.dart';
+import 'package:sweetmelon/packages/devtools/lib/devtools.dart';
 
 import '../di/service_locator.dart';
 
@@ -35,7 +36,6 @@ class _HomeScreenState extends State<HomeScreen> {
               debugPrint('Page loaded successfully');
             },
           ),
-
           if (_showInspector)
             DraggableScrollableSheet(
               initialChildSize: 0.5,
@@ -59,7 +59,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
         ],
       ),
-
       floatingActionButton: FloatingActionButton.small(
         onPressed: () => setState(() => _showInspector = !_showInspector),
         backgroundColor: const Color(0xFF6C63FF),
