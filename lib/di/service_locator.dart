@@ -1,17 +1,22 @@
-import 'package:camera_plugin/camera_plugin.dart';
-import 'package:core/core.dart';
-import 'package:devtools/devtools.dart';
 import 'package:flutter/foundation.dart';
-import 'package:geolocation_plugin/geolocation_plugin.dart';
 import 'package:get_it/get_it.dart';
-import 'package:performance/performance.dart';
-import 'package:plugin_engine/plugin_engine.dart';
-import 'package:security/security.dart';
-import 'package:storage_plugin/storage_plugin.dart';
+
+import 'package:sweetmelon/packages/core/lib/core.dart';
+import 'package:sweetmelon/packages/devtools/lib/devtools.dart';
+import 'package:sweetmelon/packages/performance/lib/performance.dart';
+import 'package:sweetmelon/packages/plugin_engine/lib/plugin_engine.dart';
+import 'package:sweetmelon/packages/security/lib/security.dart';
+import 'package:sweetmelon/plugins/camera/lib/camera_plugin.dart';
+import 'package:sweetmelon/plugins/geolocation/lib/geolocation_plugin.dart';
+import 'package:sweetmelon/plugins/storage/lib/storage_plugin.dart';
 
 // ============================================================
 // DEPENDENCY INJECTION
 // ============================================================
+//
+// Wiring order matters: the registry receives an emitter that forwards to the
+// bridge through a closure, which breaks the registry -> bridge -> manager ->
+// registry cycle without a late-bound setter.
 
 final sl = GetIt.instance;
 
@@ -26,59 +31,34 @@ class ServiceLocator {
     );
 
     sl.registerLazySingleton<RateLimiter>(() {
-      final limiter = RateLimiter();
-      limiter.setDefaultRule(RateLimitRule.perSecond(50));
+      final limiter = RateLimiter(
+        defaultRule: const RateLimitRule.perSecond(50),
+      );
       limiter.addRule(
         'geolocation.getCurrentPosition',
-        RateLimitRule.perSecond(5),
+        const RateLimitRule.perSecond(5),
       );
       limiter.addRule(
         'camera.takePhoto',
-        RateLimitRule.perSecond(3),
+        const RateLimitRule.perSecond(3),
       );
       return limiter;
     });
 
-    sl.registerLazySingleton<ExecutionGuard>(
-      () => ExecutionGuard(defaultTimeoutMs: 30000),
+    sl.registerLazySingleton<ExecutionGuard>(() => ExecutionGuard());
+
+    sl.registerLazySingleton<PermissionManager>(
+      () => PermissionManager(
+        provider: const PermissionHandlerProvider(),
+      ),
     );
-
-    sl.registerLazySingleton<PermissionManager>(() {
-      final manager = PermissionManager();
-
-      manager.setProvider(
-        StaticPermissionProvider(
-          grants: {
-            'camera': PermissionStatus.granted,
-            'storage': PermissionStatus.granted,
-            'location': PermissionStatus.granted,
-          },
-          defaultStatus: kReleaseMode
-              ? PermissionStatus.denied
-              : PermissionStatus.granted,
-        ),
-      );
-
-      manager.addPolicy(
-        'camera',
-        const PermissionPolicy(required: ['camera', 'storage']),
-      );
-      manager.addPolicy(
-        'storage',
-        const PermissionPolicy(required: ['storage']),
-      );
-      manager.addPolicy(
-        'geolocation',
-        const PermissionPolicy(required: ['location']),
-      );
-
-      return manager;
-    });
 
     // ── Plugin Registry ────────────────────────────────────
 
     sl.registerLazySingleton<PluginRegistry>(
-      () => PluginRegistry(),
+      () => PluginRegistry(
+        emitter: (event, data) => sl<MessageBridge>().emitEvent(event, data),
+      ),
     );
 
     // ── Plugin Manager ─────────────────────────────────────
@@ -90,6 +70,9 @@ class ServiceLocator {
         rateLimiter: sl<RateLimiter>(),
         executionGuard: sl<ExecutionGuard>(),
         cacheManager: sl<CacheManager>(),
+        config: const PluginManagerConfig(
+          timeout: Duration(seconds: 30),
+        ),
       ),
     );
 
@@ -98,14 +81,12 @@ class ServiceLocator {
     sl.registerLazySingleton<MessageBridge>(() {
       final bridge = MessageBridge();
       final manager = sl<PluginManager>();
-
-      bridge.setMessageHandler(manager.execute);
-      bridge.setBatchHandler(manager.executeBatch);
-
+      bridge.setMessageHandler((request) => manager.execute(request));
+      bridge.setBatchHandler(
+        (requests, options) => manager.executeBatch(requests, options),
+      );
       return bridge;
     });
-
-    sl<PluginRegistry>().setEventEmitter(sl<MessageBridge>().emitEvent);
 
     // ── WebView Config ─────────────────────────────────────
 
@@ -115,7 +96,7 @@ class ServiceLocator {
           : WebViewHostConfig.development(),
     );
 
-    // ── Dev Tools ──────────────────────────────────────────
+    // ── Dev Tools (debug UI is only shown in debug builds) ─
 
     sl.registerLazySingleton<BridgeInspector>(
       () => BridgeInspector(
@@ -139,17 +120,17 @@ class ServiceLocator {
     if (sl.isRegistered<BridgeInspector>()) {
       sl<BridgeInspector>().dispose();
     }
-    if (sl.isRegistered<PluginManager>()) {
-      sl<PluginManager>().dispose();
+    if (sl.isRegistered<MessageBridge>()) {
+      sl<MessageBridge>().dispose();
     }
     if (sl.isRegistered<PluginRegistry>()) {
       await sl<PluginRegistry>().dispose();
     }
+    if (sl.isRegistered<PluginManager>()) {
+      sl<PluginManager>().dispose();
+    }
     if (sl.isRegistered<CacheManager>()) {
       sl<CacheManager>().dispose();
-    }
-    if (sl.isRegistered<MessageBridge>()) {
-      sl<MessageBridge>().dispose();
     }
     await sl.reset();
   }
