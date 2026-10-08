@@ -26,7 +26,8 @@ def main() -> int:
     limit = int(sys.argv[2]) if len(sys.argv) > 2 else 60
     count = 0
     with open(path, encoding="utf-8", errors="replace") as fh:
-        lines = [raw.rstrip("\n") for raw in fh]
+        # Split on CR too: progress bars rewrite one physical line many times.
+        lines = [part for raw in fh for part in re.split(r"[\r\n]+", raw.rstrip("\n"))]
     print(f"::notice::annotate_output scanned {len(lines)} lines from {path}")
     for line in lines:
         if count >= limit:
