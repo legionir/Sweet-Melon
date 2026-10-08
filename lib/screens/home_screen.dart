@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'package:sweetmelon/packages/core/lib/core.dart';
@@ -36,7 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
               debugPrint('Page loaded successfully');
             },
           ),
-          if (_showInspector)
+          if (kDebugMode && _showInspector)
             DraggableScrollableSheet(
               initialChildSize: 0.5,
               minChildSize: 0.2,
@@ -59,14 +60,17 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.small(
-        onPressed: () => setState(() => _showInspector = !_showInspector),
-        backgroundColor: const Color(0xFF6C63FF),
-        child: Icon(
-          _showInspector ? Icons.close : Icons.bug_report,
-          color: Colors.white,
-        ),
-      ),
+      // The inspector shows bridge traffic; it is never offered in release.
+      floatingActionButton: kDebugMode
+          ? FloatingActionButton.small(
+              onPressed: () => setState(() => _showInspector = !_showInspector),
+              backgroundColor: const Color(0xFF6C63FF),
+              child: Icon(
+                _showInspector ? Icons.close : Icons.bug_report,
+                color: Colors.white,
+              ),
+            )
+          : null,
     );
   }
 

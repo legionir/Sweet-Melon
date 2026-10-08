@@ -20,7 +20,8 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
+        // Placeholder Application ID from the Flutter template. Replace it with
+        // your own unique ID before publishing (see README, "Before release").
         applicationId = "com.example.sweet_melon"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
@@ -30,11 +31,28 @@ android {
         versionName = flutter.versionName
     }
 
+    // Release signing is read from environment variables (CI secrets or a
+    // local shell). The debug key is never used for release builds (SEC-006).
+    // Without a release keystore the release APK is left unsigned.
+    val releaseKeystorePath: String? = System.getenv("SWEETMELON_KEYSTORE_PATH")
+    signingConfigs {
+        if (releaseKeystorePath != null) {
+            create("release") {
+                storeFile = file(releaseKeystorePath)
+                storePassword = System.getenv("SWEETMELON_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("SWEETMELON_KEY_ALIAS")
+                keyPassword = System.getenv("SWEETMELON_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = if (releaseKeystorePath != null) {
+                signingConfigs.getByName("release")
+            } else {
+                null
+            }
         }
     }
 }
