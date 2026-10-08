@@ -50,6 +50,18 @@ jobs:
           python3 .github/scripts/annotate_output.py unit.txt
           exit $rc
 
+      - name: Format check (dart format, fails on any unformatted file)
+        shell: bash
+        run: |
+          rc=0
+          dart format --output=none --set-exit-if-changed lib test integration_test > format.txt 2>&1 || rc=$?
+          tail -5 format.txt
+          python3 .github/scripts/annotate_output.py format.txt 80
+          exit $rc
+
+      - name: Coverage gate
+        run: python3 .github/scripts/coverage_gate.py coverage/lcov.info ${{ vars.COVERAGE_MIN || '0' }} '(^|/)(gen|generated)/|\.g\.dart$'
+
       - name: Upload coverage
         uses: actions/upload-artifact@v4
         with:
@@ -177,3 +189,37 @@ jobs:
           [ -f e2e-proc.log ] && python3 .github/scripts/annotate_output.py e2e-proc.log 30 || true
           [ -f e2e.rc ] && echo "::notice::e2e exit code file: $(cat e2e.rc)" || echo "::error::e2e.rc was not written"
           [ -f e2e.txt ] && python3 .github/scripts/annotate_output.py e2e.txt 60 || true
+
+  ios-build:
+    name: iOS build (macOS, no codesign)
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Resolve dependencies
+        run: flutter pub get
+
+      - name: Generate missing iOS project files (Podfile) from the Flutter template
+        shell: bash
+        run: |
+          flutter create --platforms=ios --project-name sweetmelon --org com.example \
+            --template app /tmp/ios-template
+          if [ ! -f ios/Podfile ]; then cp /tmp/ios-template/ios/Podfile ios/Podfile; fi
+
+      - name: Enable permission_handler iOS permission macros
+        run: python3 .github/scripts/ios_permissions.py ios/Podfile
+
+      - name: Build iOS app without codesigning
+        shell: bash
+        run: |
+          rc=0
+          flutter build ios --debug --no-codesign > ios-build.txt 2>&1 || rc=$?
+          tail -40 ios-build.txt
+          python3 .github/scripts/annotate_output.py ios-build.txt 60
+          exit $rc

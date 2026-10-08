@@ -35,6 +35,11 @@ rc="$(cat e2e.rc 2>/dev/null || echo missing)"
 echo "flutter test exit code: $rc" | tee -a e2e.txt
 python3 .github/scripts/annotate_output.py e2e.txt 60
 if [ "$rc" != "0" ]; then echo "E2E failed (exit code $rc)"; exit 1; fi
-if grep -q "Some tests failed\|tests passed, [1-9][0-9]* failed\|BUILD FAILED" e2e.txt; then echo "E2E output reports failure"; exit 1; fi
-if ! grep -q "All tests passed" e2e.txt; then echo "E2E did not report 'All tests passed'"; exit 1; fi
+if grep -q "Some tests failed\|tests passed, [1-9][0-9]* failed\|BUILD FAILED\|Failing tests" e2e.txt; then
+  echo "E2E output reports failure"; exit 1
+fi
+# Each test prints one E2E_OK marker when its last expectation has run.
+markers="$(grep -c "E2E_OK:" e2e.txt || true)"
+echo "E2E_OK markers: $markers (expected 2)"
+if [ "$markers" -ne 2 ]; then echo "E2E markers missing"; exit 1; fi
 echo "E2E passed"
