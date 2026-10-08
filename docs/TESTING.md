@@ -65,6 +65,7 @@ and exactly two `E2E_OK:` markers were printed (one per on-device test).
 | Regression: batches | `test/regression/batch_stop_on_error_test.dart` | BUG-007: sequential stopOnError sends CANCELLED to later items; parallel batches documented as not stopping; a timed-out sequential batch dispatches nothing later |
 | Regression: camera cancel | `test/regression/camera_cancel_test.dart` | BUG-008: picker cancellation returns CANCELLED, is not counted as an execution error, and leaves no in-flight state |
 | Regression: WebView lifecycle | `test/regression/webview_lifecycle_test.dart` | BUG-011: detach ends the session; no script after detach; late callbacks of a superseded host cannot change the live session; repeated detach is safe |
+| Regression: camera concurrency | `test/regression/camera_concurrency_test.dart` | CONC-001: while one camera call is open, a second is refused with RATE_LIMIT_EXCEEDED before the picker opens; the slot is free again after release |
 | Regression: argument validation | `test/regression/argument_validation_test.dart` | BUG-009: invalid camera and geolocation arguments return INVALID_ARGS before the plugin runs; a valid control call reaches the plugin |
 | Integration | `test/integration/bridge_pipeline_test.dart` | JSON messages through the real bridge and engine: round trip, forged token dropped, unknown plugin, malformed and oversized input, batch envelope |
 | Performance smoke | `test/performance/perf_smoke_test.dart` | 500 bridge round trips, 1000 ordered events, 10k cache operations on a 1k-entry cache within generous budgets; overwrite does not evict other entries (PERF-001) |
@@ -73,7 +74,8 @@ and exactly two `E2E_OK:` markers were printed (one per on-device test).
 
 Test names reference finding IDs where the test is about that finding. The
 regression files are the exception: each one names its finding in the file
-header and in its group name.
+header. The BUG-007, BUG-008, BUG-009 and BUG-011 files also name it in their
+group name; `camera_concurrency_test.dart` names CONC-001 in the header only.
 
 ## What is not covered
 

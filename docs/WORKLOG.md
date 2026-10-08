@@ -136,7 +136,8 @@ BASELINE RECORDED
   `message_bridge_test.dart`, `plugin_manager_test.dart`
 - `test/security/storage_security_test.dart`
 - `test/js/bridge_sdk.test.mjs` (Node VM over the shipped Dart template).
-  **Executed locally with Node 22: 16/16 pass.** One test initially encoded the
+  **Executed locally with Node 22: 16/16 pass.** (Re-run in pass 5 on Node
+  22.22.3: 16/16 pass.) One test initially encoded the
   payload twice; it was corrected to match `MessageBridge.emitEvent` (the SDK
   receives JSON text). The SDK itself was not changed for that.
 - `integration_test/app_test.dart` (emulator)
@@ -222,6 +223,8 @@ Rejected or corrected during this pass:
 - CI on head: analyze/unit PASS, JS PASS, Android build PASS, E2E FAIL, iOS not run (macOS runner not acquired).
 
 ### E2E: root cause (finding E2E-001)
+Recorded from the run logs available at the time. Not re-verified in pass 5,
+because those logs are no longer retrievable.
 - Earlier E2E failures were reported by the pass-check grep in
   `.github/scripts/run_e2e.sh`, not by the test process itself. Runs
   37803775317 and 37805464783 had `e2e.rc = 0` but failed the grep.
@@ -268,8 +271,9 @@ Rejected or corrected during this pass:
     runner (`flutter build ios --config-only`), then runs `pod install`.
   - E2E: one run failed inside the emulator-runner action before the test script
     ran (`e2e.rc not written`, job ~1 min). A rerun on the next commit passed. Cause
-    not identified; treated as a flake, not a code failure.
-  - Coverage: measured 58.18%; gate default set to 55%.
+    not identified. Correction (pass 5): the earlier wording "treated as a flake"
+    is withdrawn. The cause is not established; see the pass 4 entry.
+  - Coverage: measured 58.18% on `69b6d17` only; gate default set to 55%.
 - Plan items moved to `[x]` with green evidence: SEC-007 (redaction tested; inspector
   gated by kDebugMode), BUG-005, BUG-009 (camera validation), BUG-010 (manifests and
   Info.plist; builds green), IOS-001, TEST-002, TEST-003, CI-001, 8.12.

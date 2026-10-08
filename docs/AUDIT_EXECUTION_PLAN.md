@@ -3,6 +3,10 @@
 Status legend: `[ ]` Not Started · `[~]` In Progress · `[x]` Completed ·
 `[-]` Not Applicable · `[!]` Blocked (only for real external constraints).
 
+Convention for `[-]`: reserved for an item that does not apply to this repository,
+with the reason written next to it. It is never used for unfinished, deferred or
+unverified work. No item in this plan uses `[-]`.
+
 Definition of Done for a finding: problem identified, root cause identified,
 implementation fixed, tests added and passing, regression protected,
 documentation updated, plan updated, worklog updated.
@@ -29,7 +33,7 @@ sensitive path (JavaScript → native). The most serious issues were:
 This pass fixes the P0/P1 items, adds unit, integration, security, regression,
 JavaScript-SDK and (on Android) end-to-end tests, adds a CI workflow, and
 documents the real behaviour. Items that cannot be verified from this sandbox
-are recorded as `[!]` with the concrete reason in section 15.
+would be recorded as `[!]` with the concrete reason in section 15. None remain.
 
 ## 2. Repository Overview
 
@@ -103,8 +107,9 @@ Priority: P0 critical · P1 high · P2 medium · P3 low · P4 improvement.
   `SandboxPath` validates syntax (no absolute, no `..`, no NUL/backslash/colon),
   canonicalises the nearest existing ancestor and rejects symlinks.
 - [x] **SEC-003 (P1)** Error disclosure. Responses contained `stackTrace` and
-  raw `e.toString()` messages. Fix: unexpected exceptions return `Internal error`;
-  stack traces are logged natively only.
+  raw `e.toString()` messages. Fix: unexpected exceptions return a generic
+  message (`Internal error` in the bridge, `Plugin execution failed` in the
+  manager; see 5b); stack traces are logged natively only.
 - [x] **SEC-004 (P1)** No message size limit and no request-origin check on
   bridge input. Fix: 2 MiB limit, token check, strict protocol validation.
 - [x] **SEC-005 (P1)** Implicit permission grants (`StaticPermissionProvider`
@@ -114,7 +119,7 @@ Priority: P0 critical · P1 high · P2 medium · P3 low · P4 improvement.
 - [x] **SEC-006 (P1)** Android release build signed with the debug key.
   Fix: release signing read from environment; without it release is unsigned.
 - [x] **SEC-007 (P2)** Debug inspector (shows every bridge payload) was shown in
-  production. Fix: FAB and inspector only when `enableDebugging`.
+  production. Fix: FAB and inspector only in debug builds (`kDebugMode`; see 5b).
 - [x] **SEC-008 (P2)** Rate-limiter buckets keyed by untrusted names
   (unbounded growth). Fix: buckets only for registered plugin methods; idle
   buckets are pruned.
@@ -127,8 +132,8 @@ Priority: P0 critical · P1 high · P2 medium · P3 low · P4 improvement.
 - [x] **BUG-001 (P0)** Storage cache: `set`, `remove`, `writeFile`, `deleteFile`
   were cacheable (a second identical write was served from cache and never
   executed) and no mutation invalidated reads (stale data). Fix: read-only
-  method declaration, generation-based cache keys, invalidation on every
-  mutation.
+  method declaration, invalidation of the plugin's cached reads on every
+  successful mutation (key-prefix invalidation; see 5b).
 - [x] **BUG-002 (P1)** Batch: an exception or malformed batch never resolved the
   JS promise; `options.timeout` ignored in JS. Fix: batch envelope validation,
   batch error response, per-item timeout, JS-side batch timeout.
@@ -149,12 +154,12 @@ Priority: P0 critical · P1 high · P2 medium · P3 low · P4 improvement.
   possible. Fix: every request gets a result; sequential stop emits `CANCELLED`
   for skipped items; documented limitation for parallel dispatch.
   Evidence: `test/regression/batch_stop_on_error_test.dart` (sequential CANCELLED,
-  parallel limitation, timed-out batch dispatches nothing later). Status stays
-  Verified by CI run 37835701145 (commit `8b1fa1a`).
+  parallel limitation, timed-out batch dispatches nothing later), passed in CI
+  run 37835701145 (commit `8b1fa1a`).
 - [x] **BUG-008 (P1)** User cancellation of camera reported as `EXECUTION_ERROR`.
   Fix: `CANCELLED` error code. Decision: a user cancel is counted in `errorCount`
   (it produced no result), with code `CANCELLED`. Evidence:
-  `test/regression/camera_cancel_test.dart`. Verified by CI run 37835701145.
+  `test/regression/camera_cancel_test.dart`, passed in CI run 37835701145.
 - [x] **BUG-009 (P1)** Argument casts in plugins threw `TypeError` and surfaced
   as `EXECUTION_ERROR`. Fix: validation before execution, `INVALID_ARGS` mapping.
 - [x] **BUG-010 (P1)** Android manifest lacked CAMERA and location permissions;
@@ -163,8 +168,8 @@ Priority: P0 critical · P1 high · P2 medium · P3 low · P4 improvement.
 - [x] **BUG-011 (P2)** WebView host never detached its controller from the bridge
   on dispose. Fix: detach + end session in `dispose()`, through
   `BridgeAttachment`, so a late callback of a superseded host cannot change the
-  live session. Evidence: `test/regression/webview_lifecycle_test.dart`. Status
-  Verified by CI run 37835701145.
+  live session. Evidence: `test/regression/webview_lifecycle_test.dart`, passed
+  in CI run 37835701145.
 - [x] **BUG-012 (P1)** Rate limiter used `num.clamp` where an `int` is required
   (type error risk). Fix: explicit integer arithmetic.
 - [x] **BUG-013 (P2)** `watchPosition` / `getCurrentPosition` had no timeout
@@ -197,13 +202,13 @@ Priority: P0 critical · P1 high · P2 medium · P3 low · P4 improvement.
 
 - [x] **STAT-001 (P1)** `errorCount` was never incremented and error paths
   (validation, permission, rate limit, timeout, exceptions) were not recorded.
-  Fix: every call is recorded exactly once; `totalCalls == successCount + errorCount`;
-  `activeCalls` returns to 0.
+  Fix: each call's outcome is recorded once in `totalCalls`; failures are also
+  counted in `errorCount`; `activeCalls` returns to 0 when idle.
 
 ### Concurrency
 
-- [x] **CONC-001 (P1)** `maxConcurrentCalls` not enforced. Fix:
-  `ConcurrencyLimiter` per plugin; excess calls fail fast with
+- [x] **CONC-001 (P1)** `maxConcurrentCalls` not enforced. Fix: an in-flight
+  counter per plugin in `PluginManager`; excess calls fail fast with
   `RATE_LIMIT_EXCEEDED` (retryable). Camera uses 1 because the image picker
   rejects concurrent presentations.
 - [x] **CONC-002 (P2)** Execution guard counted duplicate request ids incorrectly.
@@ -212,9 +217,9 @@ Priority: P0 critical · P1 high · P2 medium · P3 low · P4 improvement.
 ### Permissions
 
 - [x] **PERM-001 (P1)** Permission denial now includes `status`
-  (`denied` / `permanentlyDenied` / `restricted` / `notDetermined`) in error
-  details so the JS side can prompt for settings. Permission checks run for
-  every plugin call.
+  (`denied` / `permanentlyDenied` / `unsupported`, the `PermissionState` values)
+  in error details so the JS side can prompt for settings. The check runs on
+  every call for each permission the plugin declares.
 
 ### Performance
 
@@ -222,16 +227,17 @@ Priority: P0 critical · P1 high · P2 medium · P3 low · P4 improvement.
   evicted an unrelated entry. Fix: `LinkedHashMap` based O(1) LRU; overwrites do
   not evict.
 - [x] **PERF-002 (P3)** Gradle heap of 8 GiB (`-Xmx8G`) would fail on hosted
-  runners. Fix: 4 GiB.
+  runners. Fix: reduced to 3 GiB (`-Xmx3G`; see 5b for the values tried).
 
 ### Tests
 
 - [x] **TEST-001 (P0)** No tests existed. Fix: unit, integration, security,
   regression, performance-smoke and JavaScript-SDK tests (`test/`, `test/js/`).
 - [x] **TEST-002 (P1)** No coverage measurement. Fix: `flutter test --coverage`
-  with a per-area coverage gate (`scripts/coverage_gate.py`).
-- [x] **TEST-003 (P2)** No device-level E2E. Fix: `integration_test/app_e2e_test.dart`
-  run on an Android emulator in CI (JS → bridge → storage plugin → response).
+  with a line-coverage gate (`.github/scripts/coverage_gate.py`, 55 %).
+- [x] **TEST-003 (P2)** No device-level E2E. Fix: `integration_test/app_test.dart`
+  (the planned file name was changed; see 5b) run on an Android emulator in CI.
+  It covers boot and the storage path through the engine, not JS inside the WebView.
 
 ### CI
 
@@ -285,9 +291,10 @@ geolocation subscription and the picker) is not exercised on a device; see
 Each deviation is a decision made during implementation. The reason is recorded
 in `docs/WORKLOG.md`.
 
-- **SEC-003 message.** The plan text says `Internal error`. The code sends
-  `Plugin execution failed`, which says which step failed without naming
-  internals. Both are generic.
+- **SEC-003 message.** The plan text says `Internal error`. The bridge still sends
+  `Internal error` for its own failures. The plugin manager sends
+  `Plugin execution failed` for exceptions thrown by plugins, which says which
+  step failed without naming internals. Both are generic.
 - **SEC-005 TTL.** Set to 5 s as planned. The manager reports `status` in
   details; `restricted` and `notDetermined` from the plan are reported as
   `denied` because `permission_handler` does not expose them on every platform.
@@ -296,7 +303,8 @@ in `docs/WORKLOG.md`.
   misconfigured host.
 - **BUG-001 invalidation.** Cache keys are not generation-based. A successful
   non-cacheable call invalidates the plugin's cache by key prefix. This is
-  simpler and has the same observable effect.
+  simpler and has the same observable effect. The BUG-001 `Fix` line above says
+  the same.
 - **BUG-007.** Parallel batches run concurrently; `stopOnError` is applied only
   to sequential batches. Documented in `docs/SECURITY.md`.
 - **BUG-012.** The limiter uses integer arithmetic on milliseconds; no `clamp`.
@@ -319,7 +327,7 @@ in `docs/WORKLOG.md`.
 - **Coverage gate.** Coverage is generated, uploaded, and enforced at 55 % by
   `.github/scripts/coverage_gate.py` in CI (TEST-002).
 - **E2E.** `integration_test/app_test.dart` replaces the planned
-  `app_e2e_test.dart`. It covers boot, the WebView host and the storage path
+  `app_e2e_test.dart` (TEST-003). It covers boot, the WebView host and the storage path
   through the engine. It does not drive JavaScript through the WebView (TEST-003).
 
 ## 6. Risks
@@ -370,7 +378,8 @@ See `docs/TESTING.md`. Summary:
 - Security: traversal, symlink escape, unauthorized token, malformed protocol,
   oversized message, unknown plugin/method, permission denial, rate abuse,
   concurrency abuse, error disclosure (`test/security`).
-- Regression: one test per BUG/SEC fixed (`test/regression`).
+- Regression: tests for the BUG/SEC/CONC findings in `test/regression`, plus
+  regression-named tests in `test/unit` (see `docs/TESTING.md`).
 - JavaScript SDK: the injected SDK is executed in a Node VM (`test/js`).
 - E2E: Android emulator, real WebView (`integration_test`).
 

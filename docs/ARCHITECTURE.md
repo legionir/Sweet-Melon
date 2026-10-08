@@ -142,7 +142,8 @@ stats entry and one trace:
 ## Composition (`lib/di/service_locator.dart`)
 
 `get_it` singletons, created lazily. Rate-limit rules are set here:
-`camera.takePhoto` 3/s, `geolocation.getCurrentPosition` 5/s, default 50/s. The registry gets an emitter closure that
+`camera.takePhoto` 3/s, `geolocation.getCurrentPosition` 5/s, default 50/s.
+The registry gets an emitter closure that
 calls the bridge, which breaks the registry → bridge → manager → registry
 cycle without a late setter. Plugins are registered during `ServiceLocator.init`.
 

@@ -70,7 +70,7 @@ lib/
     camera/ geolocation/ storage/
 test/unit/                     unit tests
 test/security/                 attacker-input tests (storage paths, sizes)
-test/regression/               one file per fixed finding (BUG-, SEC-, SM-)
+test/regression/               regression tests; each file names the findings it covers
 test/integration/              JSON -> bridge -> manager -> plugin -> response
 test/performance/              smoke budgets (bridge, events, cache)
 test/helpers/                  fakes shared by the Dart tests
