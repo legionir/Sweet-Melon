@@ -133,6 +133,21 @@ jobs:
       - name: Resolve dependencies
         run: flutter pub get
 
+      - name: Inspect and prepare Android SDK (NDK)
+        shell: bash
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+          ls "$ANDROID_SDK_ROOT/ndk" 2>&1 || echo "no ndk dir under ANDROID_SDK_ROOT"
+          ls "$ANDROID_HOME/ndk" 2>&1 || echo "no ndk dir under ANDROID_HOME"
+          SDKM="$(ls -d "$ANDROID_SDK_ROOT"/cmdline-tools/*/bin/sdkmanager 2>/dev/null | head -1)"
+          echo "sdkmanager=$SDKM"
+          if [ -n "$SDKM" ]; then
+            yes | "$SDKM" --licenses > /dev/null 2>&1 || true
+            "$SDKM" --install "ndk;28.2.13676358" > ndk-install.txt 2>&1 || true
+            tail -5 ndk-install.txt
+          fi
+
       - name: Run integration tests on an emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -143,6 +158,7 @@ jobs:
           script: |
             rc=0
             { echo "== before"; df -h / | tail -1; free -m | head -2; } > e2e-diag.txt
+            rc=0
             flutter test integration_test/app_test.dart > e2e.txt 2>&1 || rc=$?
             { echo "== after rc=$rc"; df -h / | tail -1; free -m | head -2; dmesg 2>/dev/null | grep -i "killed process" | tail -3; } >> e2e-diag.txt
             cat e2e-diag.txt
