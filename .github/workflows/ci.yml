@@ -220,6 +220,8 @@ jobs:
         run: |
           rc=0
           flutter build ios --debug --no-codesign > ios-build.txt 2>&1 || rc=$?
-          tail -40 ios-build.txt
-          python3 .github/scripts/annotate_output.py ios-build.txt 60
+          if [ "$rc" != "0" ]; then
+            grep -n -i "error" ios-build.txt | head -40 | sed 's/^/::error::/'
+            tail -n 80 ios-build.txt | sed 's/^/::notice::/'
+          fi
           exit $rc
