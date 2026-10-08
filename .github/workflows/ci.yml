@@ -206,19 +206,22 @@ jobs:
       - name: Generate missing iOS project files (Podfile) from the Flutter template
         shell: bash
         run: |
-          set -o pipefail
           rm -rf /tmp/ios-template
-          flutter create --platforms=ios --project-name sweetmelon --org com.example \
-            --template app /tmp/ios-template 2>&1 | tail -n 60 || {
-              echo "flutter create failed"; exit 1; }
-          echo "Template iOS files:"; ls -la /tmp/ios-template/ios || true
+          if ! flutter create --platforms=ios --project-name sweetmelon \
+              --org com.example --template app /tmp/ios-template > /tmp/create.log 2>&1; then
+            tail -n 30 /tmp/create.log | sed 's/^/::error::flutter create: /'
+            exit 1
+          fi
+          echo "::notice::flutter create ok; template iOS dir:"
+          ls /tmp/ios-template/ios | sed 's/^/::notice::template ios: /'
           if [ ! -f ios/Podfile ]; then
             if [ ! -f /tmp/ios-template/ios/Podfile ]; then
-              echo "Template has no Podfile"; exit 1
+              echo "::error::template has no Podfile"
+              exit 1
             fi
             cp /tmp/ios-template/ios/Podfile ios/Podfile
           fi
-          echo "Podfile ready at ios/Podfile"
+          echo "::notice::ios/Podfile present"
 
       - name: Enable permission_handler iOS permission macros
         run: python3 .github/scripts/ios_permissions.py ios/Podfile

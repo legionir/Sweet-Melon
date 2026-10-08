@@ -43,6 +43,7 @@ def main() -> int:
         return 1
     pct = 100.0 * hit / found
     print(f"Line coverage: {pct:.2f}% ({hit}/{found} lines), threshold {threshold:.2f}%")
+    print(f"::notice title=Line coverage::{pct:.2f}% ({hit}/{found} lines), threshold {threshold:.2f}%")
     worst = sorted(per_file.items(), key=lambda kv: kv[1][1] / max(kv[1][0], 1))[:10]
     for name, (lf, lh) in worst:
         print(f"  {100.0 * lh / max(lf, 1):6.2f}%  {name}")
