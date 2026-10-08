@@ -290,6 +290,10 @@ in `docs/WORKLOG.md`.
   to sequential batches. Documented in `docs/SECURITY.md`.
 - **BUG-012.** The limiter uses integer arithmetic on milliseconds; no `clamp`.
 - **PERF-002.** Heap set to 4 GiB as planned.
+- **Toolchain minimums (CI-001).** Flutter's current minimums are Gradle 8.14,
+  AGP 8.11.1 and Kotlin 2.2.20. The repo was on Gradle 8.10.2, AGP 8.7.0 and
+  Kotlin 1.8.22 and failed the debug build. The versions were raised to the
+  minimums.
 - **Folders.** Tests live in `test/unit/`, `test/security/` and
   `test/js/`. The planned `test/integration`, `test/regression` and
   `test/performance` folders were not created; regression and performance cases

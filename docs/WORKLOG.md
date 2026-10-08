@@ -155,3 +155,31 @@ BASELINE RECORDED
 ### Status
 - Implementation: written. Verification: **pending CI**. No item may be marked
   `[x]` until the pushed commit's workflow runs green.
+
+### CI verification log (GitHub Actions, branch arena/a3bec261-sweet-melon)
+
+The Flutter SDK is not available in the sandbox, so every Dart and Android
+result below comes from CI. Job logs cannot be downloaded from the sandbox
+(the log storage host is unreachable), so diagnostics were moved into
+check-run annotations by `.github/scripts/annotate_output.py`.
+
+Failures found and fixed, in order:
+1. `ci.yml` did not parse: an unquoted step name contained `:`. Quoted.
+2. Analyzer: missing `dart:async` (Completer), missing `CacheManager` import in
+   `test/helpers/fakes.dart`, missing `package:flutter/foundation.dart` for
+   `kDebugMode` in `home_screen.dart`. Fixed.
+3. Steps were using `cmd; rc=$?`. GitHub runs `bash -e`, so the script stopped
+   before the diagnostic step. Changed to `cmd || rc=$?`.
+4. Android: Flutter's current minimums are Gradle 8.14, AGP 8.11.1 and Kotlin
+   2.2.20. The repo pinned Gradle 8.10.2, AGP 8.7.0 and Kotlin 1.8.22. Bumped to
+   the minimums; this is a toolchain requirement, not a preference.
+5. E2E step: the first failure was the same Gradle error, but the step still
+   reported success. Added explicit checks for failure text and for
+   `All tests passed`.
+
+Result at this point (commit history on the branch):
+- JavaScript SDK tests: pass (16/16 locally with Node 22, and in CI).
+- analyze (`--fatal-warnings`) and unit/security/regression tests: pass in CI.
+- Android debug and release build: pass in CI.
+- Android emulator integration test: see the latest run; the step is gated on
+  an explicit `All tests passed` line.
