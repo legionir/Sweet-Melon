@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:sweetmelon/packages/core/lib/src/protocol/message_protocol.dart';
+import 'package:sweetmelon/packages/performance/lib/performance.dart';
 import 'package:sweetmelon/packages/plugin_engine/lib/plugin_engine.dart';
 import 'package:sweetmelon/packages/security/lib/security.dart';
 

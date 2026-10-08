@@ -1,5 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sweetmelon/packages/performance/lib/src/cache_manager.dart';
+import 'package:sweetmelon/packages/performance/lib/performance.dart';
 import 'package:sweetmelon/packages/security/lib/security.dart';
 import 'package:sweetmelon/plugins/geolocation/lib/geolocation_plugin.dart';
 
