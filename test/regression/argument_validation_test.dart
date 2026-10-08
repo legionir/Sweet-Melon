@@ -50,7 +50,7 @@ void main() {
       var opened = 0;
       final plugin = GeolocationPlugin(positionStream: (settings) {
         opened++;
-        return Stream<Position>.empty();
+        return const Stream<Position>.empty();
       });
       final h = await EngineHarness.create(
         plugins: [plugin],
@@ -70,7 +70,7 @@ void main() {
       var opened = 0;
       final plugin = GeolocationPlugin(positionStream: (settings) {
         opened++;
-        return Stream<Position>.empty();
+        return const Stream<Position>.empty();
       });
       final h = await EngineHarness.create(
         plugins: [plugin],
@@ -90,7 +90,7 @@ void main() {
       var opened = 0;
       final plugin = GeolocationPlugin(positionStream: (settings) {
         opened++;
-        return Stream<Position>.empty();
+        return const Stream<Position>.empty();
       });
       final h = await EngineHarness.create(
         plugins: [plugin],
