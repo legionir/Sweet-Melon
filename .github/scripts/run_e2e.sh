@@ -3,6 +3,11 @@
 # One script file keeps shell state and gives a single, strict exit code.
 set -uo pipefail
 
+# Memory trace: lets the log show whether the emulator + Gradle exhausted RAM.
+( while sleep 15; do echo "$(date +%T) $(free -m | sed -n 2p)"; done ) > mem.log 2>&1 &
+MEM_PID=$!
+trap 'kill $MEM_PID 2>/dev/null; python3 .github/scripts/annotate_output.py mem.log 30' EXIT
+
 echo "== devices"
 flutter devices 2>&1 | tee e2e-devices.txt
 adb devices 2>&1 | tee -a e2e-devices.txt
