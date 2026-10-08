@@ -28,6 +28,11 @@ and release build, and the on-device test on an Android emulator. See
 | Injected SDK | `test/js/bridge_sdk.test.mjs` | the shipped SDK template run in a Node VM: install rules, iframe refusal, token in every message, call/batch resolution and errors, timeouts, events, listener isolation |
 | Device | `integration_test/app_test.dart` | app boot, WebView host present, storage round-trip and traversal rejection on Android |
 
+**Status:** the device test is **failing in CI** on the last run. The app boots
+and the first test passes on the emulator, but the `flutter test` process stops
+before it reports a summary. See the final status in
+`docs/AUDIT_EXECUTION_PLAN.md` section 16.
+
 Each regression test is labelled `regression:` in its name and refers to the
 finding it protects (BUG-, SEC-, SM-, PERF-, CONC-, STAT-).
 

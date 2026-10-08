@@ -183,3 +183,32 @@ Result at this point (commit history on the branch):
 - Android debug and release build: pass in CI.
 - Android emulator integration test: see the latest run; the step is gated on
   an explicit `All tests passed` line.
+
+### Final CI status for this session (latest run on the branch)
+
+| Job | Result | Evidence |
+| --- | --- | --- |
+| Injected JavaScript SDK (Node VM) | PASS | 16/16 tests |
+| Analyze, unit, security and regression tests | PASS | `flutter analyze --fatal-warnings`; `flutter test test/` |
+| Android build (debug and release) | PASS | debug APK and unsigned release APK built |
+| Android end-to-end (emulator) | FAIL | app boots; first test passes; `flutter test` stops before the summary |
+
+Overall: **NOT COMPLETE**. Open items:
+- E2E on the emulator (TEST-003, CI-001, 8.11, 8.12). Diagnosis so far is in
+  the plan's section 16. Not reproduced locally.
+- Coverage gate script (TEST-002).
+- Formatter check (`dart format`) is not in CI.
+- BUG-005 (geolocation event path), BUG-009 (camera validation), BUG-011
+  (dispose path), SEC-007 (inspector redaction): implemented, no automated test.
+- BUG-010 iOS: usage strings present, iOS not built (IOS-001 blocked: no
+  Podfile, no macOS host).
+- Plan statuses: 44 `[x]`, 17 `[~]`, 1 `[ ]` (the legend line).
+
+Rejected or corrected during this pass:
+- A manual emulator start (own step) was tried: the system image download was
+  too slow in the sandbox runner (the sdkmanager timeout hit at ~60%). Reverted to
+  android-emulator-runner.
+- Gradle wrapper, AGP, and Kotlin were raised to Flutter's minimums (Gradle 8.14,
+  AGP 8.11.1, Kotlin 2.2.20). Not a preference; the build fails otherwise.
+- A test that double-encoded the SDK payload was corrected to match the native
+  side. The SDK was not changed for that.

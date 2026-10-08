@@ -91,58 +91,58 @@ Priority: P0 critical · P1 high · P2 medium · P3 low · P4 improvement.
 
 ### Security
 
-- [~] **SEC-001 (P0)** JavaScript trust boundary. The `flutterBridge` channel
+- [x] **SEC-001 (P0)** JavaScript trust boundary. The `flutterBridge` channel
   was exposed to all frames; any page could post requests; navigation to any
   origin was allowed when `allowedHosts` was empty; non-HTTP schemes were not
   filtered. Fix: `NavigationPolicy` (default deny remote, block non-http(s)
   schemes), SDK installed only in the top frame, per-session random token that
   every message must carry (constant-time compare), tokens invalidated on every
   page start.
-- [~] **SEC-002 (P0)** Storage path traversal. `listFiles` skipped `..`
+- [x] **SEC-002 (P0)** Storage path traversal. `listFiles` skipped `..`
   validation and only compared strings; no symlink containment anywhere. Fix:
   `SandboxPath` validates syntax (no absolute, no `..`, no NUL/backslash/colon),
   canonicalises the nearest existing ancestor and rejects symlinks.
-- [~] **SEC-003 (P1)** Error disclosure. Responses contained `stackTrace` and
+- [x] **SEC-003 (P1)** Error disclosure. Responses contained `stackTrace` and
   raw `e.toString()` messages. Fix: unexpected exceptions return `Internal error`;
   stack traces are logged natively only.
-- [~] **SEC-004 (P1)** No message size limit and no request-origin check on
+- [x] **SEC-004 (P1)** No message size limit and no request-origin check on
   bridge input. Fix: 2 MiB limit, token check, strict protocol validation.
-- [~] **SEC-005 (P1)** Implicit permission grants (`StaticPermissionProvider`
+- [x] **SEC-005 (P1)** Implicit permission grants (`StaticPermissionProvider`
   granted camera/storage/location always) and permission cache that never
   expires. Fix: `PlatformPermissionProvider` (permission_handler + sandbox
   rules), 5 s TTL cache, explicit `permanentlyDenied` status returned to JS.
-- [~] **SEC-006 (P1)** Android release build signed with the debug key.
+- [x] **SEC-006 (P1)** Android release build signed with the debug key.
   Fix: release signing read from environment; without it release is unsigned.
 - [~] **SEC-007 (P2)** Debug inspector (shows every bridge payload) was shown in
   production. Fix: FAB and inspector only when `enableDebugging`.
-- [~] **SEC-008 (P2)** Rate-limiter buckets keyed by untrusted names
+- [x] **SEC-008 (P2)** Rate-limiter buckets keyed by untrusted names
   (unbounded growth). Fix: buckets only for registered plugin methods; idle
   buckets are pruned.
-- [~] **SEC-009 (P2)** Unbounded storage read/write size. Fix: 5 MiB file limit.
-- [~] **SEC-010 (P3)** Camera returns absolute temporary file paths to JS.
+- [x] **SEC-009 (P2)** Unbounded storage read/write size. Fix: 5 MiB file limit.
+- [x] **SEC-010 (P3)** Camera returns absolute temporary file paths to JS.
   Accepted and documented (needed for picker results); see `docs/SECURITY.md`.
 
 ### Bugs
 
-- [~] **BUG-001 (P0)** Storage cache: `set`, `remove`, `writeFile`, `deleteFile`
+- [x] **BUG-001 (P0)** Storage cache: `set`, `remove`, `writeFile`, `deleteFile`
   were cacheable (a second identical write was served from cache and never
   executed) and no mutation invalidated reads (stale data). Fix: read-only
   method declaration, generation-based cache keys, invalidation on every
   mutation.
-- [~] **BUG-002 (P1)** Batch: an exception or malformed batch never resolved the
+- [x] **BUG-002 (P1)** Batch: an exception or malformed batch never resolved the
   JS promise; `options.timeout` ignored in JS. Fix: batch envelope validation,
   batch error response, per-item timeout, JS-side batch timeout.
-- [~] **BUG-003 (P1)** Bridge `_isReady` was never reset on reload/navigation;
+- [x] **BUG-003 (P1)** Bridge `_isReady` was never reset on reload/navigation;
   responses for the previous page were sent into the new page; the pending
   script queue was unbounded. Fix: sessions (`startSession`/`endSession`),
   stale-session responses dropped, bounded queue.
-- [~] **BUG-004 (P1)** `emitEvent` with a primitive payload produced invalid
+- [x] **BUG-004 (P1)** `emitEvent` with a primitive payload produced invalid
   JS for the SDK (`JSON.parse` of a non-string); non-serialisable payloads threw.
   Fix: payload double-encoded; serialisation errors are logged and dropped.
 - [~] **BUG-005 (P1)** Geolocation `watchPosition` discarded every position; only
   one watch; no event delivery. Fix: `watchId`-based watches, `geolocation.position`
   and `geolocation.error` events, `clearWatch({watchId})`, dispose cancels all.
-- [~] **BUG-006 (P2)** Malformed requests: `json['requestId'] as String? ?? 'unknown'`
+- [x] **BUG-006 (P2)** Malformed requests: `json['requestId'] as String? ?? 'unknown'`
   could throw inside the error handler and answered a non-existent id. Fix:
   protocol validation with typed `ProtocolException`.
 - [~] **BUG-007 (P2)** `stopOnError` ignored in parallel batches; missing results
@@ -157,68 +157,68 @@ Priority: P0 critical · P1 high · P2 medium · P3 low · P4 improvement.
   Fix: manifest permissions and Info.plist usage strings.
 - [~] **BUG-011 (P2)** WebView host never detached its controller from the bridge
   on dispose. Fix: detach + end session in `dispose()`.
-- [~] **BUG-012 (P1)** Rate limiter used `num.clamp` where an `int` is required
+- [x] **BUG-012 (P1)** Rate limiter used `num.clamp` where an `int` is required
   (type error risk). Fix: explicit integer arithmetic.
-- [~] **BUG-013 (P2)** `watchPosition` / `getCurrentPosition` had no timeout
+- [x] **BUG-013 (P2)** `watchPosition` / `getCurrentPosition` had no timeout
   argument. Fix: `timeoutMs` (1..60000) mapped to the location time limit.
 
 ### Architecture
 
-- [~] **ARCH-001 (P2)** Unused nested `pubspec.yaml` files in `lib/packages/*` and
+- [x] **ARCH-001 (P2)** Unused nested `pubspec.yaml` files in `lib/packages/*` and
   `lib/plugins/*` (not wired into the build). Fix: removed; single package.
-- [~] **ARCH-002 (P1)** Capability metadata (`supportsStreaming`, `supportsCache`,
+- [x] **ARCH-002 (P1)** Capability metadata (`supportsStreaming`, `supportsCache`,
   `maxConcurrentCalls`, `supportsBatch`) and the separate `cacheable` flag
   disagreed and were not enforced. Fix: `PluginCapabilities` is the single
   source; the manager enforces streaming, cache and concurrency.
-- [~] **ARCH-003 (P2)** Dead code: `ArgsValidator`/`ArgSchema`, `MemorySink`,
+- [x] **ARCH-003 (P2)** Dead code: `ArgsValidator`/`ArgSchema`, `MemorySink`,
   `FileSink` (stub that never wrote), `PluginManifest`, `PermissionPolicy`,
   `checkPlugin`, `BatchRequest`, `PluginRequest.create`, `recordError`, unused
   cache patterns, lifecycle hooks `onPause`/`onResume`, unused `http`/`uuid`
   dependencies, unused `allowFileAccess`/`defaultTimeoutMs` configuration.
   Fix: removed or wired.
-- [~] **ARCH-004 (P2)** The bridge depended on `webview_flutter`. Fix:
+- [x] **ARCH-004 (P2)** The bridge depended on `webview_flutter`. Fix:
   `JsExecutor` abstraction; only `WebViewHost` touches the WebView.
-- [~] **ARCH-005 (P3)** Duplicate `MainActivity` in `com/example/sweetmelon`
+- [x] **ARCH-005 (P3)** Duplicate `MainActivity` in `com/example/sweetmelon`
   (not referenced by the manifest). Fix: removed.
-- [~] **ARCH-006 (P2)** Two validation result types (`ValidationResult`,
+- [x] **ARCH-006 (P2)** Two validation result types (`ValidationResult`,
   `ArgsValidationResult`). Fix: one type with optional error code.
-- [~] **ARCH-007 (P3)** Hard-coded 30 s timeout in the manager ignored the guard
+- [x] **ARCH-007 (P3)** Hard-coded 30 s timeout in the manager ignored the guard
   configuration. Fix: the guard's default is used.
 
 ### Statistics / Metrics
 
-- [~] **STAT-001 (P1)** `errorCount` was never incremented and error paths
+- [x] **STAT-001 (P1)** `errorCount` was never incremented and error paths
   (validation, permission, rate limit, timeout, exceptions) were not recorded.
   Fix: every call is recorded exactly once; `totalCalls == successCount + errorCount`;
   `activeCalls` returns to 0.
 
 ### Concurrency
 
-- [~] **CONC-001 (P1)** `maxConcurrentCalls` not enforced. Fix:
+- [x] **CONC-001 (P1)** `maxConcurrentCalls` not enforced. Fix:
   `ConcurrencyLimiter` per plugin; excess calls fail fast with
   `RATE_LIMIT_EXCEEDED` (retryable). Camera uses 1 because the image picker
   rejects concurrent presentations.
-- [~] **CONC-002 (P2)** Execution guard counted duplicate request ids incorrectly.
+- [x] **CONC-002 (P2)** Execution guard counted duplicate request ids incorrectly.
   Fix: reference-counted in-flight map.
 
 ### Permissions
 
-- [~] **PERM-001 (P1)** Permission denial now includes `status`
+- [x] **PERM-001 (P1)** Permission denial now includes `status`
   (`denied` / `permanentlyDenied` / `restricted` / `notDetermined`) in error
   details so the JS side can prompt for settings. Permission checks run for
   every plugin call.
 
 ### Performance
 
-- [~] **PERF-001 (P2)** LRU eviction was O(n) on each insert and overwrites
+- [x] **PERF-001 (P2)** LRU eviction was O(n) on each insert and overwrites
   evicted an unrelated entry. Fix: `LinkedHashMap` based O(1) LRU; overwrites do
   not evict.
-- [~] **PERF-002 (P3)** Gradle heap of 8 GiB (`-Xmx8G`) would fail on hosted
+- [x] **PERF-002 (P3)** Gradle heap of 8 GiB (`-Xmx8G`) would fail on hosted
   runners. Fix: 4 GiB.
 
 ### Tests
 
-- [~] **TEST-001 (P0)** No tests existed. Fix: unit, integration, security,
+- [x] **TEST-001 (P0)** No tests existed. Fix: unit, integration, security,
   regression, performance-smoke and JavaScript-SDK tests (`test/`, `test/js/`).
 - [~] **TEST-002 (P1)** No coverage measurement. Fix: `flutter test --coverage`
   with a per-area coverage gate (`scripts/coverage_gate.py`).
@@ -230,15 +230,15 @@ Priority: P0 critical · P1 high · P2 medium · P3 low · P4 improvement.
 - [~] **CI-001 (P0)** No CI. Fix: `.github/workflows/ci.yml` (format, analyze,
   unit/integration/security tests, JS SDK tests, coverage gate, Android debug
   build, Android emulator E2E).
-- [~] **CI-002 (P2)** No `.gitignore`: `.dart_tool`, `build`, `local.properties`,
+- [x] **CI-002 (P2)** No `.gitignore`: `.dart_tool`, `build`, `local.properties`,
   keystores and IDE files were committable. Fix: Flutter-appropriate `.gitignore`.
 
 ### Documentation
 
-- [~] **DOC-001 (P2)** README was empty. Fix: README with setup, commands and layout.
-- [~] **DOC-002 (P2)** No architecture, security or testing documentation. Fix:
+- [x] **DOC-001 (P2)** README was empty. Fix: README with setup, commands and layout.
+- [x] **DOC-002 (P2)** No architecture, security or testing documentation. Fix:
   `docs/ARCHITECTURE.md`, `docs/SECURITY.md`, `docs/TESTING.md`.
-- [~] **DOC-003 (P3)** Stale comments/strings (`Hello World` display name,
+- [x] **DOC-003 (P3)** Stale comments/strings (`Hello World` display name,
   placeholder RunnerTests). Fix: corrected.
 
 ### Known platform gap
@@ -289,7 +289,11 @@ in `docs/WORKLOG.md`.
 - **BUG-007.** Parallel batches run concurrently; `stopOnError` is applied only
   to sequential batches. Documented in `docs/SECURITY.md`.
 - **BUG-012.** The limiter uses integer arithmetic on milliseconds; no `clamp`.
-- **PERF-002.** Heap set to 4 GiB as planned.
+- **PERF-002.** Heap reduced from 8 GiB to 3 GiB (`org.gradle.jvmargs=-Xmx3G`). The
+  plan suggested 4 GiB; 4 GiB and then 2 GiB were tried. 2 GiB failed in
+  `JetifyTransform` with `Java heap space`. Jetifier is also disabled
+  (`android.enableJetifier=false`): every plugin here is AndroidX, and the
+  transform was the main memory consumer. Kotlin daemon heap is 1.5 GiB.
 - **Toolchain minimums (CI-001).** Flutter's current minimums are Gradle 8.14,
   AGP 8.11.1 and Kotlin 2.2.20. The repo was on Gradle 8.10.2, AGP 8.7.0 and
   Kotlin 1.8.22 and failed the debug build. The versions were raised to the
@@ -330,19 +334,19 @@ verified by GitHub Actions.
 
 ## 8. Implementation Plan
 
-- [~] 8.1 Baseline and plan/worklog files
-- [~] 8.2 Remove dead code and unwired packages (ARCH-001, ARCH-003, ARCH-005)
-- [~] 8.3 Protocol validation and error contract (BUG-006, SEC-003, SEC-004, ARCH-006)
-- [~] 8.4 Bridge sessions, token, queue bound, batch semantics, events (SEC-001, BUG-002/003/004, ARCH-004)
+- [x] 8.1 Baseline and plan/worklog files
+- [x] 8.2 Remove dead code and unwired packages (ARCH-001, ARCH-003, ARCH-005)
+- [x] 8.3 Protocol validation and error contract (BUG-006, SEC-003, SEC-004, ARCH-006)
+- [x] 8.4 Bridge sessions, token, queue bound, batch semantics, events (SEC-001, BUG-002/003/004, ARCH-004)
 - [~] 8.5 WebView host: navigation policy, SDK in top frame, lifecycle (SEC-001, BUG-011)
-- [~] 8.6 Security components: sandbox path, permissions, rate limiter, guard, concurrency (SEC-002, SEC-005, SEC-008, CONC-001/002, BUG-012)
-- [~] 8.7 Cache LRU and mutation invalidation (BUG-001, PERF-001)
-- [~] 8.8 Plugin manager pipeline, capabilities and metrics (ARCH-002, STAT-001, SEC-003, BUG-007)
+- [x] 8.6 Security components: sandbox path, permissions, rate limiter, guard, concurrency (SEC-002, SEC-005, SEC-008, CONC-001/002, BUG-012)
+- [x] 8.7 Cache LRU and mutation invalidation (BUG-001, PERF-001)
+- [x] 8.8 Plugin manager pipeline, capabilities and metrics (ARCH-002, STAT-001, SEC-003, BUG-007)
 - [~] 8.9 Plugins: storage, camera, geolocation (SEC-002, SEC-009, BUG-005/008/009/013, CONC-001)
 - [~] 8.10 Platform config: manifests, plist, Gradle signing and heap (SEC-006, BUG-010, PERF-002)
 - [~] 8.11 Tests: unit, integration, security, regression, perf smoke, JS SDK, E2E
 - [~] 8.12 CI workflow and coverage gate (CI-001, TEST-002, TEST-003)
-- [~] 8.13 Documentation (DOC-001..003, CI-002)
+- [x] 8.13 Documentation (DOC-001..003, CI-002)
 
 ## 9. Test Plan
 
@@ -415,5 +419,35 @@ Blocked items (only real external constraints):
 
 ## 16. Final Verification
 
-See the final section of `docs/WORKLOG.md` and the "Final Status" section below,
-which is filled in only after CI on the pushed commit has passed.
+See the final section of `docs/WORKLOG.md`.
+
+### Final Status (last pushed commit on `arena/a3bec261-sweet-melon`)
+
+| CI job | Result |
+| --- | --- |
+| Injected JavaScript SDK (Node VM) | PASS (16/16) |
+| Analyze, unit, security and regression tests | PASS (`flutter analyze --fatal-warnings`, `flutter test test/`) |
+| Android build (debug and release) | PASS (release is unsigned: no keystore in CI) |
+| Android end-to-end (emulator) | **FAIL** (see below) |
+
+**Overall status: NOT COMPLETE.** The E2E job fails in CI. Items that depend on
+the on-device test are still `[~]`: TEST-003, CI-001, 8.11, 8.12, and BUG-005,
+BUG-009, BUG-010 (iOS), BUG-011, SEC-007.
+
+E2E failure, as observed in CI (not reproduced locally; the sandbox cannot
+download job logs):
+- The emulator boots. The integration test app installs and runs on the device.
+  The first test, "app boots into the home screen with the WebView host",
+  reports pass. The storage tests run on the device.
+- The `flutter test` process then stops before it prints any summary. The last
+  line is `Running Gradle task 'assembleDebug'`. The script's own exit-code line
+  never runs, so the process group is killed at about 3.5 to 8 minutes into the
+  step. The memory log did not show memory pressure.
+- Attempts that did not fix it: Gradle/AGP/Kotlin bump; Jetifier disabled;
+  heap reduced; emulator RAM capped; NDK pre-installed; test run moved into one
+  bash script with timeouts; a manual emulator start (abandoned: the system
+  image download exceeded the time limit in the sandbox runner).
+
+Next step: reproduce with `flutter test integration_test/app_test.dart -d <id>`
+on a local or self-hosted emulator, or move the on-device checks to
+`flutter drive` with a log file on the device.
