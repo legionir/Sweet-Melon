@@ -11,14 +11,15 @@ if [ -z "$CMDLINE" ]; then
 fi
 IMAGE="system-images;android-33;google_apis;x86_64"
 yes | "$CMDLINE/sdkmanager" --licenses > /dev/null 2>&1 || true
-"$CMDLINE/sdkmanager" "$IMAGE" "emulator" "platform-tools" > sdk-emulator.txt 2>&1 || {
+timeout 1200 "$CMDLINE/sdkmanager" "$IMAGE" "emulator" "platform-tools" > sdk-emulator.txt 2>&1 || {
   tail -40 sdk-emulator.txt; exit 1; }
 echo no | "$CMDLINE/avdmanager" create avd -n ci -k "$IMAGE" -d pixel --force > avd.txt 2>&1 || {
   tail -40 avd.txt; exit 1; }
 nohup "$SDK/emulator/emulator" -avd ci -no-window -no-audio -no-boot-anim \
   -no-snapshot -gpu swiftshader_indirect -memory 2048 > emulator.log 2>&1 &
 echo "emulator pid $!"
-"$SDK/platform-tools/adb" wait-for-device
+echo "waiting for emulator to register with adb"
+timeout 300 "$SDK/platform-tools/adb" wait-for-device || { echo "adb saw no device"; tail -60 emulator.log; exit 1; }
 for _ in $(seq 1 120); do
   if [ "$("$SDK/platform-tools/adb" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = "1" ]; then
     echo "boot completed"
