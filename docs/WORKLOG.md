@@ -253,3 +253,25 @@ Rejected or corrected during this pass:
 - Format and coverage results from CI (not yet verified).
 - iOS job result (not yet verified).
 - BUG-011 (WebViewHost dispose): no automated test yet.
+
+### Result (pass 2)
+- CI run 37822424205 on `69b6d17`: all five jobs PASS (JS SDK, analyze/unit/
+  security/regression + coverage gate 55% + format, Android build, Android E2E,
+  iOS build).
+- Fixes made during the pass, each verified by a later run:
+  - Format: 1 file (camera test) reformatted from the per-file CI diff.
+  - Unit tests: the geolocation test source is a broadcast stream (several watches
+    listen to it); the bounded-watch test awaits the async rejection.
+  - iOS: `ios/Podfile` committed from the standard Flutter template (the repo had
+    none). CI keeps CocoaPods integration (`flutter config
+    --no-enable-swift-package-manager`), regenerates `Generated.xcconfig` for the
+    runner (`flutter build ios --config-only`), then runs `pod install`.
+  - E2E: one run failed inside the emulator-runner action before the test script
+    ran (`e2e.rc not written`, job ~1 min). A rerun on the next commit passed. Cause
+    not identified; treated as a flake, not a code failure.
+  - Coverage: measured 58.18%; gate default set to 55%.
+- Plan items moved to `[x]` with green evidence: SEC-007 (redaction tested; inspector
+  gated by kDebugMode), BUG-005, BUG-009 (camera validation), BUG-010 (manifests and
+  Info.plist; builds green), IOS-001, TEST-002, TEST-003, CI-001, 8.12.
+- Not done in this pass: BUG-007, BUG-008, BUG-011 tests; 8.5, 8.9, 8.11 completion;
+  docs check against code; final audit. Section 16 lists them.

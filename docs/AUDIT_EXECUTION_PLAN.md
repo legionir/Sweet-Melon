@@ -345,7 +345,7 @@ verified by GitHub Actions.
 - [~] 8.9 Plugins: storage, camera, geolocation (SEC-002, SEC-009, BUG-005/008/009/013, CONC-001)
 - [~] 8.10 Platform config: manifests, plist, Gradle signing and heap (SEC-006, BUG-010, PERF-002)
 - [~] 8.11 Tests: unit, integration, security, regression, perf smoke, JS SDK, E2E
-- [~] 8.12 CI workflow and coverage gate (CI-001, TEST-002, TEST-003)
+- [x] 8.12 CI workflow and coverage gate (CI-001, TEST-002, TEST-003)
 - [x] 8.13 Documentation (DOC-001..003, CI-002)
 
 ## 9. Test Plan
@@ -421,33 +421,29 @@ Blocked items (only real external constraints):
 
 See the final section of `docs/WORKLOG.md`.
 
-### Final Status (last pushed commit on `arena/a3bec261-sweet-melon`)
+### Final Status (CI-verified commit `69b6d17` on `arena/a3bec261-sweet-melon`)
 
-| CI job | Result |
+| CI job (run 37822424205, head 69b6d17) | Result |
 | --- | --- |
 | Injected JavaScript SDK (Node VM) | PASS (16/16) |
-| Analyze, unit, security and regression tests | PASS (`flutter analyze --fatal-warnings`, `flutter test test/`) |
-| Android build (debug and release) | PASS (release is unsigned: no keystore in CI) |
-| Android end-to-end (emulator) | **FAIL** (see below) |
+| Analyze, unit, security and regression tests (analyze, tests, coverage gate 55%, format) | PASS (measured line coverage 58.18%) |
+| Android build (debug and release) | PASS (release unsigned: no keystore in CI) |
+| Android end-to-end (emulator) | PASS (two `E2E_OK` markers, exit code 0) |
+| iOS build (macOS, no codesign) | PASS |
 
-**Overall status: NOT COMPLETE.** The E2E job fails in CI. Items that depend on
-the on-device test are still `[~]`: TEST-003, CI-001, 8.11, 8.12, and BUG-005,
-BUG-009, BUG-010 (iOS), BUG-011, SEC-007.
+**Overall status: NOT COMPLETE.** The CI pipeline is green on `69b6d17`. Items
+still open, and why:
 
-E2E failure, as observed in CI (not reproduced locally; the sandbox cannot
-download job logs):
-- The emulator boots. The integration test app installs and runs on the device.
-  The first test, "app boots into the home screen with the WebView host",
-  reports pass. The storage tests run on the device.
-- The `flutter test` process then stops before it prints any summary. The last
-  line is `Running Gradle task 'assembleDebug'`. The script's own exit-code line
-  never runs, so the process group is killed at about 3.5 to 8 minutes into the
-  step. The memory log did not show memory pressure.
-- Attempts that did not fix it: Gradle/AGP/Kotlin bump; Jetifier disabled;
-  heap reduced; emulator RAM capped; NDK pre-installed; test run moved into one
-  bash script with timeouts; a manual emulator start (abandoned: the system
-  image download exceeded the time limit in the sandbox runner).
+- BUG-007 `[~]`: the parallel-batch `stopOnError` limitation is documented, but
+  there is no test for the sequential path's `CANCELLED` results.
+- BUG-008 `[~]`: the picker-cancel path returns `CANCELLED` in code, but no
+  automated test covers it (needs an `ImagePicker` platform mock).
+- BUG-011 `[~]`: WebView host dispose/detach has no automated test yet.
+- 8.5 (WebView host), 8.9 (plugins), 8.11 (tests): the open items above plus a
+  final review of the performance-smoke coverage.
+- Docs check against code (README, ARCHITECTURE, SECURITY, TESTING), and the
+  final audit pass, are not yet done.
 
-Next step: reproduce with `flutter test integration_test/app_test.dart -d <id>`
-on a local or self-hosted emulator, or move the on-device checks to
-`flutter drive` with a log file on the device.
+The docs commit after `69b6d17` does not change code. Its CI run must be
+checked before any final claim of completion.
+
