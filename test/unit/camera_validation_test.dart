@@ -31,26 +31,26 @@ void main() {
 
     test('rejects non-positive and oversized dimensions', () async {
       expect((await validate('takePhoto', {'maxWidth': 0})).isValid, isFalse);
-      expect((await validate('takePhoto', {'maxHeight': 10001})).isValid,
-          isFalse);
-      expect((await validate('takePhoto', {'maxHeight': 'big'})).isValid,
-          isFalse);
+      expect(
+          (await validate('takePhoto', {'maxHeight': 10001})).isValid, isFalse);
+      expect(
+          (await validate('takePhoto', {'maxHeight': 'big'})).isValid, isFalse);
     });
   });
 
   group('pickFromGallery and recordVideo', () {
     test('multiple must be a boolean when present', () async {
-      expect(
-          (await validate('pickFromGallery', {'multiple': true})).isValid, isTrue);
+      expect((await validate('pickFromGallery', {'multiple': true})).isValid,
+          isTrue);
       expect((await validate('pickFromGallery', {'multiple': 'yes'})).isValid,
           isFalse);
     });
 
     test('maxDurationSeconds must be an integer between 1 and 3600', () async {
-      expect((await validate('recordVideo', {'maxDurationSeconds': 60})).isValid,
-          isTrue);
       expect(
-          (await validate('recordVideo', {'maxDurationSeconds': 0})).isValid,
+          (await validate('recordVideo', {'maxDurationSeconds': 60})).isValid,
+          isTrue);
+      expect((await validate('recordVideo', {'maxDurationSeconds': 0})).isValid,
           isFalse);
       expect(
           (await validate('recordVideo', {'maxDurationSeconds': 3601})).isValid,
