@@ -28,7 +28,7 @@ void main() {
   late GeolocationPlugin plugin;
 
   setUp(() async {
-    source = StreamController<Position>();
+    source = StreamController<Position>.broadcast();
     settingsSeen = [];
     events = [];
     plugin = GeolocationPlugin(positionStream: (settings) {
