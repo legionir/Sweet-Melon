@@ -145,4 +145,5 @@ jobs:
             flutter test integration_test/app_test.dart > e2e.txt 2>&1 || rc=$?
             cat e2e.txt
             python3 .github/scripts/annotate_output.py e2e.txt
-            exit $rc
+            if [ "$rc" -ne 0 ]; then echo "E2E failed with exit code $rc"; exit "$rc"; fi
+            if grep -q "Some tests failed\|tests passed, [1-9][0-9]* failed\|BUILD FAILED" e2e.txt; then echo "E2E output reports failure"; exit 1; fi
