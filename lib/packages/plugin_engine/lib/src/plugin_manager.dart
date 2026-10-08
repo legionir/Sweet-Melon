@@ -140,7 +140,8 @@ class PluginManager {
     }
 
     try {
-      final validation = await plugin.validateArgs(request.method, request.args);
+      final validation =
+          await plugin.validateArgs(request.method, request.args);
       if (!validation.isValid) {
         return _fail(
           requestId,
@@ -153,8 +154,8 @@ class PluginManager {
       }
     } catch (e) {
       BridgeLogger.error('Manager', 'Validation crashed: ${e.runtimeType}');
-      return _fail(requestId, PluginErrorCode.invalidArgs,
-          'Invalid arguments', stopwatch,
+      return _fail(requestId, PluginErrorCode.invalidArgs, 'Invalid arguments',
+          stopwatch,
           plugin: plugin.name, method: request.method);
     }
 
@@ -164,8 +165,13 @@ class PluginManager {
       final cached = cacheManager.get(cacheKey);
       if (cached != null) {
         _recordStats(statKey, 0, fromCache: true);
-        _trace(requestId: requestId, plugin: plugin.name, method: request.method,
-            processingTimeMs: 0, success: true, fromCache: true);
+        _trace(
+            requestId: requestId,
+            plugin: plugin.name,
+            method: request.method,
+            processingTimeMs: 0,
+            success: true,
+            fromCache: true);
         return PluginResponse.success(
           requestId: requestId,
           data: cached,
@@ -209,8 +215,12 @@ class PluginManager {
       }
 
       _recordStats(statKey, elapsed, fromCache: false);
-      _trace(requestId: requestId, plugin: plugin.name, method: request.method,
-          processingTimeMs: elapsed, success: true);
+      _trace(
+          requestId: requestId,
+          plugin: plugin.name,
+          method: request.method,
+          processingTimeMs: elapsed,
+          success: true);
       return PluginResponse.success(
         requestId: requestId,
         data: result,
@@ -290,7 +300,8 @@ class PluginManager {
       final sequential = () async {
         for (final request in requests) {
           await runOne(request);
-          if (options.stopOnError && results[request.requestId]!.success == false) {
+          if (options.stopOnError &&
+              results[request.requestId]!.success == false) {
             stopped = true;
             return;
           }

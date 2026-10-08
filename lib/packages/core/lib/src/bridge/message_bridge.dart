@@ -184,7 +184,8 @@ class MessageBridge {
 
     if (!_tokenMatches(json['token'])) {
       // No response: the sender is not an authenticated page session.
-      BridgeLogger.warn('Bridge', 'Rejected message with invalid session token');
+      BridgeLogger.warn(
+          'Bridge', 'Rejected message with invalid session token');
       return;
     }
 
@@ -197,7 +198,9 @@ class MessageBridge {
     } catch (e, stackTrace) {
       // Defensive: nothing above should throw, but a bridge failure must never
       // surface as an unhandled zone error.
-      BridgeLogger.error('Bridge', 'Unexpected bridge failure: ${e.runtimeType}',
+      BridgeLogger.error(
+          'Bridge',
+          'Unexpected bridge failure: ${e.runtimeType}',
           {'stackTrace': stackTrace.toString()});
     }
   }

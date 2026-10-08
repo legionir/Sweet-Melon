@@ -22,13 +22,17 @@ void main() {
       );
       final response = await h.manager.execute(buildRequest(args: {'x': 1}));
       expect(response.success, isTrue);
-      expect(response.data, {'method': 'echo', 'args': {'x': 1}});
+      expect(response.data, {
+        'method': 'echo',
+        'args': {'x': 1}
+      });
       final stats = h.manager.stats['fake.echo']!;
       expect(stats.totalCalls, 1);
       expect(stats.errorCount, 0);
     });
 
-    test('unknown plugin yields PLUGIN_NOT_FOUND and creates no limiter state (SEC-008)',
+    test(
+        'unknown plugin yields PLUGIN_NOT_FOUND and creates no limiter state (SEC-008)',
         () async {
       final h = await EngineHarness.create(plugins: [FakePlugin()]);
       for (var i = 0; i < 20; i++) {
@@ -95,7 +99,8 @@ void main() {
     });
 
     test('rate limit yields RATE_LIMIT_EXCEEDED with a retry hint', () async {
-      final limiter = RateLimiter(defaultRule: const RateLimitRule.perSecond(1));
+      final limiter =
+          RateLimiter(defaultRule: const RateLimitRule.perSecond(1));
       final h = await EngineHarness.create(
         plugins: [FakePlugin()],
         rateLimiter: limiter,
@@ -200,11 +205,14 @@ void main() {
   });
 
   group('caching (SM-003, BUG-001)', () {
-    test('read-only results are served from cache on the second call', () async {
+    test('read-only results are served from cache on the second call',
+        () async {
       final plugin = FakePlugin(cacheable: {'get'});
       final h = await EngineHarness.create(plugins: [plugin]);
-      final first = await h.manager.execute(buildRequest(method: 'get', args: {'key': 'a'}));
-      final second = await h.manager.execute(buildRequest(requestId: 'r2', method: 'get', args: {'key': 'a'}));
+      final first = await h.manager
+          .execute(buildRequest(method: 'get', args: {'key': 'a'}));
+      final second = await h.manager.execute(
+          buildRequest(requestId: 'r2', method: 'get', args: {'key': 'a'}));
       expect(first.metadata.fromCache, isFalse);
       expect(second.metadata.fromCache, isTrue);
       expect(plugin.calls, 1);
@@ -241,7 +249,8 @@ void main() {
     test('cache keys do not depend on argument key order', () async {
       final plugin = FakePlugin(cacheable: {'get'});
       final h = await EngineHarness.create(plugins: [plugin]);
-      await h.manager.execute(buildRequest(method: 'get', args: {'a': 1, 'b': 2}));
+      await h.manager
+          .execute(buildRequest(method: 'get', args: {'a': 1, 'b': 2}));
       final again = await h.manager.execute(
         buildRequest(requestId: 'r2', method: 'get', args: {'b': 2, 'a': 1}),
       );
@@ -294,7 +303,8 @@ void main() {
       );
       expect(results.map((r) => r.requestId), ['a', 'b']);
       expect(results.every((r) => !r.success), isTrue);
-      expect(results.every((r) => r.error!.code == PluginErrorCode.timeout), isTrue);
+      expect(results.every((r) => r.error!.code == PluginErrorCode.timeout),
+          isTrue);
     });
 
     test('sequential stopOnError marks later items as not executed', () async {

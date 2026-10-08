@@ -192,7 +192,8 @@ class EngineHarness {
           clock: clock?.millis,
         );
     final guard = ExecutionGuard();
-    final cacheManager = cache ?? CacheManager(maxEntries: 50, now: clock?.call);
+    final cacheManager =
+        cache ?? CacheManager(maxEntries: 50, now: clock?.call);
     final manager = PluginManager(
       registry: registry,
       permissionManager: permissions,

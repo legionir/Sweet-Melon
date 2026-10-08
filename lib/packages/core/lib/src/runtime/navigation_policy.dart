@@ -15,8 +15,7 @@ class NavigationVerdict {
 
   const NavigationVerdict._(this.allowed, this.reason);
 
-  static const NavigationVerdict allow =
-      NavigationVerdict._(true, 'allowed');
+  static const NavigationVerdict allow = NavigationVerdict._(true, 'allowed');
 
   factory NavigationVerdict.block(String reason) =>
       NavigationVerdict._(false, reason);

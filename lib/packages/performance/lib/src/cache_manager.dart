@@ -98,8 +98,7 @@ class CacheManager {
   void invalidate(String key) => _entries.remove(key);
 
   /// Removes every entry belonging to [pluginName].
-  void invalidatePlugin(String pluginName) =>
-      invalidatePattern('$pluginName:');
+  void invalidatePlugin(String pluginName) => invalidatePattern('$pluginName:');
 
   /// Removes every entry whose key starts with [prefix].
   void invalidatePattern(String prefix) {

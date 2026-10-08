@@ -211,7 +211,8 @@ class CameraPlugin extends Plugin {
     final maxDuration = args['maxDurationSeconds'];
     if (maxDuration != null) {
       if (maxDuration is! int) {
-        return ValidationResult.invalid('maxDurationSeconds must be an integer');
+        return ValidationResult.invalid(
+            'maxDurationSeconds must be an integer');
       }
       if (maxDuration <= 0 || maxDuration > 3600) {
         return ValidationResult.invalid(

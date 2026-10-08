@@ -41,7 +41,8 @@ String normalizeSandboxPath(String raw, {bool allowEmpty = false}) {
     );
   }
   if (raw.length > kMaxPathLength) {
-    throw const PluginException(PluginErrorCode.invalidArgs, 'path is too long');
+    throw const PluginException(
+        PluginErrorCode.invalidArgs, 'path is too long');
   }
   if (raw.contains('\u0000') || raw.contains('\\') || raw.startsWith('/')) {
     throw const PluginException(
@@ -51,7 +52,8 @@ String normalizeSandboxPath(String raw, {bool allowEmpty = false}) {
   }
   final segments = raw.split('/');
   if (segments.length > kMaxPathDepth) {
-    throw const PluginException(PluginErrorCode.invalidArgs, 'path is too deep');
+    throw const PluginException(
+        PluginErrorCode.invalidArgs, 'path is too deep');
   }
   for (final segment in segments) {
     if (segment == '..' || segment == '.') {
@@ -108,7 +110,8 @@ Future<String> resolveWithinRoot(String root, String relative) async {
 }
 
 bool _isInside(String root, String path) =>
-    path == root || path.startsWith('$root${Platform.pathSeparator}') ||
+    path == root ||
+    path.startsWith('$root${Platform.pathSeparator}') ||
     path.startsWith('$root/');
 
 class StoragePlugin extends Plugin {
@@ -287,7 +290,8 @@ class StoragePlugin extends Plugin {
     final path = await _filePath(args['path'] as String);
     final file = File(path);
     if (!await file.exists()) {
-      throw const PluginException(PluginErrorCode.invalidArgs, 'File not found');
+      throw const PluginException(
+          PluginErrorCode.invalidArgs, 'File not found');
     }
     final length = await file.length();
     if (length > kMaxFileBytes) {
@@ -403,7 +407,8 @@ class StoragePlugin extends Plugin {
           _requireString(args, 'content');
           final encoding = args['encoding'];
           if (encoding != null && encoding != 'utf8' && encoding != 'base64') {
-            return ValidationResult.invalid('encoding must be "utf8" or "base64"');
+            return ValidationResult.invalid(
+                'encoding must be "utf8" or "base64"');
           }
           break;
         case 'listFiles':
@@ -430,7 +435,8 @@ class StoragePlugin extends Plugin {
       );
     }
     if (key.length > kMaxKeyLength) {
-      throw const PluginException(PluginErrorCode.invalidArgs, 'key is too long');
+      throw const PluginException(
+          PluginErrorCode.invalidArgs, 'key is too long');
     }
   }
 

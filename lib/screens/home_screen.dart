@@ -63,8 +63,7 @@ class _HomeScreenState extends State<HomeScreen> {
       // The inspector shows bridge traffic; it is never offered in release.
       floatingActionButton: kDebugMode
           ? FloatingActionButton.small(
-              onPressed: () =>
-                  setState(() => _showInspector = !_showInspector),
+              onPressed: () => setState(() => _showInspector = !_showInspector),
               backgroundColor: const Color(0xFF6C63FF),
               child: Icon(
                 _showInspector ? Icons.close : Icons.bug_report,

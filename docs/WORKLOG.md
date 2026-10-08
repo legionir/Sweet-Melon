@@ -212,3 +212,50 @@ Rejected or corrected during this pass:
   AGP 8.11.1, Kotlin 2.2.20). Not a preference; the build fails otherwise.
 - A test that double-encoded the SDK payload was corrected to match the native
   side. The SDK was not changed for that.
+
+---
+
+## 2026-10-08 — Completion pass 2
+
+### Baseline (start of pass 2)
+- Branch `arena/a3bec261-sweet-melon`, head `6838f65` at start; working tree clean.
+- CI on head: analyze/unit PASS, JS PASS, Android build PASS, E2E FAIL, iOS not run (macOS runner not acquired).
+
+### E2E: root cause (finding E2E-001)
+- Symptom: the job reported "E2E failed" and the log stopped after
+  `Running Gradle task 'assembleDebug'`.
+- Evidence gathered this pass: the exit code of `flutter test` was written to a
+  file by a detached session and read as `0`. The app booted, "app boots into the
+  home screen" passed, and storage tests ran on the device.
+- Root cause: our own pass check. Flutter 3.47 prints a `✅ Passing tests` group
+  and not the string "All tests passed"; the script required that string and
+  failed a passing run. Earlier theories (process killed, memory pressure, the
+  emulator-runner wrapper) were wrong and are withdrawn. The `rc` variable also
+  was unset on success (a script bug).
+- Fix: the test prints an `E2E_OK:` marker per passing test. The script requires
+  exit code 0, no failure markers, and exactly two markers.
+- Regression guard: the E2E script refuses to pass without the markers.
+- Verification: CI run 37809546838, job "Android end-to-end (emulator)": PASS.
+
+### Other changes in this pass
+- Format: `dart format` was failing on 24 files. A CI step now publishes each
+  file's formatter diff as a check run; the diffs were applied with `git apply`
+  (storage_plugin.dart by hunk, since a NUL escape in a context line did not
+  match). Verification: pending the next CI run.
+- Coverage gate: `.github/scripts/coverage_gate.py` runs after unit tests.
+  Threshold is taken from repo variable `COVERAGE_MIN`; unset means 0 for this
+  measurement run. The real threshold will be set from the measured value.
+- iOS: a macOS job generates the missing `ios/Podfile` from the Flutter template
+  (`flutter create`), adds the permission_handler macros, and builds without
+  codesigning. Previously IOS-001 was blocked for "no Podfile / no macOS". Neither
+  is a blocker: the Podfile is generated in CI and macOS runners exist on GitHub.
+  The first macOS attempt was not picked up by a runner (capacity); it is retried.
+- Tests added: `test/unit/devtools_redaction_test.dart` (SEC-007),
+  `test/unit/camera_validation_test.dart` (BUG-009),
+  `test/unit/geolocation_lifecycle_test.dart` (BUG-005, BUG-013, SM-009, SM-011).
+- Inspector trace line cleaned up (plain quotes inside the interpolation).
+
+### Open after this push
+- Format and coverage results from CI (not yet verified).
+- iOS job result (not yet verified).
+- BUG-011 (WebViewHost dispose): no automated test yet.

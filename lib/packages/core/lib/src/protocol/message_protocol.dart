@@ -337,9 +337,7 @@ class BatchOptions {
           requestId: batchId);
     }
     if (timeout != null &&
-        (timeout is! num ||
-            timeout <= 0 ||
-            timeout > kMaxBatchTimeoutMs)) {
+        (timeout is! num || timeout <= 0 || timeout > kMaxBatchTimeoutMs)) {
       throw ProtocolException(
         'options.timeoutMs must be between 1 and $kMaxBatchTimeoutMs',
         requestId: batchId,
@@ -421,7 +419,8 @@ class BatchEnvelope {
 // PARSING HELPERS (private)
 // ============================================================
 
-Map<String, dynamic> _asJsonMap(Map<dynamic, dynamic> value, String? requestId) {
+Map<String, dynamic> _asJsonMap(
+    Map<dynamic, dynamic> value, String? requestId) {
   for (final key in value.keys) {
     if (key is! String) {
       throw ProtocolException('object keys must be strings',

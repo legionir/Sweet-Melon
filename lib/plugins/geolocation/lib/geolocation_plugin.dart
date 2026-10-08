@@ -254,7 +254,8 @@ class GeolocationPlugin extends Plugin {
         return ValidationResult.invalid('timeoutMs must be a number');
       }
       if (timeoutMs < 1 || timeoutMs > 60000) {
-        return ValidationResult.invalid('timeoutMs must be between 1 and 60000');
+        return ValidationResult.invalid(
+            'timeoutMs must be between 1 and 60000');
       }
     }
     final distanceFilter = args['distanceFilter'];

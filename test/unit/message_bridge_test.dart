@@ -59,15 +59,18 @@ void main() {
       expect(bridge.isReady, isTrue);
     });
 
-    test('requests without the session token are dropped before any handler runs',
+    test(
+        'requests without the session token are dropped before any handler runs',
         () async {
       var handled = 0;
       bridge.setMessageHandler((request) async {
         handled++;
-        return PluginResponse.success(requestId: request.requestId, data: 1, metadata: null);
+        return PluginResponse.success(
+            requestId: request.requestId, data: 1, metadata: null);
       });
       bridge.startSession();
-      await bridge.handleIncomingMessage(jsonEncode(requestJson(token: 'nope')));
+      await bridge
+          .handleIncomingMessage(jsonEncode(requestJson(token: 'nope')));
       expect(handled, 0);
     });
 
@@ -80,7 +83,8 @@ void main() {
         handled++;
         return PluginResponse.success(requestId: request.requestId, data: 1);
       });
-      await bridge.handleIncomingMessage(jsonEncode(requestJson(token: oldToken)));
+      await bridge
+          .handleIncomingMessage(jsonEncode(requestJson(token: oldToken)));
       expect(handled, 0);
     });
   });

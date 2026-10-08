@@ -28,7 +28,8 @@ void main() {
     temp.deleteSync(recursive: true);
   });
 
-  Future<PluginErrorCode?> errorOf(String method, Map<String, dynamic> args) async {
+  Future<PluginErrorCode?> errorOf(
+      String method, Map<String, dynamic> args) async {
     try {
       await plugin.onCall(method, args);
       return null;
@@ -49,7 +50,8 @@ void main() {
     }
 
     test('writeFile never creates a file outside the sandbox', () async {
-      await plugin.validateArgs('writeFile', {'path': '../outside.txt', 'content': 'x'});
+      await plugin.validateArgs(
+          'writeFile', {'path': '../outside.txt', 'content': 'x'});
       expect(File('${temp.path}/outside.txt').existsSync(), isFalse);
     });
 
@@ -58,19 +60,25 @@ void main() {
       expect(v.isValid, isFalse);
     });
 
-    test('a symlink planted inside the sandbox cannot be used to escape', () async {
+    test('a symlink planted inside the sandbox cannot be used to escape',
+        () async {
       final outside = Directory('${temp.path}/outside')..createSync();
       File('${outside.path}/secret.txt').writeAsStringSync('top secret');
       Link('${sandbox.path}/link').createSync(outside.path);
 
       expect(await errorOf('readFile', {'path': 'link/secret.txt'}),
           PluginErrorCode.sandboxViolation);
-      expect(await errorOf('writeFile', {'path': 'link/new.txt', 'content': 'x'}),
+      expect(
+          await errorOf('writeFile', {'path': 'link/new.txt', 'content': 'x'}),
           PluginErrorCode.sandboxViolation);
       expect(File('${outside.path}/new.txt').existsSync(), isFalse);
-    }, skip: Platform.isWindows ? 'symlinks need elevated rights on Windows' : false);
+    },
+        skip: Platform.isWindows
+            ? 'symlinks need elevated rights on Windows'
+            : false);
 
-    test('listFiles on a traversal path is refused (regression: unvalidated listFiles)',
+    test(
+        'listFiles on a traversal path is refused (regression: unvalidated listFiles)',
         () async {
       final v = await plugin.validateArgs('listFiles', {'path': '../'});
       expect(v.isValid, isFalse);
@@ -109,7 +117,8 @@ void main() {
 
   test('file round-trip inside the sandbox works', () async {
     expect(
-      await plugin.onCall('writeFile', {'path': 'docs/a.txt', 'content': 'hello'}),
+      await plugin
+          .onCall('writeFile', {'path': 'docs/a.txt', 'content': 'hello'}),
       isTrue,
     );
     expect(await plugin.onCall('readFile', {'path': 'docs/a.txt'}), 'hello');
@@ -119,7 +128,10 @@ void main() {
   });
 
   test('key-value round-trip with JSON values', () async {
-    await plugin.onCall('set', {'key': 'user', 'value': {'name': 'x'}});
+    await plugin.onCall('set', {
+      'key': 'user',
+      'value': {'name': 'x'}
+    });
     expect(await plugin.onCall('get', {'key': 'user'}), {'name': 'x'});
     expect(await plugin.onCall('has', {'key': 'user'}), isTrue);
     expect(await plugin.onCall('keys', {}), ['user']);
@@ -131,12 +143,14 @@ void main() {
     expect((await plugin.validateArgs('get', {})).isValid, isFalse);
     expect((await plugin.validateArgs('get', {'key': ''})).isValid, isFalse);
     expect(
-      (await plugin.validateArgs('get', {'key': 'k' * (kMaxKeyLength + 1)})).isValid,
+      (await plugin.validateArgs('get', {'key': 'k' * (kMaxKeyLength + 1)}))
+          .isValid,
       isFalse,
     );
   });
 
-  test('through the engine: traversal yields SANDBOX_VIOLATION or INVALID_ARGS, never success',
+  test(
+      'through the engine: traversal yields SANDBOX_VIOLATION or INVALID_ARGS, never success',
       () async {
     final harness = await EngineHarness.create(
       plugins: [plugin],

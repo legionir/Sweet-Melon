@@ -9,7 +9,8 @@ void main() {
   group('normalizeSandboxPath (SEC-002)', () {
     test('accepts plain relative paths and returns them unchanged', () {
       expect(normalizeSandboxPath('a.txt'), 'a.txt');
-      expect(normalizeSandboxPath('docs/2026/notes v1.txt'), 'docs/2026/notes v1.txt');
+      expect(normalizeSandboxPath('docs/2026/notes v1.txt'),
+          'docs/2026/notes v1.txt');
     });
 
     test('empty path is only allowed when explicitly permitted', () {
@@ -87,7 +88,8 @@ void main() {
       expect(await resolveWithinRoot(root, 'inside.txt'), '$root/inside.txt');
     });
 
-    test('rejects a symlink inside the root that points outside (regression: SEC-002)',
+    test(
+        'rejects a symlink inside the root that points outside (regression: SEC-002)',
         () async {
       final outside = Directory('${temp.path}/outside')..createSync();
       Link('$root/escape').createSync(outside.path);
@@ -101,6 +103,9 @@ void main() {
           ),
         ),
       );
-    }, skip: Platform.isWindows ? 'symlinks need elevated rights on Windows' : false);
+    },
+        skip: Platform.isWindows
+            ? 'symlinks need elevated rights on Windows'
+            : false);
   });
 }

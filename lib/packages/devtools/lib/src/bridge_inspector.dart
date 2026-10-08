@@ -33,9 +33,8 @@ class BridgeInspector {
   static Map<String, dynamic> redact(Map<String, dynamic> json) {
     return {
       for (final entry in json.entries)
-        entry.key: _redactedFields.contains(entry.key)
-            ? '[redacted]'
-            : entry.value,
+        entry.key:
+            _redactedFields.contains(entry.key) ? '[redacted]' : entry.value,
     };
   }
 

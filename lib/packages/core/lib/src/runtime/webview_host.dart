@@ -60,7 +60,8 @@ class _WebViewHostState extends State<WebViewHost> {
   void initState() {
     super.initState();
     _navigationPolicy = NavigationPolicy(
-      allowedHosts: widget.config.allowedHosts.map((h) => h.toLowerCase()).toSet(),
+      allowedHosts:
+          widget.config.allowedHosts.map((h) => h.toLowerCase()).toSet(),
       allowInsecureHttp: widget.config.enableDebugging,
     );
     _initController();
@@ -142,7 +143,8 @@ class _WebViewHostState extends State<WebViewHost> {
       await _controller.runJavaScript(buildBridgeSdk(token));
       BridgeLogger.info('WebView', 'Bridge SDK injected');
     } catch (e) {
-      BridgeLogger.error('WebView', 'Bridge SDK injection failed: ${e.runtimeType}');
+      BridgeLogger.error(
+          'WebView', 'Bridge SDK injection failed: ${e.runtimeType}');
     }
   }
 

@@ -82,7 +82,12 @@ void main() {
     test('returns a fresh copy: mutating the result does not change the cache',
         () {
       final cache = CacheManager(maxEntries: 10);
-      cache.set('k', {'list': [1, 2]}, ttl: const Duration(seconds: 10));
+      cache.set(
+          'k',
+          {
+            'list': [1, 2]
+          },
+          ttl: const Duration(seconds: 10));
       final first = cache.get('k') as Map<String, dynamic>;
       (first['list'] as List).add(99);
       final second = cache.get('k') as Map<String, dynamic>;
@@ -133,11 +138,13 @@ void main() {
 
     test('values that cannot be encoded are refused', () {
       final cache = CacheManager(maxEntries: 5);
-      expect(cache.set('k', Object(), ttl: const Duration(seconds: 1)), isFalse);
+      expect(
+          cache.set('k', Object(), ttl: const Duration(seconds: 1)), isFalse);
       expect(cache.get('k'), isNull);
     });
 
-    test('performance: 20k set/get operations on a 1k-entry cache stay fast', () {
+    test('performance: 20k set/get operations on a 1k-entry cache stay fast',
+        () {
       final cache = CacheManager(maxEntries: 1000);
       final watch = Stopwatch()..start();
       for (var i = 0; i < 20000; i++) {
@@ -177,7 +184,8 @@ void main() {
       expect(guard.activeCount, 0);
     });
 
-    test('rejects a duplicate requestId while the first is in flight', () async {
+    test('rejects a duplicate requestId while the first is in flight',
+        () async {
       final guard = ExecutionGuard();
       final gate = Completer<void>();
       final first = guard.execute<void>(
@@ -214,7 +222,8 @@ void main() {
   group('PermissionManager (SEC-005)', () {
     test('caches a grant until the TTL expires, then asks again', () async {
       final clock = FakeClock();
-      final provider = FakePermissionProvider({'camera': PermissionState.granted});
+      final provider =
+          FakePermissionProvider({'camera': PermissionState.granted});
       final manager = PermissionManager(
         provider: provider,
         cacheTtl: const Duration(seconds: 60),
@@ -236,7 +245,8 @@ void main() {
     });
 
     test('invalidateAll forces a fresh check', () async {
-      final provider = FakePermissionProvider({'location': PermissionState.granted});
+      final provider =
+          FakePermissionProvider({'location': PermissionState.granted});
       final manager = PermissionManager(provider: provider);
       await manager.check('location');
       manager.invalidateAll();
@@ -248,8 +258,8 @@ void main() {
   group('GeolocationPlugin.validatePositionArgs', () {
     test('accepts known accuracy levels and numeric distance filter', () {
       expect(
-        GeolocationPlugin.validatePositionArgs({'accuracy': 'best', 'distanceFilter': 5})
-            .isValid,
+        GeolocationPlugin.validatePositionArgs(
+            {'accuracy': 'best', 'distanceFilter': 5}).isValid,
         isTrue,
       );
     });
