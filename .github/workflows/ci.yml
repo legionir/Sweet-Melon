@@ -157,10 +157,12 @@ jobs:
           python3 .github/scripts/annotate_output.py e2e-prebuild.txt 40
           exit $rc
 
-      - name: Start Android emulator (API 33, x86_64)
-        shell: bash
-        run: bash .github/scripts/start_emulator.sh
-
-      - name: Run integration tests on the emulator
-        shell: bash
-        run: bash .github/scripts/run_e2e.sh
+      - name: Run integration tests on an emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 33
+          arch: x86_64
+          target: google_apis
+          disable-animations: true
+          emulator-options: -no-window -no-snapshot -gpu swiftshader_indirect -noaudio -no-boot-anim -memory 2048
+          script: bash .github/scripts/run_e2e.sh
