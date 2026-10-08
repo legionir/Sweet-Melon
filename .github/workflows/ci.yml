@@ -148,6 +148,15 @@ jobs:
             tail -5 ndk-install.txt
           fi
 
+      - name: Pre-build debug APK outside the emulator run
+        shell: bash
+        run: |
+          rc=0
+          flutter build apk --debug > e2e-prebuild.txt 2>&1 || rc=$?
+          cat e2e-prebuild.txt | tail -60
+          python3 .github/scripts/annotate_output.py e2e-prebuild.txt 40
+          exit $rc
+
       - name: Run integration tests on an emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
