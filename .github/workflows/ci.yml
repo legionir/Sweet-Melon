@@ -218,9 +218,13 @@ jobs:
       - name: Enable permission_handler iOS permission macros
         run: python3 .github/scripts/ios_permissions.py ios/Podfile
 
+      - name: Regenerate Flutter iOS config for this runner
+        run: flutter build ios --config-only --no-codesign
+
       - name: Install CocoaPods dependencies
         shell: bash
         run: |
+          grep FLUTTER_ROOT ios/Flutter/Generated.xcconfig | sed 's/^/::notice::/'
           cd ios
           rc=0
           pod install > ../pod-install.txt 2>&1 || rc=$?
