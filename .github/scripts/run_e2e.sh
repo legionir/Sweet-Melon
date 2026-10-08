@@ -1,42 +1,20 @@
 #!/usr/bin/env bash
-# Runs the on-device integration test against the booted Android emulator.
-# One script file keeps shell state and gives a single, strict exit code.
+# Runs the on-device integration test on the already-booted emulator.
 set -uo pipefail
-
-# Memory trace: lets the log show whether the emulator + Gradle exhausted RAM.
-( while sleep 15; do echo "$(date +%T) $(free -m | sed -n 2p)"; done ) > mem.log 2>&1 &
-MEM_PID=$!
-trap 'kill $MEM_PID 2>/dev/null; python3 .github/scripts/annotate_output.py mem.log 30' EXIT
-
-echo "== devices"
-flutter devices 2>&1 | tee e2e-devices.txt
-adb devices 2>&1 | tee -a e2e-devices.txt
-
-DEVICE="$(adb devices | awk 'NR>1 && $2=="device" {print $1; exit}')"
+SDK="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
+DEVICE="$("$SDK/platform-tools/adb" devices | awk 'NR>1 && $2=="device" {print $1; exit}')"
+echo "device=$DEVICE"
 if [ -z "$DEVICE" ]; then
-  echo "No booted Android device found" | tee e2e.txt
+  echo "No booted Android device found" > e2e.txt
   python3 .github/scripts/annotate_output.py e2e.txt
   exit 1
 fi
-echo "Using device $DEVICE"
-
 rc=0
 timeout 1500 flutter test integration_test/app_test.dart -d "$DEVICE" > e2e.txt 2>&1 || rc=$?
 echo "flutter test exit code: $rc" | tee -a e2e.txt
-
 cat e2e.txt
 python3 .github/scripts/annotate_output.py e2e.txt 60
-
-if [ "$rc" -ne 0 ]; then
-  echo "E2E failed with exit code $rc"
-  exit "$rc"
-fi
-if grep -q "Some tests failed\|tests passed, [1-9][0-9]* failed\|BUILD FAILED" e2e.txt; then
-  echo "E2E output reports failure"
-  exit 1
-fi
-if ! grep -q "All tests passed" e2e.txt; then
-  echo "E2E did not report 'All tests passed'"
-  exit 1
-fi
+if [ "$rc" -ne 0 ]; then echo "E2E failed with exit code $rc"; exit "$rc"; fi
+if grep -q "Some tests failed\|tests passed, [1-9][0-9]* failed\|BUILD FAILED" e2e.txt; then echo "E2E output reports failure"; exit 1; fi
+if ! grep -q "All tests passed" e2e.txt; then echo "E2E did not report 'All tests passed'"; exit 1; fi
 echo "E2E passed"
