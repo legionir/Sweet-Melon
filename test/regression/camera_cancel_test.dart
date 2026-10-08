@@ -83,5 +83,19 @@ void main() {
       expect(response.data, isNull);
       expect(response.error!.code, isNot(PluginErrorCode.executionError));
     });
+
+    test('cancel is counted as a call that failed, with its own code (stats)',
+        () async {
+      // Decision (BUG-008, worklog): a user cancel produced no result, so it is
+      // counted in errorCount like every other failed call (SM-005). Its code
+      // stays CANCELLED, so it is never confused with EXECUTION_ERROR.
+      final h = await harness(CancellingPicker());
+      await h.manager.execute(
+        buildRequest(requestId: 'c2', plugin: 'camera', method: 'takePhoto'),
+      );
+      final stats = h.manager.stats['camera.takePhoto']!;
+      expect(stats.totalCalls, 1);
+      expect(stats.errorCount, 1);
+    });
   });
 }

@@ -27,7 +27,7 @@ to have a copy of the app, its keystore or device access.
 | Permissions | Checked before every call on the OS (`permission_handler`), with a 5 s cache so revocations are seen quickly. A denial returns `status` (`denied`, `permanentlyDenied`, `unsupported`) so JS can ask again or open settings. Unknown permissions are denied. | SEC-005, PERM-001 |
 | Storage paths | `normalizeSandboxPath`: relative only, no `..` or `.`, no backslash, no NUL, no `:`, identifier-like segments, bounded length and depth. `resolveWithinRoot` resolves the nearest existing ancestor with `resolveSymbolicLinks` and rejects anything outside the sandbox root. Covered by a symlink test. | SEC-002 |
 | Storage sizes | 5 MiB per file (read and write, measured on decoded bytes); 64 KiB per stored value; 128-char keys. | SEC-009 |
-| Rate limiting | Sliding window per `plugin.method`, applied only after the plugin resolves. At most 1024 tracked keys, idle keys pruned. Camera 3/s, geolocation `getCurrentPosition` 5/s, default 50/s. | SEC-008 |
+| Rate limiting | Sliding window per `plugin.method`, applied only after the plugin resolves. At most 1024 tracked keys, idle keys pruned. `camera.takePhoto` 3/s, `geolocation.getCurrentPosition` 5/s, all other methods 50/s. | SEC-008 |
 | Concurrency | `maxConcurrentCalls` per plugin is enforced; camera is 1. Duplicate in-flight request ids are rejected. | CONC-001, CONC-002 |
 | Timeouts | Every execution has a timeout from configuration (30 s default). Batches have an overall timeout. | SM-004, BUG-002, BUG-013 |
 | Debug tooling | The inspector UI is only shown when `kDebugMode` is true, and it redacts `args` and `data` before storing them. | SEC-007 |
@@ -57,8 +57,9 @@ cache entries, so a read that follows a write is never stale (BUG-001, SM-003).
 - **Token scope.** The token protects against other frames and stale pages. It
   does not authenticate a compromised allow-listed host.
 - **Rate limits are per process.** They reset when the app restarts.
-- **iOS.** Permission checks and usage strings are in place, but the iOS
-  project has not been built in CI (IOS-001).
+- **iOS.** Permission checks and usage strings are in place. The iOS project
+  is built without code signing in CI (IOS-001), but the app is not run on a
+  simulator or device, so iOS runtime permission behaviour is not tested.
 
 ## Reporting
 

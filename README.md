@@ -1,7 +1,8 @@
 # Sweet-Melon
 
 A Flutter app that hosts a WebView and gives the web page a small, validated
-bridge to native plugins (camera, storage, geolocation). The JavaScript side
+bridge to native plugins (camera, storage, geolocation). It is a JavaScript-to-native
+API bridge, not a general WebView wrapper. The JavaScript side
 calls `window.Native.call({...})`; the Dart side checks permissions, rate
 limits, validates arguments, runs the plugin with a timeout and returns a
 structured response.
@@ -24,9 +25,11 @@ structured response.
 ```bash
 flutter pub get
 
-flutter analyze                       # static analysis
-flutter test test/                    # unit, security and regression tests
-flutter test --coverage test/         # same, with coverage/lcov.info
+flutter analyze --fatal-warnings      # static analysis (CI uses this)
+bash .github/scripts/format_report.sh   # formatting (CI; fails on any unformatted file)
+flutter test test/                    # unit, security, regression, integration, performance
+flutter test --coverage test/         # same, writes coverage/lcov.info
+python3 .github/scripts/coverage_gate.py coverage/lcov.info 55 '(^|/)(gen|generated)/|\.g\.dart$'
 node --test test/js/bridge_sdk.test.mjs   # injected JavaScript SDK
 
 flutter run                           # debug app on a device or emulator
@@ -65,15 +68,36 @@ lib/
     devtools/                  debug-only bridge inspector (payloads redacted)
   plugins/
     camera/ geolocation/ storage/
-test/                          unit, security and regression tests (Dart)
+test/unit/                     unit tests
+test/security/                 attacker-input tests (storage paths, sizes)
+test/regression/               one file per fixed finding (BUG-, SEC-, SM-)
+test/integration/              JSON -> bridge -> manager -> plugin -> response
+test/performance/              smoke budgets (bridge, events, cache)
+test/helpers/                  fakes shared by the Dart tests
 test/js/                       injected SDK tests (Node VM)
-integration_test/              on-device end-to-end test
-android/, ios/                 platform projects
+integration_test/              on-device end-to-end test (Android emulator)
+android/, ios/                 platform projects (ios/Podfile is committed)
 .github/workflows/ci.yml       CI pipeline
+.github/scripts/               CI helpers (E2E runner, coverage gate, format report)
+docs/                          architecture, security, testing, audit plan, worklog
 ```
 
 ## iOS
 
-The repository does not contain `ios/Podfile`, and the iOS project has not
-been built or verified in CI. The `Info.plist` usage strings are in place. See
-the blocked item IOS-001 in the audit plan.
+The iOS project is built in CI on a macOS runner with `flutter build ios --debug
+--no-codesign`. CI keeps the CocoaPods integration (Flutter's Swift Package
+Manager migration is turned off for the job) and runs `pod install` before the
+build. The minimum iOS version is 13.0, matching `ios/Podfile` and the
+`IPHONEOS_DEPLOYMENT_TARGET` setting. Running on a device needs a Mac with Xcode
+and your own signing team.
+
+## Before release
+
+Identifiers are placeholders inherited from the Flutter template. Before you
+publish the app, choose your own values:
+
+- Android `applicationId` in `android/app/build.gradle.kts`
+  (currently `com.example.sweet_melon`).
+- iOS `PRODUCT_BUNDLE_IDENTIFIER` in `ios/Runner.xcodeproj/project.pbxproj`
+  (currently `com.example.sweet_melon`, kept equal to the Android ID).
+- Release signing environment variables, as described above.

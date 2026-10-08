@@ -1,5 +1,13 @@
 # Architecture
 
+## Purpose
+
+The bridge gives JavaScript loaded in the top frame of a WebView controlled by
+the app access to a fixed set of native Android (and iOS) plugin APIs: storage,
+camera and geolocation. It is not a generic WebView wrapper. Pages can call only
+the plugins, methods and arguments that the engine accepts, and only from hosts
+on the allow-list.
+
 ## Overview
 
 ```
@@ -46,13 +54,20 @@
     256 entries. The queue never grows past that bound.
   - `emitEvent` validates the event name and double-encodes the payload, which
     is what the SDK expects.
+- `runtime/bridge_attachment.dart` — one WebView controller's claim on the
+  shared bridge. Page callbacks from a controller that was disposed or replaced
+  are ignored, so a late callback cannot start or end the session of the live
+  page. `WebViewHost.dispose` detaches through it (BUG-011).
 - `runtime/bridge_sdk.dart` — the JavaScript injected into each top-level page.
-  It is a Dart raw string. The Node test reads the same template, so there is
-  one copy of the code.
+  It exposes `window.Native` and posts to the `flutterBridge` channel. It does
+  nothing outside the top frame. It is a Dart raw string, and the Node test
+  executes that same template, so there is one copy of the code.
 - `runtime/navigation_policy.dart` — decides which navigations are allowed.
   Default deny for remote hosts. `about:blank` is the only `about:` URL allowed.
-  Only `https` (and `http` in debugging) to allow-listed hosts is allowed.
-  `javascript:`, `file:`, `intent:`, `content:`, `data:` are always blocked.
+  Only `https` to allow-listed hosts is allowed, and `http` only when
+  `allowInsecureHttp` is enabled (development).
+  Every other scheme (`javascript:`, `file:`, `intent:`, `content:`, `data:`
+  and so on) is blocked by the default-deny rule.
 - `runtime/webview_host.dart` — the Flutter widget. It configures the
   controller, applies the navigation policy, injects the SDK with a fresh token
   per page, and detaches from the bridge on dispose.
@@ -116,8 +131,8 @@ stats entry and one trace:
   files under the application documents directory. Paths go through
   `normalizeSandboxPath` and `resolveWithinRoot` (see SECURITY.md). Files are
   limited to 5 MiB. Read methods are cacheable; write methods are not.
-- **camera** — `image_picker`. One concurrent call (the native picker cannot
-  present two at once). User cancellation returns `CANCELLED`.
+- **camera** — `image_picker`. `maxConcurrentCalls` is 1. User cancellation
+  returns `CANCELLED`.
 - **geolocation** — one-shot `getCurrentPosition` and multiple named
   `watchPosition` streams (max 4). Positions are delivered as
   `geolocation.position` events with a `watchId`; errors as `geolocation.error`.
@@ -126,7 +141,8 @@ stats entry and one trace:
 
 ## Composition (`lib/di/service_locator.dart`)
 
-`get_it` singletons, created lazily. The registry gets an emitter closure that
+`get_it` singletons, created lazily. Rate-limit rules are set here:
+`camera.takePhoto` 3/s, `geolocation.getCurrentPosition` 5/s, default 50/s. The registry gets an emitter closure that
 calls the bridge, which breaks the registry → bridge → manager → registry
 cycle without a late setter. Plugins are registered during `ServiceLocator.init`.
 

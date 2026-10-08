@@ -20,10 +20,11 @@ import 'plugin_registry.dart';
 //   3. capability: streaming     -> INVALID_REQUEST
 //   4. capability: batch         -> INVALID_REQUEST (batch only)
 //   5. rate limit (plugin.method) -> RATE_LIMIT_EXCEEDED
-//   6. concurrency limit         -> RATE_LIMIT_EXCEEDED
-//   7. permissions               -> PERMISSION_DENIED
-//   8. argument validation       -> INVALID_ARGS
-//   9. cache read (read-only)    -> success (fromCache)
+//   6. permissions               -> PERMISSION_DENIED
+//   7. argument validation       -> INVALID_ARGS
+//   8. cache read (read-only)    -> success (fromCache)
+//   9. concurrency limit         -> RATE_LIMIT_EXCEEDED (checked and incremented
+//                                   synchronously, before execution)
 //  10. execution with timeout    -> TIMEOUT / CANCELLED / EXECUTION_ERROR
 //  11. cache write / invalidate
 //

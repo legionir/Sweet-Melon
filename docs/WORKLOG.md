@@ -283,3 +283,74 @@ Rejected or corrected during this pass:
   truth (it has the green CI run 37823734258). The local differences were saved to
   `/tmp/wt-backup/` (outside the repo) and the branch was reset to origin.
 - Verification: `git status` clean at `953d68c`; 127 tracked files.
+
+### 2026-10-08 — Completion pass 4: CI check, E2E investigation, BUG-007/008/011, docs audit
+- **CI on `cb938ff`** (run 37833505393): JS SDK passed; analyzer failed on three
+  `prefer_const` infos in `test/regression/argument_validation_test.dart`. Fixed in
+  `ddacbd0` (`const Stream<Position>.empty()`). The run on `ddacbd0` (37833966486)
+  is the one to check; its result is recorded in the final entry below.
+- **E2E failure on run 37815334536 (commit `1b00c87`) is NOT proven to be a flake.**
+  Earlier entries called it one; that classification is withdrawn. Evidence:
+  - `gh run view --log-failed` and the job-logs API both fail with an EOF from the
+    Actions results service, so the full log could not be read.
+  - The job's check-run annotations show `e2e.rc was not written` and
+    `The process '/usr/bin/sh' failed with exit code 1`. The annotation for
+    `e2e.txt` is absent, so the test output was never reported.
+  - Interpretation: the script ended without the exit-code file being written.
+    The most likely cause is that the detached test process did not write its
+    exit code before the step ended. This is a hypothesis, not a proven root cause.
+  - Response: `run_e2e.sh` was rewritten (`cb938ff`). It creates `e2e.txt` first,
+    runs the test under `setsid`, writes `e2e.rc` from an EXIT trap on every path,
+    and still requires exit code 0, no failure markers, and exactly two `E2E_OK`
+    markers. The exit-code mechanism was not weakened. The E2E job timeout is 40
+    minutes. The E2E status is unresolved until the E2E job of the final commit is
+    green.
+- **BUG-007 (batch stopOnError).** Fix as written in the plan: every request gets a
+  result; sequential stop sends `CANCELLED` to skipped items; parallel dispatch is a
+  documented limitation (`docs/SECURITY.md`). Evidence:
+  `test/regression/batch_stop_on_error_test.dart`, plus the timed-out batch test
+  (`BUG-007`/`BUG-002`). Resolved by tests, not by changing behaviour.
+- **BUG-008 (camera cancel).** Decision: a user cancel is counted in `errorCount`,
+  with code `CANCELLED`, not `EXECUTION_ERROR`. Rationale: the call produced no
+  result, so it is a failed call (SM-005 requires every failure path to record
+  stats). Excluding it would make `errorCount` under-report failed calls. Its code
+  keeps it distinct from real execution errors. Evidence:
+  `test/regression/camera_cancel_test.dart` (code and stats assertions).
+- **CONC-001 for the camera (new test).** `test/regression/camera_concurrency_test.dart`
+  holds the first `takePhoto` open with a `BlockingPicker`. A second call returns
+  `RATE_LIMIT_EXCEEDED` without opening the picker. After release, the slot is free.
+  This closes the gap in 8.9, where CONC-001 was listed but the camera's one-call
+  limit had no test.
+- **BUG-011 (WebView dispose).** `WebViewHost.dispose` detaches through
+  `BridgeAttachment`. `test/regression/webview_lifecycle_test.dart` covers detach
+  ending the session, no script after detach, late callbacks of a superseded host,
+  and repeated detach. The widget's own callbacks are not driven by a test; see
+  `docs/TESTING.md`.
+- **iOS deployment target 12.0 → 13.0** (`project.pbxproj`, 3 places;
+  `ios/Flutter/AppFrameworkInfo.plist`). Rationale: the Podfile already declares
+  13.0, and the pods are built against it. The project never supported iOS 12
+  consistently. The iOS CI job is the check for this change.
+- **Coverage gate.** The regex in `ci.yml` was checked byte by byte (single
+  backslashes). The threshold is unchanged at 55 %. Not lowered.
+- **Docs audit against code.** Corrected:
+  - `docs/TESTING.md` rewritten: it said device tests fail in CI, no coverage gate,
+    no format check, and iOS not covered. Each row now names a real file. The iOS
+    steps match `ci.yml`.
+  - `docs/SECURITY.md`: `camera.takePhoto` is the only camera method limited to
+    3/s (it said "Camera 3/s"). iOS is built without codesign in CI (it said it was
+    not built). Rate-limit scope is now stated per method.
+  - `docs/ARCHITECTURE.md`: states the bridge's purpose as JS → native plugin API,
+    not a generic WebView wrapper. Pipeline order checked against code. Added
+    `BridgeAttachment`. Corrected the http wording (only with `allowInsecureHttp`).
+    Confirmed the `ServiceLocator` composition, the rate-limit rules, and the
+    registry → bridge emitter cycle.
+  - `plugin_manager.dart` header comment: the check order was stale. Fixed to match
+    the code. This is a comment-only change.
+  - `README.md`: framing as JS-to-native API bridge; minimum iOS 13.0.
+- **Plan corrections.** SM-009 and SM-011 protecting tests now name the geolocation
+  lifecycle tests. The native subscription is still not device-tested. Sections
+  5b, 6, 12, 14 and 15 were stale (format, coverage gate, iOS "deferred", "IOS-001
+  blocked", folders). They are updated.
+- **Local verification.** Dart and Flutter are not installed in this sandbox. Format,
+  analyze and tests can be checked only through CI. Nothing in this entry is a local
+  PASS.

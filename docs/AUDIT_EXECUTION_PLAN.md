@@ -148,15 +148,23 @@ Priority: P0 critical · P1 high · P2 medium · P3 low · P4 improvement.
 - [~] **BUG-007 (P2)** `stopOnError` ignored in parallel batches; missing results
   possible. Fix: every request gets a result; sequential stop emits `CANCELLED`
   for skipped items; documented limitation for parallel dispatch.
+  Evidence: `test/regression/batch_stop_on_error_test.dart` (sequential CANCELLED,
+  parallel limitation, timed-out batch dispatches nothing later). Status stays
+  `[~]` until the CI run for this commit is green.
 - [~] **BUG-008 (P1)** User cancellation of camera reported as `EXECUTION_ERROR`.
-  Fix: `CANCELLED` error code.
+  Fix: `CANCELLED` error code. Decision: a user cancel is counted in `errorCount`
+  (it produced no result), with code `CANCELLED`. Evidence:
+  `test/regression/camera_cancel_test.dart`. Status stays `[~]` until CI is green.
 - [x] **BUG-009 (P1)** Argument casts in plugins threw `TypeError` and surfaced
   as `EXECUTION_ERROR`. Fix: validation before execution, `INVALID_ARGS` mapping.
 - [x] **BUG-010 (P1)** Android manifest lacked CAMERA and location permissions;
   iOS lacked usage descriptions (plugins would fail or crash at runtime).
   Fix: manifest permissions and Info.plist usage strings.
 - [~] **BUG-011 (P2)** WebView host never detached its controller from the bridge
-  on dispose. Fix: detach + end session in `dispose()`.
+  on dispose. Fix: detach + end session in `dispose()`, through
+  `BridgeAttachment`, so a late callback of a superseded host cannot change the
+  live session. Evidence: `test/regression/webview_lifecycle_test.dart`. Status
+  stays `[~]` until CI is green.
 - [x] **BUG-012 (P1)** Rate limiter used `num.clamp` where an `int` is required
   (type error risk). Fix: explicit integer arithmetic.
 - [x] **BUG-013 (P2)** `watchPosition` / `getCurrentPosition` had no timeout
@@ -243,9 +251,10 @@ Priority: P0 critical · P1 high · P2 medium · P3 low · P4 improvement.
 
 ### Known platform gap
 
-- [x] **IOS-001 (P2)** The iOS project has no `ios/Podfile` in the repository and
-  cannot be generated or built in this sandbox (no Flutter SDK, no macOS host).
-  See section 15 for the blocking reason and the follow-up.
+- [x] **IOS-001 (P2)** The iOS project had no `ios/Podfile` and was never built.
+  Resolved: `ios/Podfile` is committed with the `permission_handler` macros, the
+  deployment target is 13.0, and an iOS job in CI builds the app on macOS with
+  `flutter build ios --debug --no-codesign`. Running on a device is not covered.
 
 ## 5a. Known-finding mapping (SM-001 … SM-012)
 
@@ -262,12 +271,14 @@ fix and the test that protects it.
 | SM-006 | Bridge lifecycle: stale state across reloads | BUG-003, BUG-011 | sessions; stale responses dropped; dispose ends session | `message_bridge_test` regression: stale-session response dropped |
 | SM-007 | Pending request cleanup | BUG-003, CONC-002, BUG-011 | in-flight entries removed in `finally`; `cancelAll` on dispose; batch settles | `security_units_test` (guard), `plugin_manager_test` (dispose cancels) |
 | SM-008 | Batch lifecycle (unsettled batches) | BUG-002, BUG-007 | per-item results always present; batch timeout; stopOnError semantics | `plugin_manager_test` batch group, `bridge_sdk.test.mjs` batch timeout |
-| SM-009 | Geolocation watch discards positions | BUG-005 | `watchId` streams delivering `geolocation.position`; max 4; cleanup | validation tests; event path documented as not device-tested (TEST-003) |
+| SM-009 | Geolocation watch discards positions | BUG-005 | `watchId` streams delivering `geolocation.position`; max 4; cleanup | `geolocation_lifecycle_test` (watch IDs, stream error removes watch, watch limit); the native position stream is not device-tested (TEST-003) |
 | SM-010 | Error contract leaks internals | SEC-003 | generic message to JS; details logged natively | `plugin_manager_test` error-contract group |
-| SM-011 | Geolocation stream lifecycle | BUG-005 (cleanup) | subscriptions removed on cancel, end, error and dispose | code review; no native test |
+| SM-011 | Geolocation stream lifecycle | BUG-005 (cleanup) | subscriptions removed on cancel, end, error and dispose | `geolocation_lifecycle_test` (`clearWatch` cancels, dispose cancels all); the platform subscription is not device-tested |
 | SM-012 | Resource disposal | BUG-011, BUG-005, BUG-003 | `WebViewHost.dispose` detaches; bridge/manager/registry dispose | `message_bridge_test` (dispose), `plugin_manager_test` (dispose) |
 
-SM-007 and SM-011 are only partly covered by automated tests; see `docs/TESTING.md`.
+SM-007 and SM-011 are covered at the Dart level only. The native side (the real
+geolocation subscription and the picker) is not exercised on a device; see
+`docs/TESTING.md`, "What is not covered".
 
 ## 5b. Deviations from the original plan
 
@@ -298,15 +309,15 @@ in `docs/WORKLOG.md`.
   AGP 8.11.1 and Kotlin 2.2.20. The repo was on Gradle 8.10.2, AGP 8.7.0 and
   Kotlin 1.8.22 and failed the debug build. The versions were raised to the
   minimums.
-- **Folders.** Tests live in `test/unit/`, `test/security/` and
-  `test/js/`. The planned `test/integration`, `test/regression` and
-  `test/performance` folders were not created; regression and performance cases
-  are named inside `test/unit/`.
+- **Folders.** Tests live in `test/unit/`, `test/security/`, `test/regression/`,
+  `test/integration/`, `test/performance/` and `test/js/`, as in 9.
 - **Format and analyzer gate.** The plan asked for `dart format
   --set-exit-if-changed` and `flutter analyze --fatal-infos`. CI runs
-  `flutter analyze --fatal-warnings`. The format check is not in CI yet.
-- **Coverage gate.** Coverage is generated and uploaded. The
-  `scripts/coverage_gate.py` threshold script is not written yet (TEST-002).
+  `flutter analyze --fatal-warnings`. The format check runs in CI through
+  `.github/scripts/format_report.sh`, which also publishes the diff of any
+  unformatted file as a check run.
+- **Coverage gate.** Coverage is generated, uploaded, and enforced at 55 % by
+  `.github/scripts/coverage_gate.py` in CI (TEST-002).
 - **E2E.** `integration_test/app_test.dart` replaces the planned
   `app_e2e_test.dart`. It covers boot, the WebView host and the storage path
   through the engine. It does not drive JavaScript through the WebView (TEST-003).
@@ -316,7 +327,7 @@ in `docs/WORKLOG.md`.
 | Risk | Mitigation |
 | --- | --- |
 | Dart code could not be compiled inside the sandbox | Every change is verified by CI; failures are fixed and re-pushed (section 14) |
-| `permission_handler` on iOS needs Podfile macros | Documented; iOS build deferred (IOS-001) |
+| `permission_handler` on iOS needs Podfile macros | `ios_permissions.py` checks the Podfile in CI; the iOS job builds the app without codesign (IOS-001). The app is not run on an iOS device. |
 | Parallel batch cannot cancel already dispatched calls | Documented limitation; sequential mode honours `stopOnError` |
 | Dart futures cannot be cancelled after timeout | Guard reports `TIMEOUT`; underlying plugin work may finish later (documented) |
 | WebView iframes can still call the raw channel | Token prevents use; documented in SECURITY.md |
@@ -378,14 +389,15 @@ limitations).
 
 ## 12. CI/CD Plan
 
-`.github/workflows/ci.yml`, triggered on `push` and `pull_request`:
+`.github/workflows/ci.yml`, triggered on `push` to `main` and `arena/**`, on
+`pull_request`, and manually:
 
-1. `format` — not in CI yet (see 5b).
-2. `analyze` — `flutter analyze --fatal-warnings` (see 5b).
-3. `test` — unit/integration/security/regression with coverage; coverage gate.
-4. `js-sdk` — Node VM tests for the injected SDK.
-5. `android` — debug APK build.
-6. `android-e2e` — emulator run of `integration_test`.
+1. `analyze-and-test` — `flutter analyze --fatal-warnings`; `format_report.sh`
+   (dart format check); `flutter test test/ --coverage`; coverage gate (55 %).
+2. `js-sdk-tests` — Node VM tests for the injected SDK.
+3. `android-build` — debug and release APK builds.
+4. `android-e2e` — emulator run of `integration_test`, through `run_e2e.sh`.
+5. `ios-build` — macOS build without codesign (CocoaPods; SPM disabled).
 
 Release signing is injected via environment variables only; no secret is stored
 in the repository.
@@ -400,7 +412,7 @@ the worklog. Each document is kept in line with the code in the same change.
 - All P0/P1 findings are `[x]` with tests.
 - `flutter analyze --fatal-warnings`, `flutter test`, Node SDK tests, Android
   debug and release builds, and the Android E2E pass in GitHub Actions on the
-  pushed commit. (`dart format` and the coverage gate are not yet in CI; see 5b.)
+  pushed commit, including `dart format` and the 55 % coverage gate.
 - Docs describe the behaviour in the code.
 
 ## 15. Completion Status
@@ -408,14 +420,10 @@ the worklog. Each document is kept in line with the code in the same change.
 Work items are complete in code. Verification status is recorded in the worklog
 and in the final verification section below.
 
-Blocked items (only real external constraints):
-
-- **IOS-001** — iOS build/verification. Reason: the repository has no
-  `ios/Podfile` (it is generated by `flutter create`), and the sandbox has no
-  Flutter SDK and no macOS host. The Podfile must receive the
-  `permission_handler` `PERMISSION_CAMERA=1` / `PERMISSION_LOCATION=1` macros
-  before iOS permission checks are meaningful. Follow-up: generate the platform
-  files on a macOS runner and add an iOS job.
+Blocked items: none. IOS-001 was blocked by the lack of a Flutter SDK and a
+macOS host in the sandbox. It is no longer blocked: the iOS job in CI builds the
+app on a macOS runner (see section 12). The remaining gap is that the app is not
+run on an iOS device or simulator, which is recorded in `docs/TESTING.md`.
 
 ## 16. Final Verification
 
