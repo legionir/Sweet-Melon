@@ -27,7 +27,6 @@ class CancellingPicker implements ImagePicker {
   }
 }
 
-
 /// Fake picker whose first presentation stays open until [release] is called.
 /// Later presentations return immediately with no selection. Used to test that
 /// the camera plugin refuses a second call while the first is still open.

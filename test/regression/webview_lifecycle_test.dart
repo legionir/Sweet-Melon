@@ -72,8 +72,7 @@ void main() {
       expect(bridge.sessionId, sessionBefore);
     });
 
-    test('late callbacks of a superseded host cannot end the live session',
-        () {
+    test('late callbacks of a superseded host cannot end the live session', () {
       final oldHost = BridgeAttachment(bridge: bridge, executor: first.call);
       oldHost.startSession();
       final newHost = BridgeAttachment(bridge: bridge, executor: second.call);

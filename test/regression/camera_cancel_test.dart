@@ -74,8 +74,7 @@ void main() {
       }
     });
 
-    test('cancel is not reported as an execution error',
-        () async {
+    test('cancel is not reported as an execution error', () async {
       final h = await harness(CancellingPicker());
       final response = await h.manager.execute(
         buildRequest(requestId: 'c1', plugin: 'camera', method: 'takePhoto'),
