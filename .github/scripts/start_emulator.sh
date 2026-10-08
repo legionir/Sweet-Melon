@@ -3,6 +3,14 @@
 # action's script wrapper. The emulator keeps running in the background for
 # later steps.
 set -euo pipefail
+# On any exit, surface the logs that matter as annotations (job logs are not
+# downloadable from the sandbox).
+on_exit() {
+  for f in sdk-emulator.txt avd.txt emulator.log; do
+    [ -f "$f" ] && python3 .github/scripts/annotate_output.py "$f" 40 || true
+  done
+}
+trap on_exit EXIT
 SDK="${ANDROID_SDK_ROOT:-${ANDROID_HOME:?no Android SDK}}"
 CMDLINE="$(ls -d "$SDK"/cmdline-tools/*/bin 2>/dev/null | head -1 || true)"
 if [ -z "$CMDLINE" ]; then
