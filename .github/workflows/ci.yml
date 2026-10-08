@@ -33,10 +33,22 @@ jobs:
         run: flutter pub get
 
       - name: Static analysis (fatal on errors and warnings)
-        run: flutter analyze --fatal-warnings
+        shell: bash
+        run: |
+          flutter analyze --fatal-warnings > analyze.txt 2>&1
+          rc=$?
+          cat analyze.txt
+          python3 .github/scripts/annotate_output.py analyze.txt
+          exit $rc
 
       - name: Unit, security and regression tests with coverage
-        run: flutter test test/ --coverage --reporter expanded
+        shell: bash
+        run: |
+          flutter test test/ --coverage --reporter expanded > unit.txt 2>&1
+          rc=$?
+          cat unit.txt
+          python3 .github/scripts/annotate_output.py unit.txt
+          exit $rc
 
       - name: Upload coverage
         uses: actions/upload-artifact@v4
@@ -78,10 +90,22 @@ jobs:
         run: flutter pub get
 
       - name: Build debug APK
-        run: flutter build apk --debug
+        shell: bash
+        run: |
+          flutter build apk --debug > debug-build.txt 2>&1
+          rc=$?
+          cat debug-build.txt
+          python3 .github/scripts/annotate_output.py debug-build.txt
+          exit $rc
 
       - name: "Build release APK (unsigned: no release keystore in CI)"
-        run: flutter build apk --release
+        shell: bash
+        run: |
+          flutter build apk --release > release-build.txt 2>&1
+          rc=$?
+          cat release-build.txt
+          python3 .github/scripts/annotate_output.py release-build.txt
+          exit $rc
 
   android-e2e:
     name: Android end-to-end (emulator)
@@ -116,4 +140,9 @@ jobs:
           arch: x86_64
           target: google_apis
           disable-animations: true
-          script: flutter test integration_test/app_test.dart
+          script: |
+            flutter test integration_test/app_test.dart > e2e.txt 2>&1
+            rc=$?
+            cat e2e.txt
+            python3 .github/scripts/annotate_output.py e2e.txt
+            exit $rc
