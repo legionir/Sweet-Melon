@@ -275,3 +275,11 @@ Rejected or corrected during this pass:
   Info.plist; builds green), IOS-001, TEST-002, TEST-003, CI-001, 8.12.
 - Not done in this pass: BUG-007, BUG-008, BUG-011 tests; 8.5, 8.9, 8.11 completion;
   docs check against code; final audit. Section 16 lists them.
+
+### 2026-10-08 — Completion pass 3: working-tree reconciliation
+- Finding: the local checkout was at `feca87b` (main base) with ~48 uncommitted
+  changes that did not match the CI-verified branch head `953d68c`.
+- Decision: origin `arena/a3bec261-sweet-melon` at `953d68c` is the source of
+  truth (it has the green CI run 37823734258). The local differences were saved to
+  `/tmp/wt-backup/` (outside the repo) and the branch was reset to origin.
+- Verification: `git status` clean at `953d68c`; 127 tracked files.
