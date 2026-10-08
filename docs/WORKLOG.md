@@ -222,19 +222,13 @@ Rejected or corrected during this pass:
 - CI on head: analyze/unit PASS, JS PASS, Android build PASS, E2E FAIL, iOS not run (macOS runner not acquired).
 
 ### E2E: root cause (finding E2E-001)
-- Symptom: the job reported "E2E failed" and the log stopped after
-  `Running Gradle task 'assembleDebug'`.
-- Evidence gathered this pass: the exit code of `flutter test` was written to a
-  file by a detached session and read as `0`. The app booted, "app boots into the
-  home screen" passed, and storage tests ran on the device.
-- Root cause: our own pass check. Flutter 3.47 prints a `✅ Passing tests` group
-  and not the string "All tests passed"; the script required that string and
-  failed a passing run. Earlier theories (process killed, memory pressure, the
-  emulator-runner wrapper) were wrong and are withdrawn. The `rc` variable also
-  was unset on success (a script bug).
-- Fix: the test prints an `E2E_OK:` marker per passing test. The script requires
-  exit code 0, no failure markers, and exactly two markers.
-- Regression guard: the E2E script refuses to pass without the markers.
+- Earlier E2E failures were reported by the pass-check grep in
+  `.github/scripts/run_e2e.sh`, not by the test process itself. Runs
+  37803775317 and 37805464783 had `e2e.rc = 0` but failed the grep.
+- Theories that a process was killed or ran out of memory are withdrawn. They
+  were not supported by the evidence.
+- Fix: the integration test prints an `E2E_OK:` marker per passing test. The
+  script requires exit code 0, no failure text, and exactly two markers.
 - Verification: CI run 37809546838, job "Android end-to-end (emulator)": PASS.
 
 ### Other changes in this pass
