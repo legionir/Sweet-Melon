@@ -29,9 +29,15 @@ def main() -> int:
         # Split on CR too: progress bars rewrite one physical line many times.
         lines = [part for raw in fh for part in re.split(r"[\r\n]+", raw.rstrip("\n"))]
     print(f"::notice::annotate_output scanned {len(lines)} lines from {path}")
+    follow = 0  # lines to keep after a "What went wrong" heading
     for line in lines:
         if count >= limit:
             break
+        if follow > 0 and line.strip():
+            print(f"::error::{escape(line.strip())[:500]}")
+            count += 1
+            follow -= 1
+            continue
         m = ANALYZER.match(line)
         if m:
             level = "error" if m.group(1) == "error" else "warning"
@@ -41,6 +47,8 @@ def main() -> int:
         elif KEYWORDS.search(line):
             print(f"::error::{escape(line.strip())[:500]}")
             count += 1
+            if "What went wrong" in line:
+                follow = 6
     if count == 0:
         # Nothing recognised: surface the tail so the failure is still visible.
         for line in [ln for ln in lines if ln.strip()][-40:]:
