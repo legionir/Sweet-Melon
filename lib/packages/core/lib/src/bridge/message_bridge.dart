@@ -91,6 +91,9 @@ class MessageBridge {
     return true;
   }
 
+  /// True when [executor] is the executor currently attached to this bridge.
+  bool isCurrentExecutor(JsExecutor executor) => _executor == executor;
+
   // ============================================================
   // SESSION LIFECYCLE
   // ============================================================

@@ -6,6 +6,7 @@ import 'package:webview_flutter/webview_flutter.dart';
 
 import '../bridge/message_bridge.dart';
 import '../utils/logger.dart';
+import 'bridge_attachment.dart';
 import 'bridge_sdk.dart';
 import 'navigation_policy.dart';
 
@@ -53,8 +54,10 @@ class WebViewHost extends StatefulWidget {
 class _WebViewHostState extends State<WebViewHost> {
   late final WebViewController _controller;
   late final JsExecutor _jsExecutor;
+  late final BridgeAttachment _attachment;
   late final NavigationPolicy _navigationPolicy;
   bool _isReady = false;
+  bool _disposed = false;
 
   @override
   void initState() {
@@ -81,7 +84,10 @@ class _WebViewHostState extends State<WebViewHost> {
       );
 
     _jsExecutor = _controller.runJavaScript;
-    widget.bridge.attachJsExecutor(_jsExecutor);
+    _attachment = BridgeAttachment(
+      bridge: widget.bridge,
+      executor: _jsExecutor,
+    );
 
     if (widget.initialHtml != null) {
       unawaited(_controller.loadHtmlString(widget.initialHtml!));
@@ -92,26 +98,30 @@ class _WebViewHostState extends State<WebViewHost> {
 
   @override
   void dispose() {
-    if (widget.bridge.detachJsExecutor(_jsExecutor)) {
-      widget.bridge.endSession();
-    }
+    // Late page callbacks are ignored from here on (BUG-011).
+    _disposed = true;
+    _attachment.detach();
     super.dispose();
   }
 
   NavigationDelegate _buildNavigationDelegate() {
     return NavigationDelegate(
       onPageStarted: (url) {
+        if (_disposed) return;
         BridgeLogger.info('WebView', 'Page started: $url');
-        widget.bridge.endSession();
+        _attachment.onPageStarted();
         if (mounted) setState(() => _isReady = false);
       },
       onPageFinished: (url) async {
+        if (_disposed) return;
         BridgeLogger.info('WebView', 'Page finished: $url');
         await _injectBridgeScript();
+        if (_disposed) return;
         if (mounted) setState(() => _isReady = true);
         widget.onPageLoaded?.call();
       },
       onWebResourceError: (error) {
+        if (_disposed) return;
         BridgeLogger.error(
           'WebView',
           'Resource error: ${error.description}',
@@ -139,7 +149,8 @@ class _WebViewHostState extends State<WebViewHost> {
 
   Future<void> _injectBridgeScript() async {
     try {
-      final token = widget.bridge.startSession();
+      final token = _attachment.startSession();
+      if (token == null) return; // superseded or disposed: nothing to inject
       await _controller.runJavaScript(buildBridgeSdk(token));
       BridgeLogger.info('WebView', 'Bridge SDK injected');
     } catch (e) {
@@ -151,10 +162,12 @@ class _WebViewHostState extends State<WebViewHost> {
   // ── Messages from JS ──────────────────────────────────────
 
   void _onJsMessage(JavaScriptMessage message) {
+    if (_disposed) return;
     unawaited(widget.bridge.handleIncomingMessage(message.message));
   }
 
   void _onInternalMessage(JavaScriptMessage message) {
+    if (_disposed) return;
     if (message.message.length > _maxInternalMessageLength) {
       BridgeLogger.warn('WebView', 'Oversized internal message ignored');
       return;

@@ -287,6 +287,7 @@ class PluginManager {
         : Duration(milliseconds: options.timeoutMs!);
     final results = <String, PluginResponse>{};
     var stopped = false;
+    var settled = false;
 
     Future<void> runOne(PluginRequest request) async {
       final response = await execute(request, inBatch: true);
@@ -299,6 +300,9 @@ class PluginManager {
     } else {
       final sequential = () async {
         for (final request in requests) {
+          // BUG-007: once the batch has settled (timeout), no further
+          // request may be dispatched; the loop would otherwise keep running.
+          if (settled) return;
           await runOne(request);
           if (options.stopOnError &&
               results[request.requestId]!.success == false) {
@@ -308,6 +312,7 @@ class PluginManager {
         }
       }();
       await _awaitAll([sequential], overall);
+      settled = true;
     }
 
     // Every request gets a response, even if it never finished.
