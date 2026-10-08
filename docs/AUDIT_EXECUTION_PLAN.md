@@ -436,53 +436,76 @@ run on an iOS device or simulator, which is recorded in `docs/TESTING.md`.
 
 ## 16. Final Verification
 
-Evidence is in `docs/WORKLOG.md`. This section is the summary.
+Final verification pass 5 is recorded in `docs/WORKLOG.md`. This section is the summary.
 
-### Final Status (CI-verified commit `8b1fa1a` on `arena/a3bec261-sweet-melon`)
+**Final Status: COMPLETE**
 
-CI run 37835701145 on `8b1fa1a`:
+### Repository state
 
-| CI job | Result |
-| --- | --- |
-| Injected JavaScript SDK (Node VM) | PASS |
-| Analyze, unit, security and regression tests (`flutter analyze --fatal-warnings`, `flutter test test/ --coverage`, coverage gate 55 %, `dart format` check) | PASS |
-| Android build (debug and release) | PASS (release unsigned: no keystore in CI) |
-| Android end-to-end (emulator, `run_e2e.sh`) | PASS (exit code file 0; the script also requires two `E2E_OK` markers) |
-| iOS build (macOS, no codesign) | PASS |
+- Branch `arena/a3bec261-sweet-melon`. Local HEAD equals `origin` HEAD at each
+  push, and the working tree was clean after each push.
+- Production code, tests, Android and iOS configuration and CI workflow are
+  unchanged since `8b1fa1a`. That commit's CI run 37835701145 was green. Later
+  commits `5fe5557` and `bdb204c` change only `docs/`.
+- CI runs that are green on the exact commits: `37836821932` on `5fe5557`, and
+  `37839069513` on `bdb204c`.
 
-Line coverage passed the 55 % gate. The exact percentage could not be read in this
-pass, because the job log and the coverage artifact downloads failed with EOF. The
-figure measured on the earlier commit `69b6d17` was 58.18 %. The threshold was not
-lowered.
+### CI (run 37839069513, commit `bdb204c`)
 
-Local format, analyze and test runs were not possible. Dart and Flutter are not
-installed in this sandbox, so CI is the only verification for those steps.
+| Job | Result | Steps verified |
+| --- | --- | --- |
+| Injected JavaScript SDK (Node VM) | PASS | `node --test test/js/bridge_sdk.test.mjs` |
+| Analyze, unit, security and regression tests | PASS | static analysis (`--fatal-warnings`), tests with coverage, coverage gate, format check, coverage upload |
+| Android build (debug and release) | PASS | release is unsigned (no keystore in CI) |
+| Android end-to-end (emulator) | PASS | `run_e2e.sh` (exit code 0; two `E2E_OK` markers required by the script) |
+| iOS build (macOS, no codesign) | PASS | CocoaPods install and `flutter build ios --debug --no-codesign` |
 
-Several check-run annotations on passing jobs are `failure` entries. They are false
-positives from the annotator, which matches test names containing "error" or
-"passed". The job conclusions are the authority.
+Coverage: the gate passed at the enforced 55 % threshold. The exact measured
+percentage for the final commit was not recoverable from the available CI
+logs or artifacts in this pass (both downloads failed with EOF). The earlier
+58.18 % belongs to `69b6d17` and is not the final value. The threshold was not lowered.
+
+Local verification: only the JS SDK suite was run locally (Node 22.22.3, 16/16 pass).
+Dart and Flutter are not installed in this sandbox, so Dart format, analyze and
+tests are verified in CI only.
+
+### Requirement evidence
+
+| Item | Requirement | Implementation | Test | Verification |
+| --- | --- | --- | --- | --- |
+| BUG-007 | Sequential `stopOnError`: later requests are not dispatched; skipped requests get a result; parallel limitation documented | `PluginManager.executeBatch` (sequential loop checks `settled` and `stopOnError`; skipped requests get `CANCELLED`) | `test/regression/batch_stop_on_error_test.dart` | Real manager path; passed in CI |
+| BUG-008 | Picker cancel: `ImagePicker` null → `PluginException(cancelled)` → `_fail` → `CANCELLED`, slot released, counted in `errorCount` | `CameraPlugin._takePhoto`; manager `on PluginException`; `ExecutionGuard` `finally` | `test/regression/camera_cancel_test.dart` (response code, repeated calls, stats) | Real engine path with a fake picker; passed in CI |
+| BUG-011 | Dispose detaches the executor and ends the session; late callbacks cannot change the live session | `WebViewHost.dispose` → `BridgeAttachment.detach` → `MessageBridge.detachJsExecutor` and `endSession` | `test/regression/webview_lifecycle_test.dart` (real `MessageBridge`) | Passed in CI. The widget callbacks themselves are not driven by a test (see TESTING.md) |
+| 8.5 | Navigation policy, SDK in top frame, lifecycle | `NavigationPolicy` (wired in `WebViewHost`); SDK `window.top` guard; `BridgeAttachment` | `navigation_policy_test`, `bridge_sdk.test.mjs` (iframe refusal), `webview_lifecycle_test` | Passed in CI and locally (JS) |
+| 8.9 | Storage, camera, geolocation behaviour | `SandboxPath`, storage size limits; camera cancel and validation; geolocation watches and timeout | `storage_path_test`, `storage_security_test`, `camera_validation_test`, `camera_cancel_test`, `camera_concurrency_test` (CONC-001), `geolocation_lifecycle_test`, `argument_validation_test` | Passed in CI |
+| 8.10 | Manifests, Info.plist, Gradle signing and heap | `AndroidManifest.xml` (CAMERA, FINE and COARSE location); iOS usage strings; `build.gradle.kts` signing from env; `gradle.properties` heap | Android and iOS CI build jobs | Passed in CI |
+| 8.11 | Unit, integration, security, regression, performance smoke, JS SDK, E2E | `test/unit`, `test/integration`, `test/security`, `test/regression`, `test/performance`, `test/js`, `integration_test` | the Dart suite and JS suite, E2E job | Passed in CI |
 
 ### Plan status
 
-- Every plan item is `[x]` or `[-]`. Nothing is `[~]`, `[ ]` or `[!]`.
-- No item is blocked. IOS-001 is resolved (section 15).
-- SM-001 to SM-012 are mapped to fixes and tests in section 5a.
-- BUG-007, BUG-008 and BUG-011 are resolved with focused tests. Their decisions are
-  in the worklog.
+- Every item is `[x]`. None is `[~]`, `[ ]`, `[!]` or `[-]`.
+- The `[-]` status is not used anywhere in this plan. Its meaning is written in the legend.
+- SM-001 to SM-012 are mapped in section 5a. Two of them (SM-007, SM-011) are
+  covered at the Dart level only, as stated there.
+- No P0 or P1 item is open.
+
+### Historical E2E incident
+
+Run 37815334536 (commit `1b00c87`) failed in the Android E2E job. The check-run
+annotations report `e2e.rc was not written`. The full logs could not be read.
+The root cause is not conclusively established, and this document does not call
+the failure a flake. The E2E harness was then rewritten (`cb938ff`): it writes
+`e2e.txt` first, and an EXIT trap writes `e2e.rc` on every path. Subsequent
+E2E runs passed: `37834548307`, `37835701145`, `37836821932` and `37839069513`.
 
 ### Known limits (documented, not blockers)
 
-- No automated test runs the page's JavaScript inside the real WebView. The Node VM
-  tests cover the SDK code. The on-device test covers boot and the storage path.
-- The iOS job builds the app without codesign. The app is not run on an iOS device
-  or simulator.
+- No automated test runs the page's JavaScript inside the real WebView. The Node
+  VM tests cover the SDK code, and the device test covers boot and the storage path.
+- The iOS job builds the app without codesign. The app is not run on an iOS device or simulator.
 - The native geolocation subscription and the image picker are not exercised on a
   device. Their Dart-level logic is tested with fakes.
 - Parallel batches do not apply `stopOnError` (documented in `docs/SECURITY.md`).
-- The E2E failure on run 37815334536 (commit `1b00c87`) has no proven root cause.
-  The logs for that run could not be read. The annotations show that the exit-code
-  file was never written. The script was rewritten to write it on every path, and
-  the rewritten script passed in runs 37834548307 and 37835701145.
-
-The commit that carries this section changes only `docs/`. Its own CI run is the
-final check for the branch head.
+- The symlink tests are skipped on Windows only (`skip: Platform.isWindows`). CI runs on Linux.
+- The Android and iOS bundle identifiers are placeholders (`com.example.sweet_melon`).
+  `README.md` says to change them before publishing.

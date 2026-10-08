@@ -381,3 +381,79 @@ because those logs are no longer retrievable.
 - Plan: BUG-007, BUG-008, BUG-011, 8.5, 8.9, 8.10 and 8.11 are `[x]`. Each is backed
   by a test or a CI job that passed on `8b1fa1a`. Section 16 is rewritten.
 - Final commit: this docs-only commit. Its own CI run is the check for the branch head.
+
+### 2026-10-08 — Final verification pass 5 (completion gate)
+Scope: verify the existing final state. No audit rerun, no new features. The only
+code-level check was the high-risk path review below; no production defect was found.
+
+**Final Status:** COMPLETE (see `docs/AUDIT_EXECUTION_PLAN.md` section 16).
+
+- **Final Commit:** the commit that adds this entry. It is docs-only and sits on
+  `bdb204c`. Its own CI run is reported with the final response.
+- **Branch:** `arena/a3bec261-sweet-melon`.
+- **CI Run / CI Commit (verified code and docs state):** run `37839069513` on
+  `bdb204c`, conclusion success. Production code is unchanged since `8b1fa1a`
+  (CI `37835701145`, success).
+- **Format:** PASS in CI (format check step, run 37839069513).
+- **Analyze:** PASS in CI (`flutter analyze --fatal-warnings`). Not run locally.
+- **Unit:** PASS in CI (`flutter test test/`). Not run locally.
+- **Security:** PASS in CI. Security tests are part of `test/`. Not run locally.
+- **Regression:** PASS in CI. Includes BUG-007, BUG-008, BUG-011, CONC-001 and BUG-009.
+- **Coverage Gate:** PASS in CI at the enforced threshold.
+- **Coverage Threshold:** 55 %. Not lowered.
+- **Exact Coverage Percentage:** Not available from CI logs/artifacts. Both the
+  job-log and artifact downloads failed with EOF in this pass. The 58.18 % figure
+  belongs to `69b6d17` and is not the final value.
+- **Android Build:** PASS in CI (debug and release; release unsigned, no keystore).
+- **Android E2E:** PASS in CI (exit code file 0; the script also requires two `E2E_OK` markers).
+- **iOS Build:** PASS in CI (no codesign).
+- **JS SDK:** PASS in CI, and 16/16 pass when re-run locally on Node 22.22.3.
+- **Documentation Audit:** done. Fixed: plan Status fragments; plan statements that
+  contradicted the code (PERM-001 status values, STAT-001 `successCount`, PERF-002
+  heap, SEC-007 gate, BUG-001 invalidation, CONC-001 class name, TEST-002/003 names);
+  TESTING camera concurrency row; README regression wording; ARCHITECTURE line
+  wrap. Confirmed: the bridge is described as JS → native plugin API, not a generic
+  WebView wrapper; CI describes iOS build, coverage gate and format as present;
+  camera rate limit is `camera.takePhoto` only; iOS deployment target 13.0 matches
+  Podfile and `project.pbxproj`.
+- **Final Audit:** done for the high-risk areas listed below. Checked by reading
+  code and tests; the tests that exercise them passed in CI.
+  - Bridge: size check before parse, then token check, then dispatch, with a
+    catch-all that never raises.
+  - Plugin manager: check order in code matches the documented order.
+  - Permissions: checked on every call for each declared permission.
+  - Navigation: `NavigationPolicy` is wired in `WebViewHost`.
+  - Camera: cancel → `CANCELLED`; concurrency limit is one call.
+  - Geolocation: watch cap of 4; `clearWatch` and dispose cancel subscriptions.
+  - Storage: `normalizeSandboxPath` and `resolveWithinRoot`.
+  - WebView lifecycle: `dispose` → detach → session ended.
+  - Rate limiting and timeouts: per-method rules in `ServiceLocator`; timeout from
+    configuration; batch timeout settles every item.
+  - Cancellation, dispose and error mapping: `ExecutionGuard.finally` releases the
+    slot; `PluginException` passes its code; other exceptions become `EXECUTION_ERROR`.
+  - Statistics: failures counted in `errorCount` and `totalCalls`.
+  - Android and iOS configuration: manifest permissions, env-based signing, Podfile
+    macros, deployment target, bundle identifiers (placeholders, documented).
+  - Marker search (TODO, FIXME, HACK, XXX, NotImplemented, SKIPPED, PENDING, BLOCKED)
+    in `lib`, `test`, `integration_test`, `android`, `ios` and `.github`: no
+    unresolved markers. The only `skip:` is the Windows platform gate on symlink tests.
+- **Remote HEAD Verification:** before this entry, local HEAD and
+  `refs/heads/arena/a3bec261-sweet-melon` on origin were both `bdb204c`. After the
+  final push, the same check is repeated and reported with the final response.
+- **Remaining Issues:** none that block completion. Known limits are listed in
+  section 16 of the plan.
+
+**Observed / inferred / unknown, for the historical incidents**
+- Observed (run logs of the time): run 37815334536 reported `e2e.rc was not written`
+  and exit code 1. The E2E-001 runs (37803775317, 37805464783) had `e2e.rc = 0` and
+  failed the old grep. Both were recorded from logs at the time, and the logs cannot
+  be re-read now.
+- Unknown: the root cause of run 37815334536. The logs are unavailable.
+- Inferred, not proven: the detached test process did not write its exit code before the step ended.
+- Not claimed: that the failure was a flake. Subsequent runs passed (37834548307,
+  37835701145, 37836821932, 37839069513), with the hardened harness (`cb938ff`).
+
+**Corrections made in this pass**
+- Pass 2's "treated as a flake" is withdrawn. The cause is not established.
+- The 58.18 % coverage figure is labelled as the `69b6d17` value.
+- Pass 1's "executed locally" JS SDK result was re-run on Node 22.22.3 and passes.
