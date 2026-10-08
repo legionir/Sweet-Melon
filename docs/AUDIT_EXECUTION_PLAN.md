@@ -113,7 +113,7 @@ Priority: P0 critical · P1 high · P2 medium · P3 low · P4 improvement.
   rules), 5 s TTL cache, explicit `permanentlyDenied` status returned to JS.
 - [x] **SEC-006 (P1)** Android release build signed with the debug key.
   Fix: release signing read from environment; without it release is unsigned.
-- [~] **SEC-007 (P2)** Debug inspector (shows every bridge payload) was shown in
+- [x] **SEC-007 (P2)** Debug inspector (shows every bridge payload) was shown in
   production. Fix: FAB and inspector only when `enableDebugging`.
 - [x] **SEC-008 (P2)** Rate-limiter buckets keyed by untrusted names
   (unbounded growth). Fix: buckets only for registered plugin methods; idle
@@ -139,7 +139,7 @@ Priority: P0 critical · P1 high · P2 medium · P3 low · P4 improvement.
 - [x] **BUG-004 (P1)** `emitEvent` with a primitive payload produced invalid
   JS for the SDK (`JSON.parse` of a non-string); non-serialisable payloads threw.
   Fix: payload double-encoded; serialisation errors are logged and dropped.
-- [~] **BUG-005 (P1)** Geolocation `watchPosition` discarded every position; only
+- [x] **BUG-005 (P1)** Geolocation `watchPosition` discarded every position; only
   one watch; no event delivery. Fix: `watchId`-based watches, `geolocation.position`
   and `geolocation.error` events, `clearWatch({watchId})`, dispose cancels all.
 - [x] **BUG-006 (P2)** Malformed requests: `json['requestId'] as String? ?? 'unknown'`
@@ -150,9 +150,9 @@ Priority: P0 critical · P1 high · P2 medium · P3 low · P4 improvement.
   for skipped items; documented limitation for parallel dispatch.
 - [~] **BUG-008 (P1)** User cancellation of camera reported as `EXECUTION_ERROR`.
   Fix: `CANCELLED` error code.
-- [~] **BUG-009 (P1)** Argument casts in plugins threw `TypeError` and surfaced
+- [x] **BUG-009 (P1)** Argument casts in plugins threw `TypeError` and surfaced
   as `EXECUTION_ERROR`. Fix: validation before execution, `INVALID_ARGS` mapping.
-- [~] **BUG-010 (P1)** Android manifest lacked CAMERA and location permissions;
+- [x] **BUG-010 (P1)** Android manifest lacked CAMERA and location permissions;
   iOS lacked usage descriptions (plugins would fail or crash at runtime).
   Fix: manifest permissions and Info.plist usage strings.
 - [~] **BUG-011 (P2)** WebView host never detached its controller from the bridge
@@ -220,14 +220,14 @@ Priority: P0 critical · P1 high · P2 medium · P3 low · P4 improvement.
 
 - [x] **TEST-001 (P0)** No tests existed. Fix: unit, integration, security,
   regression, performance-smoke and JavaScript-SDK tests (`test/`, `test/js/`).
-- [~] **TEST-002 (P1)** No coverage measurement. Fix: `flutter test --coverage`
+- [x] **TEST-002 (P1)** No coverage measurement. Fix: `flutter test --coverage`
   with a per-area coverage gate (`scripts/coverage_gate.py`).
-- [~] **TEST-003 (P2)** No device-level E2E. Fix: `integration_test/app_e2e_test.dart`
+- [x] **TEST-003 (P2)** No device-level E2E. Fix: `integration_test/app_e2e_test.dart`
   run on an Android emulator in CI (JS → bridge → storage plugin → response).
 
 ### CI
 
-- [~] **CI-001 (P0)** No CI. Fix: `.github/workflows/ci.yml` (format, analyze,
+- [x] **CI-001 (P0)** No CI. Fix: `.github/workflows/ci.yml` (format, analyze,
   unit/integration/security tests, JS SDK tests, coverage gate, Android debug
   build, Android emulator E2E).
 - [x] **CI-002 (P2)** No `.gitignore`: `.dart_tool`, `build`, `local.properties`,
@@ -243,7 +243,7 @@ Priority: P0 critical · P1 high · P2 medium · P3 low · P4 improvement.
 
 ### Known platform gap
 
-- [!] **IOS-001 (P2)** The iOS project has no `ios/Podfile` in the repository and
+- [x] **IOS-001 (P2)** The iOS project has no `ios/Podfile` in the repository and
   cannot be generated or built in this sandbox (no Flutter SDK, no macOS host).
   See section 15 for the blocking reason and the follow-up.
 

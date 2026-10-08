@@ -52,7 +52,7 @@ jobs:
           exit $rc
 
       - name: Coverage gate
-        run: python3 .github/scripts/coverage_gate.py coverage/lcov.info ${{ vars.COVERAGE_MIN || '0' }} '(^|/)(gen|generated)/|\.g\.dart$'
+        run: python3 .github/scripts/coverage_gate.py coverage/lcov.info ${{ vars.COVERAGE_MIN || '55' }} '(^|/)(gen|generated)/|\.g\.dart$'
 
       - name: Format check (dart format, fails on any unformatted file)
         shell: bash
