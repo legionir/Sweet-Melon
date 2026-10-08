@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  checks: write
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -50,17 +51,14 @@ jobs:
           python3 .github/scripts/annotate_output.py unit.txt
           exit $rc
 
-      - name: Format check (dart format, fails on any unformatted file)
-        shell: bash
-        run: |
-          rc=0
-          dart format --output=none --set-exit-if-changed lib test integration_test > format.txt 2>&1 || rc=$?
-          tail -5 format.txt
-          python3 .github/scripts/annotate_output.py format.txt 80
-          exit $rc
-
       - name: Coverage gate
         run: python3 .github/scripts/coverage_gate.py coverage/lcov.info ${{ vars.COVERAGE_MIN || '0' }} '(^|/)(gen|generated)/|\.g\.dart$'
+
+      - name: Format check (dart format, fails on any unformatted file)
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: bash .github/scripts/format_report.sh
 
       - name: Upload coverage
         uses: actions/upload-artifact@v4
