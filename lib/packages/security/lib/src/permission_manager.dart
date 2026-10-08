@@ -1,156 +1,113 @@
-import 'dart:async';
-
-import 'package:sweetmelon/packages/core/lib/core.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 // ============================================================
-// PERMISSION MANAGER
+// PERMISSION MANAGER — OS-backed permission checks with a short TTL cache
 // ============================================================
+//
+// SEC-005: permission results are never trusted forever. Each cached answer
+// expires after [cacheTtl], so a permission revoked in system settings is
+// observed again on the next call.
 
-enum PermissionStatus {
-  granted,
-  denied,
-  pending,
-  notDetermined,
-}
+enum PermissionState { granted, denied, permanentlyDenied, unsupported }
 
+/// Abstraction over the OS permission API (injectable for tests).
 abstract class PermissionProvider {
-  Future<PermissionStatus> checkPermission(String permission);
-  Future<PermissionStatus> requestPermission(String permission);
+  Future<PermissionState> status(String permission);
+  Future<PermissionState> request(String permission);
 }
 
-class StaticPermissionProvider implements PermissionProvider {
-  final Map<String, PermissionStatus> grants;
-  final PermissionStatus defaultStatus;
+/// Maps the logical permission names used by plugins to OS permissions.
+/// `storage` refers to the application sandbox, which needs no runtime grant.
+class PermissionHandlerProvider implements PermissionProvider {
+  const PermissionHandlerProvider();
 
-  const StaticPermissionProvider({
-    required this.grants,
-    this.defaultStatus = PermissionStatus.denied,
-  });
-
-  @override
-  Future<PermissionStatus> checkPermission(String permission) async {
-    return grants[permission] ?? defaultStatus;
+  static Permission? _map(String name) {
+    switch (name) {
+      case 'camera':
+        return Permission.camera;
+      case 'location':
+        return Permission.locationWhenInUse;
+      default:
+        return null;
+    }
   }
 
   @override
-  Future<PermissionStatus> requestPermission(String permission) async {
-    return grants[permission] ?? defaultStatus;
+  Future<PermissionState> status(String permission) async {
+    final p = _map(permission);
+    if (p == null) {
+      return _isSandboxed(permission)
+          ? PermissionState.granted
+          : PermissionState.unsupported;
+    }
+    return _fromStatus(await p.status);
+  }
+
+  @override
+  Future<PermissionState> request(String permission) async {
+    final p = _map(permission);
+    if (p == null) {
+      return _isSandboxed(permission)
+          ? PermissionState.granted
+          : PermissionState.unsupported;
+    }
+    return _fromStatus(await p.request());
+  }
+
+  static bool _isSandboxed(String permission) => permission == 'storage';
+
+  static PermissionState _fromStatus(PermissionStatus s) {
+    if (s.isGranted || s.isLimited) return PermissionState.granted;
+    if (s.isPermanentlyDenied) return PermissionState.permanentlyDenied;
+    return PermissionState.denied;
   }
 }
 
 class PermissionManager {
-  final Map<String, PermissionPolicy> _policies = {};
-  final Map<String, PermissionStatus> _cache = {};
-  PermissionProvider? _provider;
+  final PermissionProvider _provider;
+  final Duration cacheTtl;
+  final DateTime Function() _now;
+  final Map<String, _Cached> _cache = {};
 
-  void setProvider(PermissionProvider provider) {
-    _provider = provider;
-    _cache.clear();
-  }
+  PermissionManager({
+    required PermissionProvider provider,
+    this.cacheTtl = const Duration(seconds: 5),
+    DateTime Function()? now,
+  })  : _provider = provider,
+        _now = now ?? DateTime.now;
 
-  void addPolicy(String plugin, PermissionPolicy policy) {
-    _policies[plugin] = policy;
-  }
+  /// True if [permission] is currently granted. Unknown permissions are denied.
+  Future<bool> check(String permission) async =>
+      (await stateOf(permission)) == PermissionState.granted;
 
-  Future<bool> check(String permission) async {
-    if (_cache.containsKey(permission)) {
-      final cached = _cache[permission]!;
-      BridgeLogger.debug(
-        'PermissionManager',
-        'Permission "$permission" (cached): ${cached.name}',
-      );
-      return cached == PermissionStatus.granted;
+  /// Current state of [permission], from the cache when it is still fresh.
+  Future<PermissionState> stateOf(String permission) async {
+    final cached = _cache[permission];
+    if (cached != null && _now().isBefore(cached.expiresAt)) {
+      return cached.state;
     }
-
-    if (_provider == null) {
-      BridgeLogger.warn(
-        'PermissionManager',
-        'No provider set, denying permission: $permission',
-      );
-      return false;
-    }
-
-    final status = await _provider!.checkPermission(permission);
-    _cache[permission] = status;
-
-    BridgeLogger.debug(
-      'PermissionManager',
-      'Permission "$permission": ${status.name}',
-    );
-
-    return status == PermissionStatus.granted;
+    final state = await _provider.status(permission);
+    _store(permission, state);
+    return state;
   }
 
+  /// Asks the user for [permission] and caches the result.
   Future<bool> request(String permission) async {
-    if (_provider == null) {
-      BridgeLogger.warn(
-        'PermissionManager',
-        'No provider set, cannot request: $permission',
-      );
-      return false;
-    }
-
-    final status = await _provider!.requestPermission(permission);
-    _cache[permission] = status;
-
-    BridgeLogger.info(
-      'PermissionManager',
-      'Permission requested "$permission": ${status.name}',
-    );
-
-    return status == PermissionStatus.granted;
+    final state = await _provider.request(permission);
+    _store(permission, state);
+    return state == PermissionState.granted;
   }
 
-  Future<Map<String, bool>> checkAll(List<String> permissions) async {
-    final results = <String, bool>{};
-    for (final permission in permissions) {
-      results[permission] = await check(permission);
-    }
-    return results;
+  /// Drops every cached answer (e.g. after returning from system settings).
+  void invalidateAll() => _cache.clear();
+
+  void _store(String permission, PermissionState state) {
+    _cache[permission] = _Cached(state, _now().add(cacheTtl));
   }
-
-  Future<bool> checkPlugin(String pluginName) async {
-    final policy = _policies[pluginName];
-    if (policy == null) return true;
-
-    for (final permission in policy.required) {
-      final granted = await check(permission);
-      if (!granted) return false;
-    }
-    return true;
-  }
-
-  void invalidateCache([String? permission]) {
-    if (permission != null) {
-      _cache.remove(permission);
-    } else {
-      _cache.clear();
-    }
-  }
-
-  Map<String, PermissionStatus> get currentStatus => Map.unmodifiable(_cache);
-
-  bool get hasProvider => _provider != null;
 }
 
-class PermissionPolicy {
-  final List<String> required;
-  final List<String> optional;
-
-  const PermissionPolicy({
-    required this.required,
-    this.optional = const [],
-  });
-
-  factory PermissionPolicy.fromJson(Map<String, dynamic> json) {
-    return PermissionPolicy(
-      required: List<String>.from(json['required'] as List? ?? []),
-      optional: List<String>.from(json['optional'] as List? ?? []),
-    );
-  }
-
-  Map<String, dynamic> toJson() => {
-        'required': required,
-        'optional': optional,
-      };
+class _Cached {
+  final PermissionState state;
+  final DateTime expiresAt;
+  const _Cached(this.state, this.expiresAt);
 }

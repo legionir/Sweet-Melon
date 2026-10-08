@@ -6,10 +6,27 @@ import 'package:webview_flutter/webview_flutter.dart';
 
 import '../bridge/message_bridge.dart';
 import '../utils/logger.dart';
+import 'bridge_sdk.dart';
+import 'navigation_policy.dart';
 
 // ============================================================
-// WEBVIEW HOST — مرکز اصلی اجرای JS App
+// WEBVIEW HOST — the only component that touches the WebView
 // ============================================================
+//
+// Lifecycle:
+//  * onPageStarted  -> bridge.endSession(): previous page loses its token.
+//  * onPageFinished -> bridge.startSession(): new token, SDK injected with it.
+//  * page sends bridge_ready with the token -> bridge becomes ready and flushes.
+//  * dispose        -> detach from the bridge and end the session.
+//
+// Trust boundary: the JavaScript channels are visible to every frame of the
+// WebView. The host therefore (a) restricts navigation with [NavigationPolicy],
+// (b) only installs the SDK in the top frame, and (c) relies on the session
+// token enforced by [MessageBridge]. See docs/SECURITY.md.
+
+const String _bridgeChannel = 'flutterBridge';
+const String _internalChannel = '__bridgeInternal';
+const int _maxInternalMessageLength = 1024;
 
 class WebViewHost extends StatefulWidget {
   final String initialUrl;
@@ -17,7 +34,7 @@ class WebViewHost extends StatefulWidget {
   final WebViewHostConfig config;
   final MessageBridge bridge;
   final VoidCallback? onPageLoaded;
-  final Function(String error)? onError;
+  final void Function(String error)? onError;
 
   const WebViewHost({
     super.key,
@@ -35,11 +52,17 @@ class WebViewHost extends StatefulWidget {
 
 class _WebViewHostState extends State<WebViewHost> {
   late final WebViewController _controller;
+  late final JsExecutor _jsExecutor;
+  late final NavigationPolicy _navigationPolicy;
   bool _isReady = false;
 
   @override
   void initState() {
     super.initState();
+    _navigationPolicy = NavigationPolicy(
+      allowedHosts: widget.config.allowedHosts.map((h) => h.toLowerCase()).toSet(),
+      allowInsecureHttp: widget.config.enableDebugging,
+    );
     _initController();
   }
 
@@ -48,35 +71,43 @@ class _WebViewHostState extends State<WebViewHost> {
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setNavigationDelegate(_buildNavigationDelegate())
       ..addJavaScriptChannel(
-        'flutterBridge',
+        _bridgeChannel,
         onMessageReceived: _onJsMessage,
       )
       ..addJavaScriptChannel(
-        '__bridgeInternal',
+        _internalChannel,
         onMessageReceived: _onInternalMessage,
       );
 
-    // تزریق controller به bridge
-    widget.bridge.setWebViewController(_controller);
+    _jsExecutor = _controller.runJavaScript;
+    widget.bridge.attachJsExecutor(_jsExecutor);
 
     if (widget.initialHtml != null) {
-      _controller.loadHtmlString(widget.initialHtml!);
+      unawaited(_controller.loadHtmlString(widget.initialHtml!));
     } else if (widget.initialUrl.isNotEmpty) {
-      _controller.loadRequest(Uri.parse(widget.initialUrl));
+      unawaited(_controller.loadRequest(Uri.parse(widget.initialUrl)));
     }
+  }
+
+  @override
+  void dispose() {
+    if (widget.bridge.detachJsExecutor(_jsExecutor)) {
+      widget.bridge.endSession();
+    }
+    super.dispose();
   }
 
   NavigationDelegate _buildNavigationDelegate() {
     return NavigationDelegate(
       onPageStarted: (url) {
         BridgeLogger.info('WebView', 'Page started: $url');
+        widget.bridge.endSession();
+        if (mounted) setState(() => _isReady = false);
       },
       onPageFinished: (url) async {
         BridgeLogger.info('WebView', 'Page finished: $url');
         await _injectBridgeScript();
-        if (mounted) {
-          setState(() => _isReady = true);
-        }
+        if (mounted) setState(() => _isReady = true);
         widget.onPageLoaded?.call();
       },
       onWebResourceError: (error) {
@@ -87,298 +118,55 @@ class _WebViewHostState extends State<WebViewHost> {
         widget.onError?.call(error.description);
       },
       onNavigationRequest: (request) {
-        // امنیت: فقط اجازه navigation به hostهای مجاز
-        if (widget.config.allowedHosts.isNotEmpty) {
-          final uri = Uri.tryParse(request.url);
-          if (uri != null &&
-              uri.host.isNotEmpty &&
-              !widget.config.allowedHosts.contains(uri.host)) {
-            BridgeLogger.warn(
-              'WebView',
-              'Blocked navigation to: ${request.url}',
-            );
-            return NavigationDecision.prevent;
-          }
+        final verdict = _navigationPolicy.evaluate(
+          request.url,
+          isMainFrame: request.isMainFrame,
+        );
+        if (!verdict.allowed) {
+          BridgeLogger.warn(
+            'WebView',
+            'Blocked navigation (${verdict.reason}): ${request.url}',
+          );
+          return NavigationDecision.prevent;
         }
         return NavigationDecision.navigate;
       },
     );
   }
 
-  // ── تزریق JS SDK به WebView ───────────────────────────────
+  // ── Injection ─────────────────────────────────────────────
 
   Future<void> _injectBridgeScript() async {
-    const script = r'''
-      (function() {
-        'use strict';
-
-        // ============================================================
-        // NATIVE BRIDGE CORE
-        // ============================================================
-        
-        if (window.__NativeBridgeInitialized) return;
-        window.__NativeBridgeInitialized = true;
-        
-        window.__pending = {};
-        window.__eventListeners = {};
-        window.__requestCount = 0;
-        
-        // ============================================================
-        // BRIDGE UTILITIES
-        // ============================================================
-        
-        function generateId() {
-          if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-            return crypto.randomUUID();
-          }
-          return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(
-            /[xy]/g,
-            function(c) {
-              var r = Math.random() * 16 | 0;
-              var v = c === 'x' ? r : (r & 0x3 | 0x8);
-              return v.toString(16);
-            }
-          );
-        }
-        
-        // ============================================================
-        // NATIVE API
-        // ============================================================
-        
-        window.Native = {
-          call: function(options) {
-            var plugin = options.plugin;
-            var method = options.method;
-            var args = options.args || {};
-            var version = options.version || '1.0.0';
-            var timeout = options.timeout != null ? options.timeout : 30000;
-
-            return new Promise(function(resolve, reject) {
-              var id = generateId();
-              var timeoutHandle = null;
-              
-              if (timeout > 0) {
-                timeoutHandle = setTimeout(function() {
-                  if (window.__pending[id]) {
-                    delete window.__pending[id];
-                    reject({
-                      code: 'TIMEOUT',
-                      message: 'Request timed out after ' + timeout + 'ms',
-                      requestId: id
-                    });
-                  }
-                }, timeout);
-              }
-              
-              window.__pending[id] = {
-                resolve: function(data) {
-                  clearTimeout(timeoutHandle);
-                  resolve(data);
-                },
-                reject: function(error) {
-                  clearTimeout(timeoutHandle);
-                  reject(error);
-                }
-              };
-              
-              var message = JSON.stringify({
-                requestId: id,
-                plugin: plugin,
-                version: version,
-                method: method,
-                args: args,
-                timestamp: new Date().toISOString(),
-                metadata: { headers: {} }
-              });
-              
-              window.flutterBridge.postMessage(message);
-              window.__requestCount++;
-            });
-          },
-
-          batch: function(requests, options) {
-            options = options || {};
-            var batchId = generateId();
-
-            var mappedRequests = requests.map(function(r) {
-              return {
-                requestId: generateId(),
-                plugin: r.plugin,
-                method: r.method,
-                args: r.args || {},
-                version: r.version || '1.0.0',
-                timestamp: new Date().toISOString(),
-                metadata: { headers: {} }
-              };
-            });
-
-            var batchMessage = JSON.stringify({
-              type: 'batch',
-              batchId: batchId,
-              requests: mappedRequests,
-              options: {
-                parallel: options.parallel !== false,
-                stopOnError: options.stopOnError || false,
-                timeoutMs: options.timeout
-              }
-            });
-            
-            return new Promise(function(resolve, reject) {
-              window.__pending[batchId] = { resolve: resolve, reject: reject };
-              window.flutterBridge.postMessage(batchMessage);
-            });
-          },
-
-          on: function(event, callback) {
-            if (!window.__eventListeners[event]) {
-              window.__eventListeners[event] = [];
-            }
-            window.__eventListeners[event].push(callback);
-
-            var self = this;
-            return function() { self.off(event, callback); };
-          },
-
-          off: function(event, callback) {
-            if (!window.__eventListeners[event]) return;
-            window.__eventListeners[event] = 
-              window.__eventListeners[event].filter(function(cb) {
-                return cb !== callback;
-              });
-          },
-          
-          info: function() {
-            return {
-              initialized: true,
-              pendingRequests: Object.keys(window.__pending).length,
-              totalRequests: window.__requestCount,
-              version: '1.0.0'
-            };
-          }
-        };
-        
-        // ============================================================
-        // RESPONSE HANDLER — پاسخ از Flutter
-        // ============================================================
-        
-        window.__resolveCall = function(requestId, responseJson) {
-          var response = typeof responseJson === 'string' 
-            ? JSON.parse(responseJson) 
-            : responseJson;
-            
-          var pending = window.__pending[requestId];
-          
-          if (!pending) {
-            console.warn('[Bridge] No pending request for:', requestId);
-            return;
-          }
-          
-          delete window.__pending[requestId];
-          
-          if (response.success) {
-            pending.resolve(response.data);
-          } else {
-            pending.reject(response.error);
-          }
-        };
-        
-        // ============================================================
-        // BATCH RESPONSE HANDLER
-        // ============================================================
-        
-        window.__resolveBatch = function(batchId, responseJson) {
-          var response = typeof responseJson === 'string'
-            ? JSON.parse(responseJson)
-            : responseJson;
-            
-          var pending = window.__pending[batchId];
-          if (!pending) return;
-          
-          delete window.__pending[batchId];
-          pending.resolve(response.results);
-        };
-        
-        // ============================================================
-        // EVENT EMITTER از Flutter به JS
-        // ============================================================
-        
-        window.__emitEvent = function(event, dataJson) {
-          var data = typeof dataJson === 'string'
-            ? JSON.parse(dataJson)
-            : dataJson;
-            
-          var listeners = window.__eventListeners[event] || [];
-          listeners.forEach(function(cb) {
-            try {
-              cb(data);
-            } catch (e) {
-              console.error('[Bridge] Event listener error:', e);
-            }
-          });
-        };
-
-        // ============================================================
-        // DEBUG HELPERS
-        // ============================================================
-        
-        window.__bridgeDebug = {
-          getPending: function() { return Object.keys(window.__pending); },
-          getStats: function() {
-            return {
-              pending: Object.keys(window.__pending).length,
-              total: window.__requestCount,
-              listeners: Object.keys(window.__eventListeners)
-            };
-          },
-          clearPending: function() {
-            var ids = Object.keys(window.__pending);
-            ids.forEach(function(id) {
-              if (window.__pending[id] && window.__pending[id].reject) {
-                window.__pending[id].reject({
-                  code: 'CLEARED',
-                  message: 'Pending request cleared manually'
-                });
-              }
-            });
-            window.__pending = {};
-          }
-        };
-        
-        // اطلاع‌رسانی آماده بودن Bridge
-        window.__bridgeInternal.postMessage(JSON.stringify({
-          type: 'bridge_ready',
-          timestamp: new Date().toISOString()
-        }));
-        
-        console.log('[NativeBridge] SDK initialized successfully');
-        
-      })();
-    ''';
-
-    await _controller.runJavaScript(script);
-    BridgeLogger.info('WebView', 'Bridge script injected');
-  }
-
-  // ── دریافت پیام از JS ─────────────────────────────────────
-
-  void _onJsMessage(JavaScriptMessage message) {
     try {
-      final json = jsonDecode(message.message) as Map<String, dynamic>;
-      widget.bridge.handleIncomingMessage(json);
+      final token = widget.bridge.startSession();
+      await _controller.runJavaScript(buildBridgeSdk(token));
+      BridgeLogger.info('WebView', 'Bridge SDK injected');
     } catch (e) {
-      BridgeLogger.error('WebView', 'Failed to parse JS message: $e');
+      BridgeLogger.error('WebView', 'Bridge SDK injection failed: ${e.runtimeType}');
     }
   }
 
+  // ── Messages from JS ──────────────────────────────────────
+
+  void _onJsMessage(JavaScriptMessage message) {
+    unawaited(widget.bridge.handleIncomingMessage(message.message));
+  }
+
   void _onInternalMessage(JavaScriptMessage message) {
+    if (message.message.length > _maxInternalMessageLength) {
+      BridgeLogger.warn('WebView', 'Oversized internal message ignored');
+      return;
+    }
     try {
-      final json = jsonDecode(message.message) as Map<String, dynamic>;
-      if (json['type'] == 'bridge_ready') {
-        BridgeLogger.info('WebView', 'JS Bridge is ready');
-        widget.bridge.onBridgeReady();
+      final decoded = jsonDecode(message.message);
+      if (decoded is Map && decoded['type'] == 'bridge_ready') {
+        final token = decoded['token'];
+        if (widget.bridge.onBridgeReady(token is String ? token : null)) {
+          BridgeLogger.info('WebView', 'JS Bridge is ready');
+        }
       }
     } catch (e) {
-      BridgeLogger.error('WebView', 'Internal message error: $e');
+      BridgeLogger.error('WebView', 'Internal message error: ${e.runtimeType}');
     }
   }
 
@@ -406,25 +194,21 @@ class _WebViewHostState extends State<WebViewHost> {
 // ============================================================
 
 class WebViewHostConfig {
+  /// Enables debug tooling (inspector UI, plain http for allowed hosts).
   final bool enableDebugging;
-  final bool allowFileAccess;
-  final int defaultTimeoutMs;
+
+  /// Hosts that the WebView may navigate to over https. Empty means the
+  /// WebView can only show the application's own (about:blank) content.
   final List<String> allowedHosts;
 
   const WebViewHostConfig({
     this.enableDebugging = false,
-    this.allowFileAccess = false,
-    this.defaultTimeoutMs = 30000,
     this.allowedHosts = const [],
   });
 
   factory WebViewHostConfig.development() => const WebViewHostConfig(
         enableDebugging: true,
-        defaultTimeoutMs: 60000,
       );
 
-  factory WebViewHostConfig.production() => const WebViewHostConfig(
-        enableDebugging: false,
-        defaultTimeoutMs: 30000,
-      );
+  factory WebViewHostConfig.production() => const WebViewHostConfig();
 }

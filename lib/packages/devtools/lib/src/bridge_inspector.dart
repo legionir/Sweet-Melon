@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -14,7 +15,9 @@ class BridgeInspector {
   final MessageBridge bridge;
   final PluginManager manager;
 
-  final List<InspectorEntry> _log = [];
+  static const int maxLogEntries = 500;
+
+  final Queue<InspectorEntry> _log = Queue<InspectorEntry>();
   final _logController = StreamController<InspectorEntry>.broadcast();
 
   StreamSubscription<BridgeMessage>? _bridgeSub;
@@ -22,6 +25,19 @@ class BridgeInspector {
 
   Stream<InspectorEntry> get logStream => _logController.stream;
   List<InspectorEntry> get log => List.unmodifiable(_log);
+
+  /// Payload fields never retained by the inspector (SEC-007): they may hold
+  /// file contents or personal data.
+  static const Set<String> _redactedFields = {'args', 'data'};
+
+  static Map<String, dynamic> redact(Map<String, dynamic> json) {
+    return {
+      for (final entry in json.entries)
+        entry.key: _redactedFields.contains(entry.key)
+            ? '[redacted]'
+            : entry.value,
+    };
+  }
 
   BridgeInspector({
     required this.bridge,
@@ -38,11 +54,13 @@ class BridgeInspector {
             ? EntryDirection.jsToFlutter
             : EntryDirection.flutterToJs,
         timestamp: message.timestamp,
-        content: message.message.toJson(),
+        content: redact(message.message.toJson()),
       );
 
-      _log.add(entry);
-      if (_log.length > 500) _log.removeAt(0);
+      _log.addLast(entry);
+      while (_log.length > maxLogEntries) {
+        _log.removeFirst();
+      }
 
       if (!_logController.isClosed) {
         _logController.add(entry);
@@ -92,7 +110,10 @@ class InspectorEntry {
   final DateTime timestamp;
   final Map<String, dynamic> content;
 
-  const InspectorEntry({
+  /// Lower-cased JSON text, computed once for filtering.
+  late final String searchText = jsonEncode(content).toLowerCase();
+
+  InspectorEntry({
     required this.id,
     required this.direction,
     required this.timestamp,
@@ -147,7 +168,12 @@ class _BridgeInspectorWidgetState extends State<BridgeInspectorWidget> {
     _entries.addAll(widget.inspector.log);
     _sub = widget.inspector.logStream.listen((entry) {
       if (mounted) {
-        setState(() => _entries.insert(0, entry));
+        setState(() {
+          _entries.insert(0, entry);
+          if (_entries.length > BridgeInspector.maxLogEntries) {
+            _entries.removeLast();
+          }
+        });
       }
     });
   }
@@ -165,10 +191,7 @@ class _BridgeInspectorWidgetState extends State<BridgeInspectorWidget> {
     }
     if (_filter.isNotEmpty) {
       final lowerFilter = _filter.toLowerCase();
-      list = list.where((e) {
-        final content = jsonEncode(e.content).toLowerCase();
-        return content.contains(lowerFilter);
-      }).toList();
+      list = list.where((e) => e.searchText.contains(lowerFilter)).toList();
     }
     return list;
   }

@@ -1,30 +1,43 @@
-import 'dart:async';
 import 'dart:io';
 
 import 'package:image_picker/image_picker.dart';
+import 'package:sweetmelon/packages/core/lib/src/protocol/message_protocol.dart';
 import 'package:sweetmelon/packages/plugin_engine/lib/plugin_engine.dart';
 
 // ============================================================
 // CAMERA PLUGIN
 // ============================================================
+//
+// * A user cancelling the picker is reported as CANCELLED (BUG-006), not as a
+//   generic execution error.
+// * The native picker is single-instance, so the plugin allows exactly one
+//   concurrent call; the manager rejects overlapping calls (BUG-006, SM-002).
+// * All arguments are validated before the picker is opened.
 
 class CameraPlugin extends Plugin {
-  final ImagePicker _picker = ImagePicker();
+  final ImagePicker _picker;
+
+  CameraPlugin({ImagePicker? picker}) : _picker = picker ?? ImagePicker();
 
   @override
   String get name => 'camera';
 
   @override
-  String get version => '1.0.0';
+  String get version => '1.1.0';
 
   @override
   String get description => 'Camera and image picker plugin';
 
   @override
-  bool get cacheable => false;
+  PluginCapabilities get capabilities => const PluginCapabilities(
+        supportsStreaming: false,
+        supportsBatch: false,
+        supportsCache: false,
+        maxConcurrentCalls: 1,
+      );
 
   @override
-  List<String> get supportedMethods => [
+  List<String> get supportedMethods => const [
         'takePhoto',
         'pickFromGallery',
         'recordVideo',
@@ -32,10 +45,7 @@ class CameraPlugin extends Plugin {
       ];
 
   @override
-  List<String> get requiredPermissions => ['camera', 'storage'];
-
-  @override
-  Future<void> onInitialize() async {}
+  List<String> get requiredPermissions => const ['camera'];
 
   @override
   Future<dynamic> onCall(String method, Map<String, dynamic> args) async {
@@ -49,7 +59,10 @@ class CameraPlugin extends Plugin {
       case 'getInfo':
         return _getInfo();
       default:
-        throw UnsupportedError('Method "$method" not supported');
+        throw const PluginException(
+          PluginErrorCode.methodNotFound,
+          'Method is not supported',
+        );
     }
   }
 
@@ -64,8 +77,12 @@ class CameraPlugin extends Plugin {
       maxWidth: maxWidth,
       maxHeight: maxHeight,
     );
-
-    if (image == null) throw Exception('User cancelled photo capture');
+    if (image == null) {
+      throw const PluginException(
+        PluginErrorCode.cancelled,
+        'User cancelled photo capture',
+      );
+    }
     return _xFileToMap(image);
   }
 
@@ -76,18 +93,27 @@ class CameraPlugin extends Plugin {
 
     if (multiple) {
       final images = await _picker.pickMultiImage();
-      if (images.isEmpty) throw Exception('No images selected');
-
+      if (images.isEmpty) {
+        throw const PluginException(
+          PluginErrorCode.cancelled,
+          'No images selected',
+        );
+      }
       final imageList = <Map<String, dynamic>>[];
       for (final img in images) {
         imageList.add(await _xFileToMap(img));
       }
       return {'images': imageList};
-    } else {
-      final image = await _picker.pickImage(source: ImageSource.gallery);
-      if (image == null) throw Exception('User cancelled');
-      return _xFileToMap(image);
     }
+
+    final image = await _picker.pickImage(source: ImageSource.gallery);
+    if (image == null) {
+      throw const PluginException(
+        PluginErrorCode.cancelled,
+        'User cancelled image selection',
+      );
+    }
+    return _xFileToMap(image);
   }
 
   Future<Map<String, dynamic>> _recordVideo(
@@ -99,17 +125,19 @@ class CameraPlugin extends Plugin {
       source: ImageSource.camera,
       maxDuration: maxDuration != null ? Duration(seconds: maxDuration) : null,
     );
+    if (video == null) {
+      throw const PluginException(
+        PluginErrorCode.cancelled,
+        'User cancelled video capture',
+      );
+    }
 
-    if (video == null) throw Exception('User cancelled');
-
-    final file = File(video.path);
-    final stat = await file.stat();
-
+    final stat = await File(video.path).stat();
     return {
       'path': video.path,
       'name': video.name,
       'size': stat.size,
-      'mimeType': 'video/mp4',
+      'mimeType': video.mimeType ?? 'video/mp4',
     };
   }
 
@@ -123,8 +151,7 @@ class CameraPlugin extends Plugin {
   }
 
   Future<Map<String, dynamic>> _xFileToMap(XFile xFile) async {
-    final file = File(xFile.path);
-    final stat = await file.stat();
+    final stat = await File(xFile.path).stat();
     return {
       'path': xFile.path,
       'name': xFile.name,
@@ -141,6 +168,12 @@ class CameraPlugin extends Plugin {
     switch (method) {
       case 'takePhoto':
         return _validateTakePhoto(args);
+      case 'pickFromGallery':
+        final multiple = args['multiple'];
+        if (multiple != null && multiple is! bool) {
+          return ValidationResult.invalid('multiple must be a boolean');
+        }
+        return ValidationResult.valid();
       case 'recordVideo':
         return _validateRecordVideo(args);
       default:
@@ -155,9 +188,20 @@ class CameraPlugin extends Plugin {
         return ValidationResult.invalid('quality must be a number');
       }
       if (quality < 0 || quality > 100) {
-        return ValidationResult.invalid(
-          'quality must be between 0 and 100',
-        );
+        return ValidationResult.invalid('quality must be between 0 and 100');
+      }
+    }
+    for (final dimension in const ['maxWidth', 'maxHeight']) {
+      final value = args[dimension];
+      if (value != null) {
+        if (value is! num) {
+          return ValidationResult.invalid('$dimension must be a number');
+        }
+        if (value <= 0 || value > 10000) {
+          return ValidationResult.invalid(
+            '$dimension must be between 1 and 10000',
+          );
+        }
       }
     }
     return ValidationResult.valid();
@@ -167,13 +211,11 @@ class CameraPlugin extends Plugin {
     final maxDuration = args['maxDurationSeconds'];
     if (maxDuration != null) {
       if (maxDuration is! int) {
-        return ValidationResult.invalid(
-          'maxDurationSeconds must be an integer',
-        );
+        return ValidationResult.invalid('maxDurationSeconds must be an integer');
       }
-      if (maxDuration <= 0) {
+      if (maxDuration <= 0 || maxDuration > 3600) {
         return ValidationResult.invalid(
-          'maxDurationSeconds must be positive',
+          'maxDurationSeconds must be between 1 and 3600',
         );
       }
     }

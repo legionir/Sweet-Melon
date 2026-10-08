@@ -1,126 +1,101 @@
-import 'dart:async';
-
-import 'package:sweetmelon/packages/core/lib/core.dart';
+import 'dart:collection';
 
 // ============================================================
-// RATE LIMITER
+// RATE LIMITER — sliding window per key
 // ============================================================
+//
+// Keys are only created for plugin/method pairs that the plugin manager has
+// already resolved (SEC-008). The number of tracked keys is capped and idle
+// keys are pruned, so the map cannot grow without bound.
 
 class RateLimitResult {
   final bool allowed;
-  final int remaining;
   final int retryAfterMs;
 
-  const RateLimitResult({
-    required this.allowed,
-    required this.remaining,
-    required this.retryAfterMs,
-  });
+  const RateLimitResult.allow()
+      : allowed = true,
+        retryAfterMs = 0;
+
+  const RateLimitResult.deny(this.retryAfterMs) : allowed = false;
 }
 
 class RateLimitRule {
   final int maxCalls;
   final Duration window;
 
-  const RateLimitRule({
-    required this.maxCalls,
-    required this.window,
-  });
+  const RateLimitRule({required this.maxCalls, required this.window})
+      : assert(maxCalls > 0);
 
-  factory RateLimitRule.perSecond(int max) => RateLimitRule(
-        maxCalls: max,
-        window: const Duration(seconds: 1),
-      );
-
-  factory RateLimitRule.perMinute(int max) => RateLimitRule(
-        maxCalls: max,
-        window: const Duration(minutes: 1),
-      );
+  const RateLimitRule.perSecond(int maxCalls)
+      : this(maxCalls: maxCalls, window: const Duration(seconds: 1));
 }
 
 class RateLimiter {
+  final RateLimitRule defaultRule;
+  final int maxTrackedKeys;
   final Map<String, RateLimitRule> _rules = {};
-  final Map<String, _BucketState> _buckets = {};
-  RateLimitRule _defaultRule = RateLimitRule.perSecond(100);
+  final LinkedHashMap<String, Queue<int>> _buckets = LinkedHashMap();
+  final int Function() _clock;
 
-  void setDefaultRule(RateLimitRule rule) {
-    _defaultRule = rule;
-  }
+  RateLimiter({
+    this.defaultRule = const RateLimitRule.perSecond(50),
+    this.maxTrackedKeys = 1024,
+    int Function()? clock,
+  })  : assert(maxTrackedKeys > 0),
+        _clock = clock ?? (() => DateTime.now().millisecondsSinceEpoch);
 
-  void addRule(String key, RateLimitRule rule) {
-    _rules[key] = rule;
-    BridgeLogger.debug(
-      'RateLimiter',
-      'Rule added: $key (${rule.maxCalls} per ${rule.window.inSeconds}s)',
-    );
-  }
+  void addRule(String key, RateLimitRule rule) => _rules[key] = rule;
 
-  Future<RateLimitResult> check(String plugin, String method) async {
-    final specificKey = '$plugin.$method';
-    final pluginKey = plugin;
-    final rule = _rules[specificKey] ?? _rules[pluginKey] ?? _defaultRule;
+  RateLimitRule ruleFor(String key) => _rules[key] ?? defaultRule;
 
-    _buckets[specificKey] ??= _BucketState(rule: rule);
-    final bucket = _buckets[specificKey]!;
-    final result = bucket.consume();
+  /// Checks and, if allowed, records one call for [key].
+  RateLimitResult check(String key) {
+    final now = _clock();
+    final rule = ruleFor(key);
+    final windowMs = rule.window.inMilliseconds;
 
-    if (!result.allowed) {
-      BridgeLogger.warn(
-        'RateLimiter',
-        'Rate limit exceeded for: $specificKey '
-            '(retry after ${result.retryAfterMs}ms)',
-      );
+    var bucket = _buckets.remove(key);
+    if (bucket == null) {
+      _pruneIfNeeded(now);
+      bucket = Queue<int>();
+    }
+    // Re-insert at the end to keep LRU order.
+    _buckets[key] = bucket;
+
+    while (bucket.isNotEmpty && now - bucket.first >= windowMs) {
+      bucket.removeFirst();
     }
 
-    return result;
-  }
-
-  void reset(String key) => _buckets.remove(key);
-  void resetAll() => _buckets.clear();
-
-  Map<String, dynamic> getStats() {
-    return _buckets.map(
-      (key, bucket) => MapEntry(key, bucket.toJson()),
-    );
-  }
-}
-
-class _BucketState {
-  final RateLimitRule rule;
-  final List<DateTime> _calls = [];
-
-  _BucketState({required this.rule});
-
-  RateLimitResult consume() {
-    final now = DateTime.now();
-    final windowStart = now.subtract(rule.window);
-
-    _calls.removeWhere((time) => time.isBefore(windowStart));
-
-    if (_calls.length >= rule.maxCalls) {
-      final oldest = _calls.first;
-      final retryAfter = oldest.add(rule.window).difference(now);
-
-      return RateLimitResult(
-        allowed: false,
-        remaining: 0,
-        retryAfterMs: retryAfter.inMilliseconds.clamp(0, 60000),
-      );
+    if (bucket.length >= rule.maxCalls) {
+      final retryAfter = windowMs - (now - bucket.first);
+      return RateLimitResult.deny(retryAfter < 1 ? 1 : retryAfter);
     }
 
-    _calls.add(now);
-
-    return RateLimitResult(
-      allowed: true,
-      remaining: rule.maxCalls - _calls.length,
-      retryAfterMs: 0,
-    );
+    bucket.addLast(now);
+    return const RateLimitResult.allow();
   }
 
-  Map<String, dynamic> toJson() => {
-        'callsInWindow': _calls.length,
-        'maxCalls': rule.maxCalls,
-        'windowSeconds': rule.window.inSeconds,
-        'remaining': (rule.maxCalls - _calls.length).clamp(0, rule.maxCalls),
-      };
+  /// Number of keys currently tracked.
+  int get trackedKeys => _buckets.length;
+
+  void reset() => _buckets.clear();
+
+  void _pruneIfNeeded(int now) {
+    // Drop fully idle buckets first.
+    final idle = <String>[];
+    for (final entry in _buckets.entries) {
+      final window = ruleFor(entry.key).window.inMilliseconds;
+      final q = entry.value;
+      if (q.isEmpty || now - q.last >= window) {
+        idle.add(entry.key);
+      }
+    }
+    for (final key in idle) {
+      _buckets.remove(key);
+    }
+    // Still full: evict the least recently used keys.
+    while (_buckets.length >= maxTrackedKeys) {
+      _buckets.remove(_buckets.keys.first);
+    }
+  }
 }

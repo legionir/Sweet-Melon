@@ -4,8 +4,6 @@
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
-	<key>CFBundleDisplayName</key>
-	<string>Hello World</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -47,5 +45,13 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>The app uses the camera when a web page asks to take a photo or record a video.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>The app records audio with videos that a web page asks you to record.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>The app lets a web page pick photos from your library when you choose to share them.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>The app uses your location only while it is open, when a web page asks for it.</string>
 </dict>
 </plist>

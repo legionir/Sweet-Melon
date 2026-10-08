@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 
 // ============================================================
 // BRIDGE LOGGER — سیستم لاگ ساختارمند
@@ -118,8 +117,6 @@ class BridgeLogger {
     }
   }
 
-  static void clear() => _history.clear();
-
   static void dispose() {
     _controller?.close();
     _controller = null;
@@ -139,47 +136,5 @@ class ConsoleSink implements LogSink {
   void write(LogEntry entry) {
     // ignore: avoid_print
     print(entry.toString());
-  }
-}
-
-class MemorySink implements LogSink {
-  final List<LogEntry> entries = [];
-  final int maxEntries;
-
-  MemorySink({this.maxEntries = 500});
-
-  @override
-  void write(LogEntry entry) {
-    entries.add(entry);
-    if (entries.length > maxEntries) entries.removeAt(0);
-  }
-}
-
-class FileSink implements LogSink {
-  final String Function() pathProvider;
-  final _buffer = StringBuffer();
-  Timer? _flushTimer;
-
-  FileSink({required this.pathProvider}) {
-    _flushTimer = Timer.periodic(
-      const Duration(seconds: 5),
-      (_) => _flush(),
-    );
-  }
-
-  @override
-  void write(LogEntry entry) {
-    _buffer.writeln(jsonEncode(entry.toJson()));
-  }
-
-  void _flush() {
-    if (_buffer.isEmpty) return;
-    // در پروژه واقعی: نوشتن به فایل
-    _buffer.clear();
-  }
-
-  void dispose() {
-    _flush();
-    _flushTimer?.cancel();
   }
 }
