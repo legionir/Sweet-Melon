@@ -7,8 +7,6 @@
 //  * parallel batch: stopOnError is not applied (calls are already dispatched).
 //  * a sequential batch that times out must not dispatch later requests after it
 //    has settled.
-import 'dart:async';
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sweetmelon/packages/core/lib/src/protocol/message_protocol.dart';
 import 'package:sweetmelon/packages/plugin_engine/lib/plugin_engine.dart';

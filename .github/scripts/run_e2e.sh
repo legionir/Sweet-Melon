@@ -1,21 +1,44 @@
 #!/usr/bin/env bash
 # Runs the on-device integration test on the already-booted emulator.
 #
-# The test runs in its own session (setsid) and writes its exit code to a file,
-# so the result is recorded even if the parent shell is terminated. A process
-# sampler writes the top consumers every 15 s to e2e-proc.log.
+# Result contract (read by the workflow):
+#  * e2e.txt  — everything this script and flutter test printed.
+#  * e2e.rc   — the exit code of the test run. It is written on every exit path,
+#               including early failures, so a missing file always means the
+#               script itself never ran to completion.
+#  * e2e-proc.log — process/memory samples every 15 s while the test runs.
+#
+# The test runs in its own session (setsid) so that a signal to this script does
+# not silently drop its exit code; the script waits for e2e.rc, bounded below.
 set -uo pipefail
-SDK="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
+
+# Create the result file first: a failure before any output must still leave
+# evidence behind (the workflow previously saw neither e2e.txt nor e2e.rc).
+: > e2e.txt
+rm -f e2e.rc
+finish() {
+  local rc=$?
+  if [ ! -f e2e.rc ]; then echo "$rc" > e2e.rc; fi
+}
+trap finish EXIT
+
+log() { echo "$*" | tee -a e2e.txt; }
+
+log "run_e2e: ANDROID_SDK_ROOT=${ANDROID_SDK_ROOT:-<unset>} ANDROID_HOME=${ANDROID_HOME:-<unset>}"
+SDK="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
 ADB="$SDK/platform-tools/adb"
-DEVICE="$("$ADB" devices | awk 'NR>1 && $2=="device" {print $1; exit}')"
-echo "device=$DEVICE"
-if [ -z "$DEVICE" ]; then
-  echo "No booted Android device found" > e2e.txt
-  python3 .github/scripts/annotate_output.py e2e.txt
+if [ ! -x "$ADB" ]; then
+  log "adb not found at $ADB"
   exit 1
 fi
 
-rm -f e2e.rc
+DEVICE="$("$ADB" devices 2>>e2e.txt | awk 'NR>1 && $2=="device" {print $1; exit}')"
+log "device=${DEVICE:-<none>}"
+if [ -z "$DEVICE" ]; then
+  log "No booted Android device found"
+  exit 1
+fi
+
 ( while sleep 15; do
     echo "== $(date +%T) $(free -m | sed -n 2p)"
     ps -eo pid,ppid,pcpu,rss,etime,args --sort=-rss | head -6 | cut -c1-160
@@ -24,7 +47,7 @@ SAMPLER=$!
 
 setsid bash -c 'flutter test integration_test/app_test.dart -d "$1" > e2e.txt 2>&1 < /dev/null; echo $? > e2e.rc' _ "$DEVICE" &
 
-# Wait up to 30 minutes for the test session to finish.
+# Wait up to 30 minutes for the test session to write its exit code.
 for _ in $(seq 1 180); do
   [ -f e2e.rc ] && break
   sleep 10

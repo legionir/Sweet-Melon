@@ -20,7 +20,8 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
+        // Placeholder Application ID from the Flutter template. Replace it with
+        // your own unique ID before publishing (see README, "Before release").
         applicationId = "com.example.sweet_melon"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.

@@ -169,6 +169,7 @@ jobs:
 
       - name: Run integration tests on an emulator
         uses: reactivecircus/android-emulator-runner@v2
+        timeout-minutes: 40
         with:
           api-level: 33
           arch: x86_64
