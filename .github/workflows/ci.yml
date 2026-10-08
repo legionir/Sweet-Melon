@@ -166,3 +166,14 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -no-snapshot -gpu swiftshader_indirect -noaudio -no-boot-anim -memory 2048
           script: bash .github/scripts/run_e2e.sh
+
+      - name: Collect E2E diagnostics
+        if: always()
+        shell: bash
+        run: |
+          for f in e2e.txt e2e.rc e2e-proc.log; do
+            if [ -f "$f" ]; then echo "== $f"; tail -80 "$f"; fi
+          done
+          [ -f e2e-proc.log ] && python3 .github/scripts/annotate_output.py e2e-proc.log 30 || true
+          [ -f e2e.rc ] && echo "::notice::e2e exit code file: $(cat e2e.rc)" || echo "::error::e2e.rc was not written"
+          [ -f e2e.txt ] && python3 .github/scripts/annotate_output.py e2e.txt 60 || true
