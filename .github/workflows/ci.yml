@@ -212,8 +212,20 @@ jobs:
           fi
           echo "::notice::iOS project files present"
 
+      - name: Keep CocoaPods integration (no Swift Package Manager migration)
+        run: flutter config --no-enable-swift-package-manager
+
       - name: Enable permission_handler iOS permission macros
         run: python3 .github/scripts/ios_permissions.py ios/Podfile
+
+      - name: Install CocoaPods dependencies
+        shell: bash
+        run: |
+          cd ios
+          rc=0
+          pod install > ../pod-install.txt 2>&1 || rc=$?
+          tail -n 40 ../pod-install.txt | sed 's/^/::notice::pod: /'
+          exit $rc
 
       - name: Build iOS app without codesigning
         shell: bash
