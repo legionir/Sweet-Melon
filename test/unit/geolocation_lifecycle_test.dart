@@ -93,8 +93,8 @@ void main() {
     for (var i = 0; i < kMaxWatches; i++) {
       await plugin.onCall('watchPosition', {});
     }
-    expect(
-      () => plugin.onCall('watchPosition', {}),
+    await expectLater(
+      plugin.onCall('watchPosition', {}),
       throwsA(isA<PluginException>()),
     );
     expect(plugin.activeWatchCount, kMaxWatches);
