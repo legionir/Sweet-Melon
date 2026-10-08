@@ -145,26 +145,26 @@ Priority: P0 critical · P1 high · P2 medium · P3 low · P4 improvement.
 - [x] **BUG-006 (P2)** Malformed requests: `json['requestId'] as String? ?? 'unknown'`
   could throw inside the error handler and answered a non-existent id. Fix:
   protocol validation with typed `ProtocolException`.
-- [~] **BUG-007 (P2)** `stopOnError` ignored in parallel batches; missing results
+- [x] **BUG-007 (P2)** `stopOnError` ignored in parallel batches; missing results
   possible. Fix: every request gets a result; sequential stop emits `CANCELLED`
   for skipped items; documented limitation for parallel dispatch.
   Evidence: `test/regression/batch_stop_on_error_test.dart` (sequential CANCELLED,
   parallel limitation, timed-out batch dispatches nothing later). Status stays
-  `[~]` until the CI run for this commit is green.
-- [~] **BUG-008 (P1)** User cancellation of camera reported as `EXECUTION_ERROR`.
+  Verified by CI run 37835701145 (commit `8b1fa1a`).
+- [x] **BUG-008 (P1)** User cancellation of camera reported as `EXECUTION_ERROR`.
   Fix: `CANCELLED` error code. Decision: a user cancel is counted in `errorCount`
   (it produced no result), with code `CANCELLED`. Evidence:
-  `test/regression/camera_cancel_test.dart`. Status stays `[~]` until CI is green.
+  `test/regression/camera_cancel_test.dart`. Verified by CI run 37835701145.
 - [x] **BUG-009 (P1)** Argument casts in plugins threw `TypeError` and surfaced
   as `EXECUTION_ERROR`. Fix: validation before execution, `INVALID_ARGS` mapping.
 - [x] **BUG-010 (P1)** Android manifest lacked CAMERA and location permissions;
   iOS lacked usage descriptions (plugins would fail or crash at runtime).
   Fix: manifest permissions and Info.plist usage strings.
-- [~] **BUG-011 (P2)** WebView host never detached its controller from the bridge
+- [x] **BUG-011 (P2)** WebView host never detached its controller from the bridge
   on dispose. Fix: detach + end session in `dispose()`, through
   `BridgeAttachment`, so a late callback of a superseded host cannot change the
   live session. Evidence: `test/regression/webview_lifecycle_test.dart`. Status
-  stays `[~]` until CI is green.
+  Verified by CI run 37835701145.
 - [x] **BUG-012 (P1)** Rate limiter used `num.clamp` where an `int` is required
   (type error risk). Fix: explicit integer arithmetic.
 - [x] **BUG-013 (P2)** `watchPosition` / `getCurrentPosition` had no timeout
@@ -349,13 +349,13 @@ verified by GitHub Actions.
 - [x] 8.2 Remove dead code and unwired packages (ARCH-001, ARCH-003, ARCH-005)
 - [x] 8.3 Protocol validation and error contract (BUG-006, SEC-003, SEC-004, ARCH-006)
 - [x] 8.4 Bridge sessions, token, queue bound, batch semantics, events (SEC-001, BUG-002/003/004, ARCH-004)
-- [~] 8.5 WebView host: navigation policy, SDK in top frame, lifecycle (SEC-001, BUG-011)
+- [x] 8.5 WebView host: navigation policy, SDK in top frame, lifecycle (SEC-001, BUG-011)
 - [x] 8.6 Security components: sandbox path, permissions, rate limiter, guard, concurrency (SEC-002, SEC-005, SEC-008, CONC-001/002, BUG-012)
 - [x] 8.7 Cache LRU and mutation invalidation (BUG-001, PERF-001)
 - [x] 8.8 Plugin manager pipeline, capabilities and metrics (ARCH-002, STAT-001, SEC-003, BUG-007)
-- [~] 8.9 Plugins: storage, camera, geolocation (SEC-002, SEC-009, BUG-005/008/009/013, CONC-001)
-- [~] 8.10 Platform config: manifests, plist, Gradle signing and heap (SEC-006, BUG-010, PERF-002)
-- [~] 8.11 Tests: unit, integration, security, regression, perf smoke, JS SDK, E2E
+- [x] 8.9 Plugins: storage, camera, geolocation (SEC-002, SEC-009, BUG-005/008/009/013, CONC-001)
+- [x] 8.10 Platform config: manifests, plist, Gradle signing and heap (SEC-006, BUG-010, PERF-002)
+- [x] 8.11 Tests: unit, integration, security, regression, perf smoke, JS SDK, E2E
 - [x] 8.12 CI workflow and coverage gate (CI-001, TEST-002, TEST-003)
 - [x] 8.13 Documentation (DOC-001..003, CI-002)
 
@@ -427,31 +427,53 @@ run on an iOS device or simulator, which is recorded in `docs/TESTING.md`.
 
 ## 16. Final Verification
 
-See the final section of `docs/WORKLOG.md`.
+Evidence is in `docs/WORKLOG.md`. This section is the summary.
 
-### Final Status (CI-verified commit `69b6d17` on `arena/a3bec261-sweet-melon`)
+### Final Status (CI-verified commit `8b1fa1a` on `arena/a3bec261-sweet-melon`)
 
-| CI job (run 37822424205, head 69b6d17) | Result |
+CI run 37835701145 on `8b1fa1a`:
+
+| CI job | Result |
 | --- | --- |
-| Injected JavaScript SDK (Node VM) | PASS (16/16) |
-| Analyze, unit, security and regression tests (analyze, tests, coverage gate 55%, format) | PASS (measured line coverage 58.18%) |
+| Injected JavaScript SDK (Node VM) | PASS |
+| Analyze, unit, security and regression tests (`flutter analyze --fatal-warnings`, `flutter test test/ --coverage`, coverage gate 55 %, `dart format` check) | PASS |
 | Android build (debug and release) | PASS (release unsigned: no keystore in CI) |
-| Android end-to-end (emulator) | PASS (two `E2E_OK` markers, exit code 0) |
+| Android end-to-end (emulator, `run_e2e.sh`) | PASS (exit code file 0; the script also requires two `E2E_OK` markers) |
 | iOS build (macOS, no codesign) | PASS |
 
-**Overall status: NOT COMPLETE.** The CI pipeline is green on `69b6d17`. Items
-still open, and why:
+Line coverage passed the 55 % gate. The exact percentage could not be read in this
+pass, because the job log and the coverage artifact downloads failed with EOF. The
+figure measured on the earlier commit `69b6d17` was 58.18 %. The threshold was not
+lowered.
 
-- BUG-007 `[~]`: the parallel-batch `stopOnError` limitation is documented, but
-  there is no test for the sequential path's `CANCELLED` results.
-- BUG-008 `[~]`: the picker-cancel path returns `CANCELLED` in code, but no
-  automated test covers it (needs an `ImagePicker` platform mock).
-- BUG-011 `[~]`: WebView host dispose/detach has no automated test yet.
-- 8.5 (WebView host), 8.9 (plugins), 8.11 (tests): the open items above plus a
-  final review of the performance-smoke coverage.
-- Docs check against code (README, ARCHITECTURE, SECURITY, TESTING), and the
-  final audit pass, are not yet done.
+Local format, analyze and test runs were not possible. Dart and Flutter are not
+installed in this sandbox, so CI is the only verification for those steps.
 
-The docs commit after `69b6d17` does not change code. Its CI run must be
-checked before any final claim of completion.
+Several check-run annotations on passing jobs are `failure` entries. They are false
+positives from the annotator, which matches test names containing "error" or
+"passed". The job conclusions are the authority.
 
+### Plan status
+
+- Every plan item is `[x]` or `[-]`. Nothing is `[~]`, `[ ]` or `[!]`.
+- No item is blocked. IOS-001 is resolved (section 15).
+- SM-001 to SM-012 are mapped to fixes and tests in section 5a.
+- BUG-007, BUG-008 and BUG-011 are resolved with focused tests. Their decisions are
+  in the worklog.
+
+### Known limits (documented, not blockers)
+
+- No automated test runs the page's JavaScript inside the real WebView. The Node VM
+  tests cover the SDK code. The on-device test covers boot and the storage path.
+- The iOS job builds the app without codesign. The app is not run on an iOS device
+  or simulator.
+- The native geolocation subscription and the image picker are not exercised on a
+  device. Their Dart-level logic is tested with fakes.
+- Parallel batches do not apply `stopOnError` (documented in `docs/SECURITY.md`).
+- The E2E failure on run 37815334536 (commit `1b00c87`) has no proven root cause.
+  The logs for that run could not be read. The annotations show that the exit-code
+  file was never written. The script was rewritten to write it on every path, and
+  the rewritten script passed in runs 37834548307 and 37835701145.
+
+The commit that carries this section changes only `docs/`. Its own CI run is the
+final check for the branch head.

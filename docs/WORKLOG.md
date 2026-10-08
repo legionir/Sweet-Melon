@@ -354,3 +354,26 @@ Rejected or corrected during this pass:
 - **Local verification.** Dart and Flutter are not installed in this sandbox. Format,
   analyze and tests can be checked only through CI. Nothing in this entry is a local
   PASS.
+
+### Result (pass 4) — CI evidence and final statuses
+- `ddacbd0` (analyzer fix): its run 37833966486 was cancelled when the next push
+  superseded it. Its result is not counted. The fix is included in later runs.
+- `505f8e2` (docs audit, CONC-001 test, BUG-008 stats): run 37834548307. JS SDK, Android
+  build, Android E2E and iOS build passed. Analyze, unit and coverage passed. The
+  format check failed on three files: `test/helpers/picker_fakes.dart` (an extra
+  blank line), `test/regression/camera_cancel_test.dart` and
+  `test/regression/webview_lifecycle_test.dart` (two test calls wrapped where the
+  formatter joins them). I introduced the first two in this pass. The third was
+  already in `08fe02d`. The formatter diffs from the CI check runs were applied
+  exactly.
+- `8b1fa1a` (format fix): run 37835701145. All five jobs passed: JS SDK; analyze,
+  unit, security, regression, coverage gate and format; Android build (debug and
+  release); Android E2E; iOS build (no codesign). The E2E job's exit-code file is 0.
+- Coverage: the gate passed. The exact figure could not be read (log and artifact
+  downloads failed with EOF). Not recorded as a number.
+- E2E: passed on two consecutive runs with the rewritten `run_e2e.sh`
+  (37834548307, 37835701145). The failure on 37815334536 is still unexplained. The
+  evidence and the reason for not calling it a flake are in the entry above.
+- Plan: BUG-007, BUG-008, BUG-011, 8.5, 8.9, 8.10 and 8.11 are `[x]`. Each is backed
+  by a test or a CI job that passed on `8b1fa1a`. Section 16 is rewritten.
+- Final commit: this docs-only commit. Its own CI run is the check for the branch head.
