@@ -26,19 +26,24 @@ def main() -> int:
     limit = int(sys.argv[2]) if len(sys.argv) > 2 else 60
     count = 0
     with open(path, encoding="utf-8", errors="replace") as fh:
-        for raw in fh:
-            line = raw.rstrip("\n")
-            if count >= limit:
-                break
-            m = ANALYZER.match(line)
-            if m:
-                level = "error" if m.group(1) == "error" else "warning"
-                print(f"::{level} file={m.group('path')},line={m.group('line')}::"
-                      f"{escape(m.group('msg'))}")
-                count += 1
-            elif KEYWORDS.search(line):
-                print(f"::error::{escape(line.strip())[:500]}")
-                count += 1
+        lines = [raw.rstrip("\n") for raw in fh]
+    print(f"::notice::annotate_output scanned {len(lines)} lines from {path}")
+    for line in lines:
+        if count >= limit:
+            break
+        m = ANALYZER.match(line)
+        if m:
+            level = "error" if m.group(1) == "error" else "warning"
+            print(f"::{level} file={m.group('path')},line={m.group('line')}::"
+                  f"{escape(m.group('msg'))}")
+            count += 1
+        elif KEYWORDS.search(line):
+            print(f"::error::{escape(line.strip())[:500]}")
+            count += 1
+    if count == 0:
+        # Nothing recognised: surface the tail so the failure is still visible.
+        for line in [ln for ln in lines if ln.strip()][-40:]:
+            print(f"::error::TAIL {escape(line.strip())[:500]}")
     return 0
 
 
