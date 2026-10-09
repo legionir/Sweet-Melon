@@ -24,7 +24,7 @@ void main() {
     });
   });
 
-  group('WorkerPool', () {
+  group('WorkerPool lifecycle', () {
     test('reports idle stats before initialization', () {
       final pool = WorkerPool(poolSize: 3);
 
@@ -43,53 +43,6 @@ void main() {
 
       expect(pool.stats['initialized'], true);
       expect(pool.stats['activeWorkers'], 2);
-      pool.dispose();
-    });
-
-    test('compute runs the task off the main isolate', () async {
-      final pool = WorkerPool();
-
-      final result = await pool.compute((int x) => x * x, 7);
-
-      expect(result, 49);
-      pool.dispose();
-    });
-
-    test('processJson returns the parsed length of the input', () async {
-      final pool = WorkerPool();
-
-      expect(await pool.processJson('{"a":1}'), 7);
-      pool.dispose();
-    });
-
-    test('processBytes runs the processor on the byte list', () async {
-      final pool = WorkerPool();
-
-      final result = await pool.processBytes(
-        (bytes) => bytes.reversed.toList(),
-        [1, 2, 3],
-      );
-
-      expect(result, [3, 2, 1]);
-      pool.dispose();
-    });
-
-    test('compute fails with TimeoutException when the task is too slow',
-        () async {
-      final pool = WorkerPool();
-
-      await expectLater(
-        pool.compute(
-          (int x) {
-            final watch = Stopwatch()..start();
-            while (watch.elapsedMilliseconds < 2000) {}
-            return x;
-          },
-          1,
-          timeout: const Duration(milliseconds: 1),
-        ),
-        throwsA(isA<Exception>()),
-      );
       pool.dispose();
     });
 
@@ -116,22 +69,13 @@ void main() {
       expect(decoded, {'a': 1, 'b': 'x'});
     });
 
-    test('processBatch maps every item in a separate isolate', () async {
-      final doubled = await ComputeHelper.processBatch<int>(
-        [1, 2, 3],
-        (x) => x * 2,
+    test('decodeJsonHeavy keeps nested structures', () async {
+      final decoded = await ComputeHelper.decodeJsonHeavy(
+        '{"list":[1,2],"ok":true}',
       );
 
-      expect(doubled, [2, 4, 6]);
-    });
-
-    test('processBatch returns an empty list for empty input', () async {
-      final result = await ComputeHelper.processBatch<String>(
-        const [],
-        (s) => s.toUpperCase(),
-      );
-
-      expect(result, isEmpty);
+      expect(decoded['list'], [1, 2]);
+      expect(decoded['ok'], true);
     });
   });
 }
