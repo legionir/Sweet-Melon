@@ -1,5 +1,6 @@
 import 'dart:async';
-import 'dart:convert';
+
+import 'package:flutter/foundation.dart';
 
 enum LogLevel {
   debug(0, 'DEBUG'),
@@ -47,10 +48,12 @@ class LogEntry {
 }
 
 class BridgeLogger {
-  static LogLevel _minLevel = LogLevel.debug;
+  static LogLevel _minLevel = kReleaseMode ? LogLevel.warn : LogLevel.debug;
   static final List<LogEntry> _history = [];
   static StreamController<LogEntry>? _controller;
-  static final List<LogSink> _sinks = [ConsoleSink()];
+  static final List<LogSink> _sinks = [
+    if (kDebugMode) DebugConsoleSink(),
+  ];
 
   static StreamController<LogEntry> get _streamController {
     _controller ??= StreamController<LogEntry>.broadcast();
@@ -62,7 +65,11 @@ class BridgeLogger {
 
   static void setMinLevel(LogLevel level) => _minLevel = level;
 
-  static void addSink(LogSink sink) => _sinks.add(sink);
+  static void addSink(LogSink sink) {
+    if (!_sinks.contains(sink)) {
+      _sinks.add(sink);
+    }
+  }
 
   static void removeSink(LogSink sink) => _sinks.remove(sink);
 
@@ -110,7 +117,11 @@ class BridgeLogger {
     }
 
     for (final sink in _sinks) {
-      sink.write(entry);
+      try {
+        sink.write(entry);
+      } catch (_) {
+        // Sink error should never crash the app
+      }
     }
   }
 
@@ -126,10 +137,11 @@ abstract class LogSink {
   void write(LogEntry entry);
 }
 
-class ConsoleSink implements LogSink {
+/// استفاده از debugPrint به جای print
+class DebugConsoleSink implements LogSink {
   @override
   void write(LogEntry entry) {
-    print(entry.toString());
+    debugPrint(entry.toString());
   }
 }
 
@@ -143,33 +155,5 @@ class MemorySink implements LogSink {
   void write(LogEntry entry) {
     entries.add(entry);
     if (entries.length > maxEntries) entries.removeAt(0);
-  }
-}
-
-class FileSink implements LogSink {
-  final String Function() pathProvider;
-  final _buffer = StringBuffer();
-  Timer? _flushTimer;
-
-  FileSink({required this.pathProvider}) {
-    _flushTimer = Timer.periodic(
-      const Duration(seconds: 5),
-      (_) => _flush(),
-    );
-  }
-
-  @override
-  void write(LogEntry entry) {
-    _buffer.writeln(jsonEncode(entry.toJson()));
-  }
-
-  void _flush() {
-    if (_buffer.isEmpty) return;
-    _buffer.clear();
-  }
-
-  void dispose() {
-    _flush();
-    _flushTimer?.cancel();
   }
 }

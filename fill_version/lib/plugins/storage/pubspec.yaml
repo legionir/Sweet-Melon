@@ -1,5 +1,5 @@
 name: storage_plugin
-description: Storage plugin for Flutter Native Bridge
+description: Key-value storage plugin for Flutter Native Bridge
 version: 1.0.0
 
 environment:
@@ -9,6 +9,5 @@ dependencies:
   flutter:
     sdk: flutter
   shared_preferences: ^2.2.2
-  path_provider: ^2.1.1
   plugin_engine:
     path: ../../packages/plugin_engine

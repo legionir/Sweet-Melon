@@ -6,7 +6,6 @@ import 'package:webview_flutter/webview_flutter.dart';
 import '../protocol/message_protocol.dart';
 import '../utils/logger.dart';
 
-
 typedef MessageHandler = Future<PluginResponse> Function(PluginRequest request);
 typedef BatchHandler = Future<List<PluginResponse>> Function(
   List<PluginRequest> requests,
@@ -26,6 +25,9 @@ class MessageBridge {
 
   bool _isReady = false;
   final List<String> _pendingJsMessages = [];
+  static const int _maxPendingMessages = 200;
+
+  bool _disposed = false;
 
   void setWebViewController(WebViewController controller) {
     _webViewController = controller;
@@ -39,12 +41,22 @@ class MessageBridge {
     _batchHandler = handler;
   }
 
+  /// وقتی صفحه جدید load می‌شود، bridge را reset کن
+  void resetBridgeState() {
+    _isReady = false;
+    _pendingJsMessages.clear();
+  }
+
   void onBridgeReady() {
     _isReady = true;
-    for (final message in _pendingJsMessages) {
-      _controller.runJavaScript(message);
-    }
+    BridgeLogger.info('Bridge', 'JS Bridge is ready, flushing ${_pendingJsMessages.length} pending messages');
+
+    final messages = List<String>.from(_pendingJsMessages);
     _pendingJsMessages.clear();
+
+    for (final message in messages) {
+      _runJsDirect(message);
+    }
   }
 
   WebViewController get _controller {
@@ -55,17 +67,37 @@ class MessageBridge {
   }
 
   Future<void> handleIncomingMessage(Map<String, dynamic> json) async {
+    if (_disposed) return;
+
     final startTime = DateTime.now();
 
     try {
-      if (json.containsKey('type') && json['type'] == 'batch') {
+      // تشخیص نوع پیام
+      final type = json['type'] as String?;
+
+      if (type == 'batch') {
         await _handleBatchRequest(json);
+        return;
+      }
+
+      // بررسی فیلدهای ضروری قبل از parse
+      if (!json.containsKey('plugin') || !json.containsKey('method')) {
+        final requestId = json['requestId'] as String? ?? 'unknown';
+        await _sendError(
+          requestId,
+          const PluginError(
+            code: PluginErrorCode.invalidArgs,
+            message: 'Missing required fields: plugin, method',
+          ),
+        );
         return;
       }
 
       final request = PluginRequest.fromJson(json);
 
-      _messageStreamController.add(BridgeMessage.incoming(request));
+      if (!_messageStreamController.isClosed) {
+        _messageStreamController.add(BridgeMessage.incoming(request));
+      }
 
       BridgeLogger.info(
         'Bridge',
@@ -102,7 +134,10 @@ class MessageBridge {
       );
 
       await _sendResponse(responseWithMeta);
-      _messageStreamController.add(BridgeMessage.outgoing(responseWithMeta));
+
+      if (!_messageStreamController.isClosed) {
+        _messageStreamController.add(BridgeMessage.outgoing(responseWithMeta));
+      }
     } catch (e, stackTrace) {
       BridgeLogger.error('Bridge', 'Error handling message: $e');
 
@@ -199,12 +234,19 @@ class MessageBridge {
   }
 
   Future<void> emitEvent(String event, dynamic data) async {
+    if (_disposed) return;
     final escapedEvent = _escapeJsString(event);
-    final dataJson = jsonEncode(data);
+    final dataJson = _sanitizeJsonForJs(jsonEncode(data));
     final js = 'window.__emitEvent("$escapedEvent", $dataJson);';
     await _runJs(js);
   }
 
+  /// Sanitize JSON string for safe embedding in JS
+  String _sanitizeJsonForJs(String json) {
+    return json
+        .replaceAll('</script>', '<\\/script>')
+        .replaceAll('<!--', '<\\!--');
+  }
 
   String _escapeJsString(String value) {
     return value
@@ -212,14 +254,28 @@ class MessageBridge {
         .replaceAll('"', '\\"')
         .replaceAll("'", "\\'")
         .replaceAll('\n', '\\n')
-        .replaceAll('\r', '\\r');
+        .replaceAll('\r', '\\r')
+        .replaceAll('\t', '\\t');
   }
 
   Future<void> _runJs(String script) async {
+    if (_disposed) return;
+
     if (!_isReady) {
+      if (_pendingJsMessages.length >= _maxPendingMessages) {
+        BridgeLogger.warn(
+          'Bridge',
+          'Pending message queue full (${_pendingJsMessages.length}), dropping oldest',
+        );
+        _pendingJsMessages.removeAt(0);
+      }
       _pendingJsMessages.add(script);
       return;
     }
+    await _runJsDirect(script);
+  }
+
+  Future<void> _runJsDirect(String script) async {
     try {
       await _controller.runJavaScript(script);
     } catch (e) {
@@ -228,7 +284,11 @@ class MessageBridge {
   }
 
   void dispose() {
-    _messageStreamController.close();
+    _disposed = true;
+    _pendingJsMessages.clear();
+    if (!_messageStreamController.isClosed) {
+      _messageStreamController.close();
+    }
   }
 }
 

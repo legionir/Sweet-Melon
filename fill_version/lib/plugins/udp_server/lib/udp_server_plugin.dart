@@ -10,7 +10,7 @@ typedef UdpServerEventEmitter = Future<void> Function(String event, dynamic data
 class UdpServerPlugin extends Plugin {
   final UdpServerEventEmitter? eventEmitter;
 
-  final Map<String, _ManagedUdpServer> _servers = {};
+  final Map<String, _UdpServerInstance> _servers = {};
 
   UdpServerPlugin({this.eventEmitter});
 
@@ -21,7 +21,7 @@ class UdpServerPlugin extends Plugin {
   String get version => '1.0.0';
 
   @override
-  String get description => 'UDP server for receiving datagrams and broadcasting';
+  String get description => 'UDP server for receiving datagrams';
 
   @override
   List<String> get supportedMethods => [
@@ -37,8 +37,8 @@ class UdpServerPlugin extends Plugin {
 
   @override
   Future<void> onDispose() async {
-    for (final s in _servers.values) {
-      s.socket.close();
+    for (final server in _servers.values) {
+      server.close();
     }
     _servers.clear();
   }
@@ -76,7 +76,8 @@ class UdpServerPlugin extends Plugin {
     final host = args['host'] as String? ?? '0.0.0.0';
     final id = args['id'] as String? ?? 'udp_srv_${DateTime.now().millisecondsSinceEpoch}';
     final enableBroadcast = args['broadcast'] as bool? ?? true;
-    final bufferSize = (args['bufferSize'] as num?)?.toInt() ?? 65535;
+    final bufferSize = (args['bufferSize'] as num?)?.toInt();
+    final encoding = args['encoding'] as String? ?? 'utf8';
 
     if (_servers.containsKey(id)) {
       return {
@@ -88,61 +89,61 @@ class UdpServerPlugin extends Plugin {
     }
 
     try {
-      final bindAddress = host == '0.0.0.0'
-          ? InternetAddress.anyIPv4
-          : InternetAddress(host);
+      final socket = await RawDatagramSocket.bind(
+        host == '0.0.0.0' ? InternetAddress.anyIPv4 : InternetAddress(host),
+        port,
+      );
 
-      final socket = await RawDatagramSocket.bind(bindAddress, port);
-      socket.broadcastEnabled = enableBroadcast;
+      if (enableBroadcast) {
+        socket.broadcastEnabled = true;
+      }
 
-      final managed = _ManagedUdpServer(
+      final instance = _UdpServerInstance(
         id: id,
         socket: socket,
-        host: host,
-        port: socket.port,
+        encoding: encoding,
       );
 
       socket.listen((event) {
         if (event == RawSocketEvent.read) {
           final datagram = socket.receive();
           if (datagram != null) {
-            managed.receivedCount++;
-            managed.receivedBytes += datagram.data.length;
-
-            final senderAddr = datagram.address.address;
-            final senderPort = datagram.port;
-
-            // Track unique clients
-            final clientKey = '$senderAddr:$senderPort';
-            managed.clients.add(clientKey);
+            instance.packetCount++;
+            instance.receivedBytes += datagram.data.length;
 
             String decoded;
-            try {
-              decoded = utf8.decode(datagram.data);
-            } catch (_) {
+            if (encoding == 'base64') {
               decoded = base64Encode(datagram.data);
+            } else {
+              decoded = utf8.decode(datagram.data, allowMalformed: true);
             }
+
+            // Track unique senders
+            final senderId = '${datagram.address.address}:${datagram.port}';
+            instance.knownSenders.add(senderId);
 
             eventEmitter?.call('udpServer.data', {
               'serverId': id,
               'data': decoded,
-              'senderAddress': senderAddr,
-              'senderPort': senderPort,
+              'encoding': encoding,
+              'senderAddress': datagram.address.address,
+              'senderPort': datagram.port,
               'bytes': datagram.data.length,
-              'timestamp': DateTime.now().toIso8601String(),
+              'packetNumber': instance.packetCount,
             });
           }
         }
       });
 
-      _servers[id] = managed;
+      _servers[id] = instance;
 
       BridgeLogger.info('UdpServer', '[$id] Started on port ${socket.port}');
 
       eventEmitter?.call('udpServer.started', {
-        'id': id,
+        'serverId': id,
         'port': socket.port,
         'host': host,
+        'broadcast': enableBroadcast,
       });
 
       return {
@@ -158,26 +159,25 @@ class UdpServerPlugin extends Plugin {
   }
 
   Map<String, dynamic> _sendTo(Map<String, dynamic> args) {
-    final id = args['serverId'] as String;
+    final serverId = args['serverId'] as String;
     final data = args['data'] as String;
     final targetHost = args['host'] as String;
     final targetPort = (args['port'] as num).toInt();
+    final encoding = args['encoding'] as String? ?? 'utf8';
 
-    final managed = _servers[id];
-    if (managed == null) {
-      return {'sent': false, 'reason': 'server_not_found'};
-    }
+    final instance = _servers[serverId];
+    if (instance == null) return {'sent': false, 'reason': 'server_not_found'};
 
     try {
-      final bytes = utf8.encode(data);
-      final sent = managed.socket.send(
-        bytes,
-        InternetAddress(targetHost),
-        targetPort,
-      );
+      List<int> bytes;
+      if (encoding == 'base64') {
+        bytes = base64Decode(data);
+      } else {
+        bytes = utf8.encode(data);
+      }
 
-      managed.sentCount++;
-      managed.sentBytes += sent;
+      final sent = instance.socket.send(bytes, InternetAddress(targetHost), targetPort);
+      instance.sentBytes += sent;
 
       return {'sent': true, 'bytes': sent};
     } catch (e) {
@@ -186,28 +186,23 @@ class UdpServerPlugin extends Plugin {
   }
 
   Map<String, dynamic> _broadcast(Map<String, dynamic> args) {
-    final id = args['serverId'] as String;
+    final serverId = args['serverId'] as String;
     final data = args['data'] as String;
     final targetPort = (args['port'] as num).toInt();
-    final broadcastAddress = args['broadcastAddress'] as String? ?? '255.255.255.255';
 
-    final managed = _servers[id];
-    if (managed == null) {
-      return {'sent': false, 'reason': 'server_not_found'};
-    }
+    final instance = _servers[serverId];
+    if (instance == null) return {'sent': false, 'reason': 'server_not_found'};
 
     try {
-      managed.socket.broadcastEnabled = true;
+      instance.socket.broadcastEnabled = true;
       final bytes = utf8.encode(data);
-      final sent = managed.socket.send(
+      final sent = instance.socket.send(
         bytes,
-        InternetAddress(broadcastAddress),
+        InternetAddress('255.255.255.255'),
         targetPort,
       );
 
-      managed.sentCount++;
-      managed.sentBytes += sent;
-
+      instance.sentBytes += sent;
       return {'sent': true, 'bytes': sent, 'broadcast': true};
     } catch (e) {
       return {'sent': false, 'error': e.toString()};
@@ -216,10 +211,10 @@ class UdpServerPlugin extends Plugin {
 
   Map<String, dynamic> _stop(Map<String, dynamic> args) {
     final id = args['id'] as String;
-    final managed = _servers.remove(id);
+    final instance = _servers.remove(id);
 
-    if (managed != null) {
-      managed.socket.close();
+    if (instance != null) {
+      instance.close();
       BridgeLogger.info('UdpServer', '[$id] Stopped');
       return {'stopped': true, 'id': id};
     }
@@ -229,8 +224,8 @@ class UdpServerPlugin extends Plugin {
 
   Map<String, dynamic> _stopAll() {
     final count = _servers.length;
-    for (final s in _servers.values) {
-      s.socket.close();
+    for (final instance in _servers.values) {
+      instance.close();
     }
     _servers.clear();
     return {'stopped': count};
@@ -244,12 +239,12 @@ class UdpServerPlugin extends Plugin {
   }
 
   Map<String, dynamic> _getStats(Map<String, dynamic> args) {
-    final id = args['id'] as String;
-    final managed = _servers[id];
-    if (managed == null) {
-      return {'found': false};
-    }
-    return {'found': true, ...managed.toJson()};
+    final serverId = args['serverId'] as String;
+    final instance = _servers[serverId];
+
+    if (instance == null) return {'found': false};
+
+    return {'found': true, ...instance.toJson()};
   }
 
   @override
@@ -257,18 +252,20 @@ class UdpServerPlugin extends Plugin {
     switch (method) {
       case 'stop':
       case 'getStats':
-        if (args['id'] is! String) return ValidationResult.invalid('id is required');
+        if (args['id'] is! String && args['serverId'] is! String) {
+          return ValidationResult.invalid('id or serverId is required');
+        }
         return ValidationResult.valid();
       case 'sendTo':
-        if (args['serverId'] is! String) return ValidationResult.invalid('serverId required');
-        if (args['host'] is! String) return ValidationResult.invalid('host required');
-        if (args['port'] is! num) return ValidationResult.invalid('port required');
-        if (args['data'] is! String) return ValidationResult.invalid('data required');
+        if (args['serverId'] is! String) return ValidationResult.invalid('serverId is required');
+        if (args['host'] is! String) return ValidationResult.invalid('host is required');
+        if (args['port'] is! num) return ValidationResult.invalid('port is required');
+        if (args['data'] is! String) return ValidationResult.invalid('data is required');
         return ValidationResult.valid();
       case 'broadcast':
-        if (args['serverId'] is! String) return ValidationResult.invalid('serverId required');
-        if (args['port'] is! num) return ValidationResult.invalid('port required');
-        if (args['data'] is! String) return ValidationResult.invalid('data required');
+        if (args['serverId'] is! String) return ValidationResult.invalid('serverId is required');
+        if (args['port'] is! num) return ValidationResult.invalid('port is required');
+        if (args['data'] is! String) return ValidationResult.invalid('data is required');
         return ValidationResult.valid();
       default:
         return ValidationResult.valid();
@@ -276,34 +273,32 @@ class UdpServerPlugin extends Plugin {
   }
 }
 
-class _ManagedUdpServer {
+class _UdpServerInstance {
   final String id;
   final RawDatagramSocket socket;
-  final String host;
-  final int port;
-  int receivedCount = 0;
+  final String encoding;
+  int packetCount = 0;
   int receivedBytes = 0;
-  int sentCount = 0;
   int sentBytes = 0;
-  final Set<String> clients = {};
-  final DateTime startedAt = DateTime.now();
+  final Set<String> knownSenders = {};
 
-  _ManagedUdpServer({
+  _UdpServerInstance({
     required this.id,
     required this.socket,
-    required this.host,
-    required this.port,
+    this.encoding = 'utf8',
   });
+
+  void close() {
+    socket.close();
+  }
 
   Map<String, dynamic> toJson() => {
         'id': id,
-        'host': host,
-        'port': port,
-        'receivedCount': receivedCount,
+        'port': socket.port,
+        'packetCount': packetCount,
         'receivedBytes': receivedBytes,
-        'sentCount': sentCount,
         'sentBytes': sentBytes,
-        'uniqueClients': clients.length,
-        'uptime': DateTime.now().difference(startedAt).inSeconds,
+        'uniqueSenders': knownSenders.length,
+        'senders': knownSenders.toList(),
       };
 }

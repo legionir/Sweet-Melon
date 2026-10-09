@@ -14,11 +14,13 @@ abstract class Plugin {
   Future<dynamic> onCall(String method, Map<String, dynamic> args);
 
   Future<void> initialize() async {
+    if (_initialized) return; // جلوگیری از initialize دوباره
     await onInitialize();
     _initialized = true;
   }
 
   Future<void> dispose() async {
+    if (!_initialized) return;
     _initialized = false;
     await onDispose();
   }

@@ -10,3 +10,4 @@ dependencies:
     sdk: flutter
   core:
     path: ../core
+  permission_handler: ^11.3.0

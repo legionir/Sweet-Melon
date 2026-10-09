@@ -2,7 +2,7 @@ import 'package:flutter/services.dart';
 import 'package:sweetmelon/packages/core/lib/core.dart';
 import 'package:sweetmelon/packages/plugin_engine/lib/plugin_engine.dart';
 
-class WakeLockPlugin extends Plugin {
+class WakeLockPlugin extends BasePlugin {
   bool _isLocked = false;
   static const _channel = MethodChannel('sweetmelon/wake_lock');
 
@@ -36,11 +36,7 @@ class WakeLockPlugin extends Plugin {
       case 'isEnabled':
         return {'enabled': _isLocked};
       case 'getInfo':
-        return {
-          'name': name,
-          'version': version,
-          'enabled': _isLocked,
-        };
+        return {'name': name, 'version': version, 'enabled': _isLocked};
       default:
         throw UnsupportedError('Method "$method" not supported');
     }
@@ -52,20 +48,15 @@ class WakeLockPlugin extends Plugin {
     }
 
     try {
-      // استفاده از SystemChannels برای keep screen on
-      await SystemChannels.platform.invokeMethod(
-        'SystemChrome.setEnabledSystemUIMode',
-      );
-    } catch (_) {}
-
-    // Approach: استفاده از Wakelock via native channel
-    // در عمل از wakelock_plus package استفاده می‌شه
-    // اینجا یک implementation ساده با MethodChannel
-
-    _isLocked = true;
-    BridgeLogger.info('WakeLock', 'Screen wake lock enabled');
-
-    return {'enabled': true, 'alreadyEnabled': false};
+      await _channel.invokeMethod('enable');
+      _isLocked = true;
+      logInfo('Screen wake lock enabled (native)');
+      return {'enabled': true, 'alreadyEnabled': false, 'native': true};
+    } catch (e) {
+      logWarn('Native wake lock failed, using fallback: $e');
+      _isLocked = true;
+      return {'enabled': true, 'native': false, 'fallback': true};
+    }
   }
 
   Future<Map<String, dynamic>> _disable() async {
@@ -73,16 +64,17 @@ class WakeLockPlugin extends Plugin {
       return {'enabled': false, 'alreadyDisabled': true};
     }
 
-    _isLocked = false;
-    BridgeLogger.info('WakeLock', 'Screen wake lock disabled');
+    try {
+      await _channel.invokeMethod('disable');
+    } catch (_) {}
 
+    _isLocked = false;
+    logInfo('Screen wake lock disabled');
     return {'enabled': false, 'alreadyDisabled': false};
   }
 
   @override
   Future<void> onDispose() async {
-    if (_isLocked) {
-      await _disable();
-    }
+    if (_isLocked) await _disable();
   }
 }

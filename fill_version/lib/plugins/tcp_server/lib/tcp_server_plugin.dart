@@ -11,7 +11,7 @@ typedef TcpServerEventEmitter = Future<void> Function(String event, dynamic data
 class TcpServerPlugin extends Plugin {
   final TcpServerEventEmitter? eventEmitter;
 
-  final Map<String, _ManagedTcpServer> _servers = {};
+  final Map<String, _TcpServerInstance> _servers = {};
 
   TcpServerPlugin({this.eventEmitter});
 
@@ -22,7 +22,7 @@ class TcpServerPlugin extends Plugin {
   String get version => '1.0.0';
 
   @override
-  String get description => 'TCP server with multi-client support';
+  String get description => 'TCP server for accepting incoming connections';
 
   @override
   List<String> get supportedMethods => [
@@ -32,16 +32,16 @@ class TcpServerPlugin extends Plugin {
         'sendToClient',
         'sendToAll',
         'disconnectClient',
+        'disconnectAllClients',
         'getClients',
         'getServers',
-        'getStats',
         'getInfo',
       ];
 
   @override
   Future<void> onDispose() async {
-    for (final s in _servers.values) {
-      await s.close();
+    for (final server in _servers.values) {
+      await server.close();
     }
     _servers.clear();
   }
@@ -61,12 +61,12 @@ class TcpServerPlugin extends Plugin {
         return _sendToAll(args);
       case 'disconnectClient':
         return _disconnectClient(args);
+      case 'disconnectAllClients':
+        return _disconnectAllClients(args);
       case 'getClients':
         return _getClients(args);
       case 'getServers':
         return _getServers();
-      case 'getStats':
-        return _getStats(args);
       case 'getInfo':
         return {
           'name': name,
@@ -83,6 +83,7 @@ class TcpServerPlugin extends Plugin {
     final host = args['host'] as String? ?? '0.0.0.0';
     final id = args['id'] as String? ?? 'tcp_srv_${DateTime.now().millisecondsSinceEpoch}';
     final maxClients = (args['maxClients'] as num?)?.toInt() ?? 100;
+    final encoding = args['encoding'] as String? ?? 'utf8';
 
     if (_servers.containsKey(id)) {
       return {
@@ -94,104 +95,36 @@ class TcpServerPlugin extends Plugin {
     }
 
     try {
-      final bindAddress = host == '0.0.0.0'
-          ? InternetAddress.anyIPv4
-          : InternetAddress(host);
+      final server = await ServerSocket.bind(
+        host == '0.0.0.0' ? InternetAddress.anyIPv4 : InternetAddress(host),
+        port,
+      );
 
-      final server = await ServerSocket.bind(bindAddress, port);
-
-      final managed = _ManagedTcpServer(
+      final instance = _TcpServerInstance(
         id: id,
         server: server,
         maxClients: maxClients,
+        encoding: encoding,
       );
 
-      managed.subscription = server.listen((clientSocket) {
-        if (managed.clients.length >= maxClients) {
-          clientSocket.write('Server full\n');
+      instance.subscription = server.listen((clientSocket) {
+        if (instance.clients.length >= maxClients) {
           clientSocket.close();
+          BridgeLogger.warn('TcpServer', '[$id] Max clients reached, rejecting');
           return;
         }
 
-        managed.clientCounter++;
-        final clientId = 'client_${managed.clientCounter}';
-
-        final client = _TcpClient(
-          id: clientId,
-          socket: clientSocket,
-          remoteAddress: clientSocket.remoteAddress.address,
-          remotePort: clientSocket.remotePort,
-        );
-
-        managed.clients[clientId] = client;
-
-        BridgeLogger.info(
-          'TcpServer',
-          '[$id] Client connected: $clientId (${client.remoteAddress}:${client.remotePort})',
-        );
-
-        eventEmitter?.call('tcpServer.clientConnected', {
-          'serverId': id,
-          'clientId': clientId,
-          'remoteAddress': client.remoteAddress,
-          'remotePort': client.remotePort,
-          'totalClients': managed.clients.length,
-        });
-
-        client.subscription = clientSocket.listen(
-          (data) {
-            client.receivedBytes += data.length;
-            client.messageCount++;
-
-            String decoded;
-            try {
-              decoded = utf8.decode(data);
-            } catch (_) {
-              decoded = base64Encode(data);
-            }
-
-            eventEmitter?.call('tcpServer.data', {
-              'serverId': id,
-              'clientId': clientId,
-              'data': decoded,
-              'bytes': data.length,
-              'messageNumber': client.messageCount,
-              'timestamp': DateTime.now().toIso8601String(),
-            });
-          },
-          onError: (error) {
-            BridgeLogger.error('TcpServer', '[$id] Client error [$clientId]: $error');
-            managed.clients.remove(clientId);
-
-            eventEmitter?.call('tcpServer.clientError', {
-              'serverId': id,
-              'clientId': clientId,
-              'error': error.toString(),
-            });
-          },
-          onDone: () {
-            managed.clients.remove(clientId);
-
-            BridgeLogger.info('TcpServer', '[$id] Client disconnected: $clientId');
-
-            eventEmitter?.call('tcpServer.clientDisconnected', {
-              'serverId': id,
-              'clientId': clientId,
-              'totalClients': managed.clients.length,
-            });
-          },
-        );
+        _handleNewClient(instance, clientSocket);
       });
 
-      _servers[id] = managed;
+      _servers[id] = instance;
 
       BridgeLogger.info('TcpServer', '[$id] Started on port ${server.port}');
 
       eventEmitter?.call('tcpServer.started', {
-        'id': id,
+        'serverId': id,
         'port': server.port,
         'host': host,
-        'maxClients': maxClients,
       });
 
       return {
@@ -206,89 +139,78 @@ class TcpServerPlugin extends Plugin {
     }
   }
 
-  Map<String, dynamic> _sendToClient(Map<String, dynamic> args) {
-    final serverId = args['serverId'] as String;
-    final clientId = args['clientId'] as String;
-    final data = args['data'] as String;
-    final encoding = args['encoding'] as String? ?? 'utf8';
+  void _handleNewClient(_TcpServerInstance instance, Socket clientSocket) {
+    instance.clientCounter++;
+    final clientId = 'client_${instance.clientCounter}';
 
-    final managed = _servers[serverId];
-    if (managed == null) return {'sent': false, 'reason': 'server_not_found'};
+    final remoteAddress = clientSocket.remoteAddress.address;
+    final remotePort = clientSocket.remotePort;
 
-    final client = managed.clients[clientId];
-    if (client == null) return {'sent': false, 'reason': 'client_not_found'};
+    instance.clients[clientId] = clientSocket;
 
-    try {
-      if (encoding == 'base64') {
-        client.socket.add(base64Decode(data));
-      } else {
-        client.socket.write(data);
-      }
+    BridgeLogger.info(
+      'TcpServer',
+      '[${instance.id}] Client connected: $clientId ($remoteAddress:$remotePort)',
+    );
 
-      client.sentBytes += data.length;
-      return {'sent': true, 'clientId': clientId};
-    } catch (e) {
-      return {'sent': false, 'error': e.toString()};
-    }
-  }
+    eventEmitter?.call('tcpServer.clientConnected', {
+      'serverId': instance.id,
+      'clientId': clientId,
+      'remoteAddress': remoteAddress,
+      'remotePort': remotePort,
+      'totalClients': instance.clients.length,
+    });
 
-  Map<String, dynamic> _sendToAll(Map<String, dynamic> args) {
-    final serverId = args['serverId'] as String;
-    final data = args['data'] as String;
-    final excludeClient = args['exclude'] as String?;
+    clientSocket.listen(
+      (data) {
+        instance.receivedBytes += data.length;
 
-    final managed = _servers[serverId];
-    if (managed == null) return {'sent': 0, 'reason': 'server_not_found'};
+        String decoded;
+        if (instance.encoding == 'base64') {
+          decoded = base64Encode(data);
+        } else {
+          decoded = utf8.decode(data, allowMalformed: true);
+        }
 
-    int sentCount = 0;
+        eventEmitter?.call('tcpServer.data', {
+          'serverId': instance.id,
+          'clientId': clientId,
+          'data': decoded,
+          'encoding': instance.encoding,
+          'bytes': data.length,
+          'remoteAddress': remoteAddress,
+        });
+      },
+      onError: (error) {
+        BridgeLogger.error('TcpServer', 'Client error [$clientId]: $error');
+        instance.clients.remove(clientId);
 
-    for (final entry in managed.clients.entries) {
-      if (entry.key == excludeClient) continue;
-      try {
-        entry.value.socket.write(data);
-        entry.value.sentBytes += data.length;
-        sentCount++;
-      } catch (_) {}
-    }
+        eventEmitter?.call('tcpServer.clientError', {
+          'serverId': instance.id,
+          'clientId': clientId,
+          'error': error.toString(),
+        });
+      },
+      onDone: () {
+        instance.clients.remove(clientId);
 
-    return {'sent': sentCount, 'totalClients': managed.clients.length};
-  }
+        BridgeLogger.info('TcpServer', '[${instance.id}] Client disconnected: $clientId');
 
-  Future<Map<String, dynamic>> _disconnectClient(Map<String, dynamic> args) async {
-    final serverId = args['serverId'] as String;
-    final clientId = args['clientId'] as String;
-
-    final managed = _servers[serverId];
-    if (managed == null) return {'disconnected': false, 'reason': 'server_not_found'};
-
-    final client = managed.clients.remove(clientId);
-    if (client != null) {
-      client.subscription?.cancel();
-      await client.socket.close();
-      return {'disconnected': true, 'clientId': clientId};
-    }
-
-    return {'disconnected': false, 'reason': 'client_not_found'};
-  }
-
-  Map<String, dynamic> _getClients(Map<String, dynamic> args) {
-    final serverId = args['serverId'] as String;
-    final managed = _servers[serverId];
-
-    if (managed == null) return {'clients': <dynamic>[], 'reason': 'server_not_found'};
-
-    return {
-      'clients': managed.clients.values.map((c) => c.toJson()).toList(),
-      'count': managed.clients.length,
-    };
+        eventEmitter?.call('tcpServer.clientDisconnected', {
+          'serverId': instance.id,
+          'clientId': clientId,
+          'totalClients': instance.clients.length,
+        });
+      },
+    );
   }
 
   Future<Map<String, dynamic>> _stop(Map<String, dynamic> args) async {
     final id = args['id'] as String;
-    final managed = _servers.remove(id);
+    final instance = _servers.remove(id);
 
-    if (managed != null) {
-      await managed.close();
+    if (instance != null) {
+      await instance.close();
       BridgeLogger.info('TcpServer', '[$id] Stopped');
       return {'stopped': true, 'id': id};
     }
@@ -298,50 +220,122 @@ class TcpServerPlugin extends Plugin {
 
   Future<Map<String, dynamic>> _stopAll() async {
     final count = _servers.length;
-    for (final s in _servers.values) {
-      await s.close();
+    for (final instance in _servers.values) {
+      await instance.close();
     }
     _servers.clear();
     return {'stopped': count};
   }
 
-  Map<String, dynamic> _getServers() {
+  Map<String, dynamic> _sendToClient(Map<String, dynamic> args) {
+    final serverId = args['serverId'] as String;
+    final clientId = args['clientId'] as String;
+    final data = args['data'];
+    final encoding = args['encoding'] as String? ?? 'utf8';
+
+    final instance = _servers[serverId];
+    if (instance == null) return {'sent': false, 'reason': 'server_not_found'};
+
+    final client = instance.clients[clientId];
+    if (client == null) return {'sent': false, 'reason': 'client_not_found'};
+
+    try {
+      if (encoding == 'base64' && data is String) {
+        client.add(base64Decode(data));
+      } else {
+        client.write(data.toString());
+      }
+
+      instance.sentBytes += data.toString().length;
+      return {'sent': true, 'clientId': clientId};
+    } catch (e) {
+      return {'sent': false, 'error': e.toString()};
+    }
+  }
+
+  Map<String, dynamic> _sendToAll(Map<String, dynamic> args) {
+    final serverId = args['serverId'] as String;
+    final data = args['data'];
+    final excludeClient = args['exclude'] as String?;
+
+    final instance = _servers[serverId];
+    if (instance == null) return {'sent': 0, 'reason': 'server_not_found'};
+
+    int sentCount = 0;
+    final payload = data.toString();
+
+    for (final entry in instance.clients.entries) {
+      if (entry.key == excludeClient) continue;
+      try {
+        entry.value.write(payload);
+        sentCount++;
+      } catch (_) {}
+    }
+
+    return {'sent': sentCount, 'totalClients': instance.clients.length};
+  }
+
+  Future<Map<String, dynamic>> _disconnectClient(Map<String, dynamic> args) async {
+    final serverId = args['serverId'] as String;
+    final clientId = args['clientId'] as String;
+
+    final instance = _servers[serverId];
+    if (instance == null) return {'disconnected': false, 'reason': 'server_not_found'};
+
+    final client = instance.clients.remove(clientId);
+    if (client != null) {
+      await client.close();
+      return {'disconnected': true, 'clientId': clientId};
+    }
+
+    return {'disconnected': false, 'reason': 'client_not_found'};
+  }
+
+  Future<Map<String, dynamic>> _disconnectAllClients(Map<String, dynamic> args) async {
+    final serverId = args['serverId'] as String;
+    final instance = _servers[serverId];
+    if (instance == null) return {'disconnected': 0};
+
+    final count = instance.clients.length;
+    for (final client in instance.clients.values) {
+      await client.close();
+    }
+    instance.clients.clear();
+
+    return {'disconnected': count};
+  }
+
+  Map<String, dynamic> _getClients(Map<String, dynamic> args) {
+    final serverId = args['serverId'] as String;
+    final instance = _servers[serverId];
+
+    if (instance == null) return {'clients': <dynamic>[], 'count': 0};
+
     return {
-      'servers': _servers.values.map((s) => {
+      'clients': instance.clients.entries.map((e) {
         return {
-          'id': s.id,
-          'port': s.server.port,
-          'clientCount': s.clients.length,
-          'maxClients': s.maxClients,
-          'uptime': DateTime.now().difference(s.startedAt).inSeconds,
+          'clientId': e.key,
+          'remoteAddress': e.value.remoteAddress.address,
+          'remotePort': e.value.remotePort,
         };
       }).toList(),
-      'count': _servers.length,
+      'count': instance.clients.length,
     };
   }
 
-  Map<String, dynamic> _getStats(Map<String, dynamic> args) {
-    final id = args['id'] as String;
-    final managed = _servers[id];
-    if (managed == null) return {'found': false};
-
-    int totalReceived = 0;
-    int totalSent = 0;
-
-    for (final c in managed.clients.values) {
-      totalReceived += c.receivedBytes;
-      totalSent += c.sentBytes;
-    }
-
+  Map<String, dynamic> _getServers() {
     return {
-      'found': true,
-      'id': id,
-      'port': managed.server.port,
-      'clients': managed.clients.length,
-      'totalReceivedBytes': totalReceived,
-      'totalSentBytes': totalSent,
-      'totalConnections': managed.clientCounter,
-      'uptime': DateTime.now().difference(managed.startedAt).inSeconds,
+      'servers': _servers.values.map((s) {
+        return {
+          'id': s.id,
+          'port': s.server.port,
+          'clients': s.clients.length,
+          'maxClients': s.maxClients,
+          'sentBytes': s.sentBytes,
+          'receivedBytes': s.receivedBytes,
+        };
+      }).toList(),
+      'count': _servers.length,
     };
   }
 
@@ -349,20 +343,17 @@ class TcpServerPlugin extends Plugin {
   Future<ValidationResult> validateArgs(String method, Map<String, dynamic> args) async {
     switch (method) {
       case 'stop':
-      case 'getClients':
-      case 'getStats':
-        if (args['id'] is! String && args['serverId'] is! String) {
-          return ValidationResult.invalid('id or serverId required');
-        }
+        if (args['id'] is! String) return ValidationResult.invalid('id is required');
         return ValidationResult.valid();
       case 'sendToClient':
       case 'disconnectClient':
-        if (args['serverId'] is! String) return ValidationResult.invalid('serverId required');
-        if (args['clientId'] is! String) return ValidationResult.invalid('clientId required');
+        if (args['serverId'] is! String) return ValidationResult.invalid('serverId is required');
+        if (args['clientId'] is! String) return ValidationResult.invalid('clientId is required');
         return ValidationResult.valid();
       case 'sendToAll':
-        if (args['serverId'] is! String) return ValidationResult.invalid('serverId required');
-        if (args['data'] is! String) return ValidationResult.invalid('data required');
+      case 'getClients':
+      case 'disconnectAllClients':
+        if (args['serverId'] is! String) return ValidationResult.invalid('serverId is required');
         return ValidationResult.valid();
       default:
         return ValidationResult.valid();
@@ -370,57 +361,30 @@ class TcpServerPlugin extends Plugin {
   }
 }
 
-class _ManagedTcpServer {
+class _TcpServerInstance {
   final String id;
   final ServerSocket server;
   final int maxClients;
-  final Map<String, _TcpClient> clients = {};
+  final String encoding;
+  final Map<String, Socket> clients = {};
   StreamSubscription<Socket>? subscription;
   int clientCounter = 0;
-  final DateTime startedAt = DateTime.now();
+  int sentBytes = 0;
+  int receivedBytes = 0;
 
-  _ManagedTcpServer({
+  _TcpServerInstance({
     required this.id,
     required this.server,
-    required this.maxClients,
+    this.maxClients = 100,
+    this.encoding = 'utf8',
   });
 
   Future<void> close() async {
-    for (final c in clients.values) {
-      c.subscription?.cancel();
-      await c.socket.close();
+    subscription?.cancel();
+    for (final client in clients.values) {
+      await client.close();
     }
     clients.clear();
-    subscription?.cancel();
     await server.close();
   }
-}
-
-class _TcpClient {
-  final String id;
-  final Socket socket;
-  final String remoteAddress;
-  final int remotePort;
-  StreamSubscription<Uint8List>? subscription;
-  int receivedBytes = 0;
-  int sentBytes = 0;
-  int messageCount = 0;
-  final DateTime connectedAt = DateTime.now();
-
-  _TcpClient({
-    required this.id,
-    required this.socket,
-    required this.remoteAddress,
-    required this.remotePort,
-  });
-
-  Map<String, dynamic> toJson() => {
-        'id': id,
-        'remoteAddress': remoteAddress,
-        'remotePort': remotePort,
-        'receivedBytes': receivedBytes,
-        'sentBytes': sentBytes,
-        'messageCount': messageCount,
-        'connectedSeconds': DateTime.now().difference(connectedAt).inSeconds,
-      };
 }

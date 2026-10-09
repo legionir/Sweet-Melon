@@ -16,6 +16,8 @@ class BridgeInspector {
   StreamSubscription<BridgeMessage>? _bridgeSub;
   StreamSubscription<PluginTrace>? _traceSub;
 
+  bool _disposed = false;
+
   Stream<InspectorEntry> get logStream => _logController.stream;
   List<InspectorEntry> get log => List.unmodifiable(_log);
 
@@ -28,6 +30,8 @@ class BridgeInspector {
 
   void _attachListeners() {
     _bridgeSub = bridge.messageStream.listen((message) {
+      if (_disposed) return;
+
       final entry = InspectorEntry(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         direction: message.direction == BridgeMessageDirection.incoming
@@ -46,6 +50,8 @@ class BridgeInspector {
     });
 
     _traceSub = manager.traces.listen((trace) {
+      if (_disposed) return;
+
       BridgeLogger.debug(
         'Inspector',
         '${trace.plugin}.${trace.method} — '
@@ -70,12 +76,14 @@ class BridgeInspector {
   }
 
   void dispose() {
+    _disposed = true;
     _bridgeSub?.cancel();
     _traceSub?.cancel();
-    _logController.close();
+    if (!_logController.isClosed) {
+      _logController.close();
+    }
   }
 }
-
 
 enum EntryDirection { jsToFlutter, flutterToJs }
 

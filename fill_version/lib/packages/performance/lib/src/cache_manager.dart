@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:sweetmelon/packages/core/lib/core.dart';
 
-
 class CacheEntry {
   final dynamic value;
   final DateTime expiresAt;
@@ -32,8 +31,24 @@ class CacheManager {
 
   final Set<String> _noCachePatterns = {};
 
+  /// متدهایی که mutation هستند و نباید cache بشن
+  final Set<String> _mutationMethods = {
+    'set', 'remove', 'clear', 'delete', 'write', 'update',
+    'insert', 'create', 'put', 'patch', 'post',
+    'deleteFile', 'writeFile',
+  };
+
   CacheManager({this.maxEntries = 500}) {
     _startCleanupTimer();
+  }
+
+  /// بررسی mutation بودن method
+  bool isMutationMethod(String method) {
+    return _mutationMethods.contains(method);
+  }
+
+  void addMutationMethod(String method) {
+    _mutationMethods.add(method);
   }
 
   Future<dynamic> get(String key) async {
@@ -84,6 +99,7 @@ class CacheManager {
 
   Future<void> invalidatePlugin(String pluginName) async {
     _cache.removeWhere((key, _) => key.startsWith('$pluginName:'));
+    BridgeLogger.debug('Cache', 'Invalidated all keys for plugin: $pluginName');
   }
 
   Future<void> invalidatePattern(String pattern) async {

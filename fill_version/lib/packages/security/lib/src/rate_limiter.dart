@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:sweetmelon/packages/core/lib/core.dart';
 
 class RateLimitResult {

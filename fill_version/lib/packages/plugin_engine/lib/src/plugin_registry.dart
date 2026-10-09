@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:sweetmelon/packages/core/lib/core.dart';
 import 'plugin_interface.dart';
 
-
 typedef EventEmitter = Future<void> Function(String event, dynamic data);
 
 class PluginRegistry {
@@ -14,6 +13,7 @@ class PluginRegistry {
   Stream<PluginRegistrationEvent> get events => _registrationController.stream;
 
   EventEmitter? _eventEmitter;
+  bool _disposed = false;
 
   void setEventEmitter(EventEmitter emitter) {
     _eventEmitter = emitter;
@@ -22,10 +22,17 @@ class PluginRegistry {
   Future<void> emitEvent(String event, dynamic data) async {
     if (_eventEmitter != null) {
       await _eventEmitter!(event, data);
+    } else {
+      BridgeLogger.warn(
+        'Registry',
+        'Event emitter not set, dropping event: $event',
+      );
     }
   }
 
   Future<void> register(Plugin plugin) async {
+    if (_disposed) return;
+
     final name = plugin.name;
     final version = plugin.version;
 
@@ -142,13 +149,16 @@ class PluginRegistry {
   }
 
   Future<void> dispose() async {
+    _disposed = true;
     for (final versions in _plugins.values) {
       for (final plugin in versions.values) {
         await plugin.dispose();
       }
     }
     _plugins.clear();
-    _registrationController.close();
+    if (!_registrationController.isClosed) {
+      _registrationController.close();
+    }
   }
 }
 

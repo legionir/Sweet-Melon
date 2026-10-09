@@ -1,7 +1,5 @@
-import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
-import 'package:path_provider/path_provider.dart';
+
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sweetmelon/packages/plugin_engine/lib/plugin_engine.dart';
 
@@ -16,7 +14,7 @@ class StoragePlugin extends Plugin {
   String get version => '1.0.0';
 
   @override
-  String get description => 'Key-value storage and file system plugin';
+  String get description => 'Key-value storage plugin';
 
   @override
   bool get cacheable => true;
@@ -32,15 +30,8 @@ class StoragePlugin extends Plugin {
         'clear',
         'keys',
         'has',
-        'readFile',
-        'writeFile',
-        'deleteFile',
-        'fileExists',
-        'listFiles',
+        'getInfo',
       ];
-
-  @override
-  List<String> get requiredPermissions => ['storage'];
 
   @override
   Future<void> onInitialize() async {
@@ -62,16 +53,13 @@ class StoragePlugin extends Plugin {
         return _keys();
       case 'has':
         return _has(args);
-      case 'readFile':
-        return _readFile(args);
-      case 'writeFile':
-        return _writeFile(args);
-      case 'deleteFile':
-        return _deleteFile(args);
-      case 'fileExists':
-        return _fileExists(args);
-      case 'listFiles':
-        return _listFiles(args);
+      case 'getInfo':
+        return {
+          'name': name,
+          'version': version,
+          'prefix': _keyPrefix,
+          'keysCount': _getBridgeKeys().length,
+        };
       default:
         throw UnsupportedError('Method "$method" not supported');
     }
@@ -81,6 +69,7 @@ class StoragePlugin extends Plugin {
     final key = args['key'] as String;
     final raw = _prefs?.getString('$_keyPrefix$key');
     if (raw == null) return null;
+
     try {
       return jsonDecode(raw);
     } catch (_) {
@@ -91,6 +80,7 @@ class StoragePlugin extends Plugin {
   Future<bool> _set(Map<String, dynamic> args) async {
     final key = args['key'] as String;
     final value = args['value'];
+
     final encoded = jsonEncode(value);
     return await _prefs?.setString('$_keyPrefix$key', encoded) ?? false;
   }
@@ -102,113 +92,32 @@ class StoragePlugin extends Plugin {
 
   Future<int> _clear() async {
     final keys = _getBridgeKeys();
-    int count = 0;
+    var count = 0;
+
     for (final key in keys) {
       final removed = await _prefs?.remove(key) ?? false;
       if (removed) count++;
     }
+
     return count;
   }
 
-  List<String> _keys() {
-    return _getBridgeKeys().map((k) => k.substring(_keyPrefix.length)).toList();
+  Map<String, dynamic> _keys() {
+    final keys = _getBridgeKeys()
+        .map((k) => k.substring(_keyPrefix.length))
+        .toList();
+
+    return {'keys': keys};
   }
 
-  bool _has(Map<String, dynamic> args) {
+  Map<String, dynamic> _has(Map<String, dynamic> args) {
     final key = args['key'] as String;
-    return _prefs?.containsKey('$_keyPrefix$key') ?? false;
+    return {'exists': _prefs?.containsKey('$_keyPrefix$key') ?? false};
   }
 
   List<String> _getBridgeKeys() {
     return _prefs?.getKeys().where((k) => k.startsWith(_keyPrefix)).toList() ??
         [];
-  }
-
-  Future<Directory> _getAppDir() async {
-    return getApplicationDocumentsDirectory();
-  }
-
-  Future<File> _resolveFile(String path) async {
-    final dir = await _getAppDir();
-    final resolved = File('${dir.path}/$path');
-    if (!resolved.path.startsWith(dir.path)) {
-      throw const FileSystemException(
-        'Invalid path: path traversal detected',
-      );
-    }
-    return resolved;
-  }
-
-  Future<String> _readFile(Map<String, dynamic> args) async {
-    final path = args['path'] as String;
-    final file = await _resolveFile(path);
-    if (!await file.exists()) {
-      throw FileSystemException('File not found', path);
-    }
-    final encoding = args['encoding'] as String? ?? 'utf8';
-    if (encoding == 'base64') {
-      final bytes = await file.readAsBytes();
-      return base64Encode(bytes);
-    }
-    return file.readAsString();
-  }
-
-  Future<bool> _writeFile(Map<String, dynamic> args) async {
-    final path = args['path'] as String;
-    final content = args['content'] as String;
-    final encoding = args['encoding'] as String? ?? 'utf8';
-    final file = await _resolveFile(path);
-    await file.parent.create(recursive: true);
-    if (encoding == 'base64') {
-      final bytes = base64Decode(content);
-      await file.writeAsBytes(bytes);
-    } else {
-      await file.writeAsString(content);
-    }
-    return true;
-  }
-
-  Future<bool> _deleteFile(Map<String, dynamic> args) async {
-    final path = args['path'] as String;
-    final file = await _resolveFile(path);
-    if (await file.exists()) {
-      await file.delete();
-      return true;
-    }
-    return false;
-  }
-
-  Future<bool> _fileExists(Map<String, dynamic> args) async {
-    final path = args['path'] as String;
-    final file = await _resolveFile(path);
-    return file.exists();
-  }
-
-  Future<List<Map<String, dynamic>>> _listFiles(
-    Map<String, dynamic> args,
-  ) async {
-    final path = args['path'] as String? ?? '';
-    final dir = await _getAppDir();
-    final targetDir = Directory('${dir.path}/$path');
-    if (!targetDir.path.startsWith(dir.path)) {
-      throw const FileSystemException(
-        'Invalid path: path traversal detected',
-      );
-    }
-    if (!await targetDir.exists()) return [];
-    final entities = await targetDir.list().toList();
-    final results = <Map<String, dynamic>>[];
-    for (final entity in entities) {
-      final stat = await entity.stat();
-      results.add({
-        'name': entity.path.split('/').last,
-        'path': entity.path.replaceFirst(dir.path, ''),
-        'type': entity is Directory ? 'directory' : 'file',
-        'size': stat.size,
-        'modified': stat.modified.toIso8601String(),
-      });
-    }
-    return results;
   }
 
   @override
@@ -222,69 +131,22 @@ class StoragePlugin extends Plugin {
       case 'has':
         return _validateKeyRequired(args);
       case 'set':
-        return _validateSet(args);
-      case 'readFile':
-      case 'deleteFile':
-      case 'fileExists':
-        return _validatePathRequired(args);
-      case 'writeFile':
-        return _validateWriteFile(args);
+        final keyResult = _validateKeyRequired(args);
+        if (!keyResult.isValid) return keyResult;
+        if (!args.containsKey('value')) {
+          return ValidationResult.invalid('value is required');
+        }
+        return ValidationResult.valid();
       default:
         return ValidationResult.valid();
     }
   }
 
   ValidationResult _validateKeyRequired(Map<String, dynamic> args) {
-    if (!args.containsKey('key') || args['key'] is! String) {
+    final key = args['key'];
+    if (key is! String || key.isEmpty) {
       return ValidationResult.invalid(
-        'key is required and must be a string',
-      );
-    }
-    if ((args['key'] as String).isEmpty) {
-      return ValidationResult.invalid('key cannot be empty');
-    }
-    return ValidationResult.valid();
-  }
-
-  ValidationResult _validateSet(Map<String, dynamic> args) {
-    final keyResult = _validateKeyRequired(args);
-    if (!keyResult.isValid) return keyResult;
-    if (!args.containsKey('value')) {
-      return ValidationResult.invalid('value is required');
-    }
-    return ValidationResult.valid();
-  }
-
-  ValidationResult _validatePathRequired(Map<String, dynamic> args) {
-    if (!args.containsKey('path') || args['path'] is! String) {
-      return ValidationResult.invalid(
-        'path is required and must be a string',
-      );
-    }
-    final path = args['path'] as String;
-    if (path.isEmpty) {
-      return ValidationResult.invalid('path cannot be empty');
-    }
-    if (path.contains('..')) {
-      return ValidationResult.invalid(
-        'path cannot contain ".." (path traversal)',
-      );
-    }
-    return ValidationResult.valid();
-  }
-
-  ValidationResult _validateWriteFile(Map<String, dynamic> args) {
-    final pathResult = _validatePathRequired(args);
-    if (!pathResult.isValid) return pathResult;
-    if (!args.containsKey('content') || args['content'] is! String) {
-      return ValidationResult.invalid(
-        'content is required and must be a string',
-      );
-    }
-    final encoding = args['encoding'] as String?;
-    if (encoding != null && encoding != 'utf8' && encoding != 'base64') {
-      return ValidationResult.invalid(
-        'encoding must be "utf8" or "base64"',
+        'key is required and must be a non-empty string',
       );
     }
     return ValidationResult.valid();

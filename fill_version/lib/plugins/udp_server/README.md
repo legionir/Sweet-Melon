@@ -1,61 +1,55 @@
 # UDP Server Plugin
 
-Receive UDP datagrams and respond or broadcast.
+Receive UDP datagrams and respond.
 
 ## Plugin Name
 `udpServer`
 
 ## Methods
 
-| Method | Args | Description |
-|--------|------|-------------|
-| `start` | `port?, host?, broadcast?, id?` | Bind UDP server |
-| `stop` | `id` | Stop specific server |
-| `stopAll` | — | Stop all servers |
-| `sendTo` | `serverId, data, host, port` | Send to specific address |
-| `broadcast` | `serverId, data, port, broadcastAddress?` | Broadcast to network |
-| `getServers` | — | List active servers |
-| `getStats` | `id` | Server statistics |
+| Method | Description |
+|--------|-------------|
+| `start` | Bind UDP socket |
+| `stop` | Close socket |
+| `sendTo` | Send to specific address |
+| `broadcast` | Send broadcast |
+| `getServers` | List active sockets |
+| `getStats` | Get statistics |
+
+### start
+| Param | Type | Default |
+|-------|------|---------|
+| `port` | `number` | `0` |
+| `host` | `string` | `"0.0.0.0"` |
+| `broadcast` | `bool` | `true` |
+| `encoding` | `string` | `"utf8"` |
 
 ## Events
-
 | Event | Data |
 |-------|------|
-| `udpServer.started` | `{ id, port, host }` |
+| `udpServer.started` | `{ serverId, port }` |
 | `udpServer.data` | `{ serverId, data, senderAddress, senderPort, bytes }` |
 
 ## Usage
-
 ```javascript
-// Start UDP server
-const { id, port } = await NativeSDK.udpServer.start({ port: 5000 });
-console.log('UDP listening on port:', port);
+// IoT sensor receiver
+const srv = await NativeSDK.udpServer.start({ port: 5000 });
 
-// Receive data
-NativeSDK.on('udpServer.data', (msg) => {
-  console.log(`From ${msg.senderAddress}:${msg.senderPort} → ${msg.data}`);
+NativeSDK.on('udpServer.data', (packet) => {
+  const sensor = JSON.parse(packet.data);
+  console.log(`Sensor ${packet.senderAddress}: temp=${sensor.temp}°C`);
   
-  // Echo back
-  NativeSDK.udpServer.sendTo(msg.serverId, 'ACK: ' + msg.data, msg.senderAddress, msg.senderPort);
+  // Respond
+  NativeSDK.udpServer.sendTo(srv.id, 'ACK', packet.senderAddress, packet.senderPort);
 });
 
-// Broadcast discovery
-await NativeSDK.udpServer.broadcast(id, 'DISCOVER', 5001);
-
-// Device discovery pattern
-const discoveryServer = await NativeSDK.udpServer.start({ port: 5001, broadcast: true });
-
-NativeSDK.on('udpServer.data', (msg) => {
-  if (msg.data === 'DISCOVER') {
-    const myInfo = JSON.stringify({ name: 'MyDevice', ip: myIp });
-    NativeSDK.udpServer.sendTo(discoveryServer.id, myInfo, msg.senderAddress, msg.senderPort);
-  }
-});
+// Discovery broadcast
+await NativeSDK.udpServer.broadcast(srv.id, JSON.stringify({
+  type: 'discover',
+  name: 'MyDevice'
+}), 5000);
 
 // Stats
-const stats = await NativeSDK.udpServer.getStats(id);
-console.log('Received:', stats.receivedCount, 'packets');
-
-// Cleanup
-await NativeSDK.udpServer.stopAll();
+const stats = await NativeSDK.udpServer.getStats(srv.id);
+console.log(`Packets: ${stats.packetCount}, Senders: ${stats.uniqueSenders}`);
 ```

@@ -11,3 +11,5 @@ dependencies:
   geolocator: ^10.1.0
   plugin_engine:
     path: ../../packages/plugin_engine
+  core:
+    path: ../../packages/core

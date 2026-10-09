@@ -13,12 +13,14 @@ class FtpServerPlugin extends Plugin {
 
   ServerSocket? _server;
   String? _rootDir;
-  String? _username;
-  String? _password;
   int _port = 0;
   bool _running = false;
-  int _clientCount = 0;
   final Map<String, _FtpSession> _sessions = {};
+  int _sessionCounter = 0;
+
+  String _username = 'anonymous';
+  String _password = '';
+  bool _allowAnonymous = true;
 
   FtpServerPlugin({this.eventEmitter});
 
@@ -29,21 +31,22 @@ class FtpServerPlugin extends Plugin {
   String get version => '1.0.0';
 
   @override
-  String get description => 'Simple FTP server for file sharing';
+  String get description => 'FTP server for file sharing on local network';
 
   @override
   List<String> get supportedMethods => [
         'start',
         'stop',
+        'configure',
         'getClients',
+        'disconnectClient',
         'getStats',
-        'kickClient',
         'getInfo',
       ];
 
   @override
   Future<void> onDispose() async {
-    await _stopServer();
+    await _stop();
   }
 
   @override
@@ -52,24 +55,39 @@ class FtpServerPlugin extends Plugin {
       case 'start':
         return _start(args);
       case 'stop':
-        return _stopServer();
+        return _stop();
+      case 'configure':
+        return _configure(args);
       case 'getClients':
         return _getClients();
+      case 'disconnectClient':
+        return _disconnectClient(args);
       case 'getStats':
         return _getStats();
-      case 'kickClient':
-        return _kickClient(args);
       case 'getInfo':
         return {
           'name': name,
           'version': version,
           'running': _running,
           'port': _port,
+          'rootDir': _rootDir,
           'clients': _sessions.length,
         };
       default:
         throw UnsupportedError('Method "$method" not supported');
     }
+  }
+
+  Map<String, dynamic> _configure(Map<String, dynamic> args) {
+    _username = args['username'] as String? ?? 'anonymous';
+    _password = args['password'] as String? ?? '';
+    _allowAnonymous = args['allowAnonymous'] as bool? ?? true;
+
+    return {
+      'configured': true,
+      'username': _username,
+      'allowAnonymous': _allowAnonymous,
+    };
   }
 
   Future<Map<String, dynamic>> _start(Map<String, dynamic> args) async {
@@ -84,11 +102,14 @@ class FtpServerPlugin extends Plugin {
     final port = (args['port'] as num?)?.toInt() ?? 2121;
     final host = args['host'] as String? ?? '0.0.0.0';
     _rootDir = args['rootDir'] as String;
-    _username = args['username'] as String? ?? 'anonymous';
-    _password = args['password'] as String? ?? '';
 
-    if (_rootDir == null || !await Directory(_rootDir!).exists()) {
-      return {'started': false, 'reason': 'rootDir does not exist'};
+    if (_rootDir == null || _rootDir!.isEmpty) {
+      return {'started': false, 'reason': 'rootDir is required'};
+    }
+
+    final rootDirectory = Directory(_rootDir!);
+    if (!await rootDirectory.exists()) {
+      await rootDirectory.create(recursive: true);
     }
 
     try {
@@ -100,7 +121,7 @@ class FtpServerPlugin extends Plugin {
       _port = _server!.port;
       _running = true;
 
-      _server!.listen(_handleClient);
+      _server!.listen(_handleNewConnection);
 
       BridgeLogger.info('FtpServer', 'Started on port $_port, root: $_rootDir');
 
@@ -121,9 +142,9 @@ class FtpServerPlugin extends Plugin {
     }
   }
 
-  void _handleClient(Socket client) {
-    _clientCount++;
-    final sessionId = 'ftp_client_$_clientCount';
+  void _handleNewConnection(Socket client) {
+    _sessionCounter++;
+    final sessionId = 'ftp_client_$_sessionCounter';
 
     final session = _FtpSession(
       id: sessionId,
@@ -138,16 +159,17 @@ class FtpServerPlugin extends Plugin {
 
     eventEmitter?.call('ftpServer.clientConnected', {
       'sessionId': sessionId,
-      'remoteAddress': session.remoteAddress,
+      'remoteAddress': client.remoteAddress.address,
+      'totalClients': _sessions.length,
     });
 
-    // Send welcome
-    _send(client, '220 Sweetmelon FTP Server Ready');
+    // Welcome message
+    client.write('220 Sweetmelon FTP Server Ready\r\n');
 
     client.listen(
-      (data) {
+      (data) async {
         final command = utf8.decode(data).trim();
-        _processCommand(session, command);
+        await _handleCommand(session, command);
       },
       onDone: () {
         _sessions.remove(sessionId);
@@ -161,359 +183,284 @@ class FtpServerPlugin extends Plugin {
     );
   }
 
-  void _processCommand(_FtpSession session, String raw) {
-    if (raw.isEmpty) return;
+  Future<void> _handleCommand(_FtpSession session, String rawCommand) async {
+    final parts = rawCommand.split(' ');
+    final cmd = parts[0].toUpperCase();
+    final arg = parts.length > 1 ? parts.sublist(1).join(' ') : '';
 
-    final parts = raw.split(' ');
-    final command = parts[0].toUpperCase();
-    final argument = parts.length > 1 ? parts.sublist(1).join(' ') : '';
+    BridgeLogger.debug('FtpServer', '[${session.id}] $cmd $arg');
 
-    BridgeLogger.debug('FtpServer', '[${session.id}] $command $argument');
+    eventEmitter?.call('ftpServer.command', {
+      'sessionId': session.id,
+      'command': cmd,
+      'argument': arg,
+    });
 
-    session.commandCount++;
-
-    switch (command) {
+    switch (cmd) {
       case 'USER':
-        if (argument == _username || _username == 'anonymous') {
-          session.username = argument;
-          _send(session.socket, '331 Password required');
+        session.username = arg;
+        if (_allowAnonymous && arg == 'anonymous') {
+          session.authenticated = true;
+          session.socket.write('230 Login successful\r\n');
         } else {
-          _send(session.socket, '530 Invalid username');
+          session.socket.write('331 Password required\r\n');
         }
         break;
 
       case 'PASS':
-        if (_password!.isEmpty || argument == _password) {
+        if (session.username == _username && arg == _password) {
           session.authenticated = true;
-          _send(session.socket, '230 Login successful');
-
-          eventEmitter?.call('ftpServer.login', {
-            'sessionId': session.id,
-            'username': session.username,
-          });
+          session.socket.write('230 Login successful\r\n');
+        } else if (_allowAnonymous && session.username == 'anonymous') {
+          session.authenticated = true;
+          session.socket.write('230 Anonymous login accepted\r\n');
         } else {
-          _send(session.socket, '530 Login incorrect');
+          session.socket.write('530 Login incorrect\r\n');
         }
         break;
 
       case 'PWD':
-        if (!session.authenticated) {
-          _send(session.socket, '530 Not logged in');
-          return;
-        }
-        _send(session.socket, '257 "${session.currentDir}"');
+        if (!session.authenticated) { session.socket.write('530 Not logged in\r\n'); break; }
+        session.socket.write('257 "${session.currentDir}"\r\n');
         break;
 
       case 'CWD':
-        if (!session.authenticated) {
-          _send(session.socket, '530 Not logged in');
-          return;
-        }
-        final newDir = _resolveDir(session, argument);
-        if (Directory(newDir).existsSync()) {
-          session.currentDir = argument.startsWith('/')
-              ? argument
-              : p.join(session.currentDir, argument);
-          _send(session.socket, '250 Directory changed');
+        if (!session.authenticated) { session.socket.write('530 Not logged in\r\n'); break; }
+        final newDir = session.resolveDir(arg);
+        if (await Directory(p.join(_rootDir!, newDir)).exists()) {
+          session.currentDir = newDir;
+          session.socket.write('250 Directory changed\r\n');
         } else {
-          _send(session.socket, '550 Directory not found');
+          session.socket.write('550 Directory not found\r\n');
         }
         break;
 
       case 'LIST':
-        if (!session.authenticated) {
-          _send(session.socket, '530 Not logged in');
-          return;
-        }
-        _handleList(session);
-        break;
-
-      case 'TYPE':
-        _send(session.socket, '200 Type set to ${argument.toUpperCase()}');
-        break;
-
-      case 'SYST':
-        _send(session.socket, '215 UNIX Type: L8');
-        break;
-
-      case 'FEAT':
-        _send(session.socket, '211-Features:\r\n PASV\r\n UTF8\r\n211 End');
-        break;
-
-      case 'QUIT':
-        _send(session.socket, '221 Goodbye');
-        session.socket.close();
-        break;
-
-      case 'NOOP':
-        _send(session.socket, '200 OK');
+        if (!session.authenticated) { session.socket.write('530 Not logged in\r\n'); break; }
+        await _handleList(session, arg);
         break;
 
       case 'PASV':
-        _handlePasv(session);
+        await _handlePasv(session);
         break;
 
-      case 'RETR':
-        _handleRetr(session, argument);
+      case 'TYPE':
+        session.socket.write('200 Type set\r\n');
         break;
 
-      case 'STOR':
-        _handleStor(session, argument);
+      case 'SYST':
+        session.socket.write('215 UNIX Type: L8\r\n');
         break;
 
-      case 'DELE':
-        _handleDele(session, argument);
-        break;
-
-      case 'MKD':
-        _handleMkd(session, argument);
-        break;
-
-      case 'RMD':
-        _handleRmd(session, argument);
+      case 'FEAT':
+        session.socket.write('211-Features:\r\n PASV\r\n UTF8\r\n211 End\r\n');
         break;
 
       case 'SIZE':
-        _handleSize(session, argument);
+        if (!session.authenticated) { session.socket.write('530 Not logged in\r\n'); break; }
+        final filePath = p.join(_rootDir!, session.resolveDir(arg));
+        final file = File(filePath);
+        if (await file.exists()) {
+          final stat = await file.stat();
+          session.socket.write('213 ${stat.size}\r\n');
+        } else {
+          session.socket.write('550 File not found\r\n');
+        }
+        break;
+
+      case 'RETR':
+        if (!session.authenticated) { session.socket.write('530 Not logged in\r\n'); break; }
+        await _handleRetr(session, arg);
+        break;
+
+      case 'STOR':
+        if (!session.authenticated) { session.socket.write('530 Not logged in\r\n'); break; }
+        await _handleStor(session, arg);
+        break;
+
+      case 'DELE':
+        if (!session.authenticated) { session.socket.write('530 Not logged in\r\n'); break; }
+        final delPath = p.join(_rootDir!, session.resolveDir(arg));
+        final delFile = File(delPath);
+        if (await delFile.exists()) {
+          await delFile.delete();
+          session.socket.write('250 File deleted\r\n');
+          session.filesTransferred++;
+        } else {
+          session.socket.write('550 File not found\r\n');
+        }
+        break;
+
+      case 'MKD':
+        if (!session.authenticated) { session.socket.write('530 Not logged in\r\n'); break; }
+        final mkdPath = p.join(_rootDir!, session.resolveDir(arg));
+        await Directory(mkdPath).create(recursive: true);
+        session.socket.write('257 "$arg" created\r\n');
+        break;
+
+      case 'RMD':
+        if (!session.authenticated) { session.socket.write('530 Not logged in\r\n'); break; }
+        final rmdPath = p.join(_rootDir!, session.resolveDir(arg));
+        final rmdDir = Directory(rmdPath);
+        if (await rmdDir.exists()) {
+          await rmdDir.delete(recursive: true);
+          session.socket.write('250 Directory removed\r\n');
+        } else {
+          session.socket.write('550 Directory not found\r\n');
+        }
+        break;
+
+      case 'QUIT':
+        session.socket.write('221 Goodbye\r\n');
+        await session.socket.close();
+        _sessions.remove(session.id);
+        break;
+
+      case 'NOOP':
+        session.socket.write('200 OK\r\n');
         break;
 
       default:
-        _send(session.socket, '502 Command not implemented');
+        session.socket.write('502 Command not implemented\r\n');
     }
   }
 
-  void _handleList(_FtpSession session) async {
-    if (session.dataSocket == null) {
-      _send(session.socket, '425 Use PASV first');
-      return;
-    }
-
-    _send(session.socket, '150 Opening data connection');
-
-    final dir = _resolveDir(session, session.currentDir);
-    final directory = Directory(dir);
-
-    if (!directory.existsSync()) {
-      _send(session.socket, '550 Directory not found');
-      return;
-    }
-
-    final entities = directory.listSync();
-    final buffer = StringBuffer();
-
-    for (final entity in entities) {
-      final stat = entity.statSync();
-      final isDir = entity is Directory;
-      final name = p.basename(entity.path);
-      final size = stat.size;
-      final date = stat.modified;
-      final dateStr = '${_monthName(date.month)} ${date.day.toString().padLeft(2)} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
-
-      buffer.writeln(
-        '${isDir ? "drwxr-xr-x" : "-rw-r--r--"} 1 owner group ${size.toString().padLeft(12)} $dateStr $name',
-      );
-    }
-
+  Future<void> _handlePasv(_FtpSession session) async {
     try {
-      final dataClient = await session.dataSocket!.first;
-      dataClient.write(buffer.toString());
-      await dataClient.close();
-    } catch (_) {}
-
-    session.dataSocket?.close();
-    session.dataSocket = null;
-
-    _send(session.socket, '226 Transfer complete');
-  }
-
-  void _handlePasv(_FtpSession session) async {
-    try {
-      final dataServer = await ServerSocket.bind(
-        InternetAddress.anyIPv4,
-        0,
-      );
-
-      session.dataSocket = dataServer;
+      final dataServer = await ServerSocket.bind(InternetAddress.anyIPv4, 0);
+      session.dataServer = dataServer;
 
       final port = dataServer.port;
-      final p1 = port ~/ 256;
-      final p2 = port % 256;
+      final p1 = port >> 8;
+      final p2 = port & 0xFF;
 
-      _send(session.socket, '227 Entering Passive Mode (127,0,0,1,$p1,$p2)');
+      final ip = (await NetworkInterface.list(type: InternetAddressType.IPv4))
+          .expand((i) => i.addresses)
+          .firstWhere((a) => !a.isLoopback, orElse: () => InternetAddress('127.0.0.1'))
+          .address
+          .replaceAll('.', ',');
+
+      session.socket.write('227 Entering Passive Mode ($ip,$p1,$p2)\r\n');
     } catch (e) {
-      _send(session.socket, '425 Cannot open data connection');
+      session.socket.write('425 Cannot open passive connection\r\n');
     }
   }
 
-  void _handleRetr(_FtpSession session, String filename) async {
-    if (!session.authenticated) {
-      _send(session.socket, '530 Not logged in');
+  Future<void> _handleList(_FtpSession session, String arg) async {
+    if (session.dataServer == null) {
+      session.socket.write('425 Use PASV first\r\n');
       return;
     }
 
-    final filePath = _resolveFile(session, filename);
+    session.socket.write('150 Opening data connection\r\n');
+
+    final dataClient = await session.dataServer!.first;
+
+    final dirPath = arg.isNotEmpty
+        ? p.join(_rootDir!, session.resolveDir(arg))
+        : p.join(_rootDir!, session.currentDir);
+
+    final dir = Directory(dirPath);
+
+    if (await dir.exists()) {
+      await for (final entity in dir.list()) {
+        final stat = await entity.stat();
+        final name = p.basename(entity.path);
+        final isDir = entity is Directory;
+        final perm = isDir ? 'drwxr-xr-x' : '-rw-r--r--';
+        final size = stat.size.toString().padLeft(10);
+        final date = _formatFtpDate(stat.modified);
+
+        dataClient.write('$perm   1 ftp ftp $size $date $name\r\n');
+      }
+    }
+
+    await dataClient.close();
+    session.dataServer?.close();
+    session.dataServer = null;
+
+    session.socket.write('226 Transfer complete\r\n');
+  }
+
+  Future<void> _handleRetr(_FtpSession session, String fileName) async {
+    if (session.dataServer == null) {
+      session.socket.write('425 Use PASV first\r\n');
+      return;
+    }
+
+    final filePath = p.join(_rootDir!, session.resolveDir(fileName));
     final file = File(filePath);
 
-    if (!file.existsSync()) {
-      _send(session.socket, '550 File not found');
+    if (!await file.exists()) {
+      session.socket.write('550 File not found\r\n');
       return;
     }
 
-    if (session.dataSocket == null) {
-      _send(session.socket, '425 Use PASV first');
-      return;
-    }
+    session.socket.write('150 Opening data connection\r\n');
 
-    _send(session.socket, '150 Opening data connection');
+    final dataClient = await session.dataServer!.first;
+    final bytes = await file.readAsBytes();
+    dataClient.add(bytes);
+    await dataClient.close();
 
-    try {
-      final dataClient = await session.dataSocket!.first;
-      final bytes = await file.readAsBytes();
-      dataClient.add(bytes);
-      await dataClient.close();
-      session.transferredBytes += bytes.length;
-    } catch (_) {}
+    session.dataServer?.close();
+    session.dataServer = null;
+    session.bytesTransferred += bytes.length;
+    session.filesTransferred++;
 
-    session.dataSocket?.close();
-    session.dataSocket = null;
-
-    _send(session.socket, '226 Transfer complete');
+    session.socket.write('226 Transfer complete\r\n');
 
     eventEmitter?.call('ftpServer.fileDownloaded', {
       'sessionId': session.id,
-      'file': filename,
+      'file': fileName,
+      'size': bytes.length,
     });
   }
 
-  void _handleStor(_FtpSession session, String filename) async {
-    if (!session.authenticated) {
-      _send(session.socket, '530 Not logged in');
+  Future<void> _handleStor(_FtpSession session, String fileName) async {
+    if (session.dataServer == null) {
+      session.socket.write('425 Use PASV first\r\n');
       return;
     }
 
-    if (session.dataSocket == null) {
-      _send(session.socket, '425 Use PASV first');
-      return;
-    }
+    session.socket.write('150 Opening data connection\r\n');
 
-    _send(session.socket, '150 Ready to receive');
-
-    final filePath = _resolveFile(session, filename);
+    final dataClient = await session.dataServer!.first;
+    final filePath = p.join(_rootDir!, session.resolveDir(fileName));
     final file = File(filePath);
     await file.parent.create(recursive: true);
 
-    try {
-      final dataClient = await session.dataSocket!.first;
-      final sink = file.openWrite();
-      int totalBytes = 0;
+    final sink = file.openWrite();
+    int totalBytes = 0;
 
-      await for (final chunk in dataClient) {
-        sink.add(chunk);
-        totalBytes += chunk.length;
-      }
+    await for (final chunk in dataClient) {
+      sink.add(chunk);
+      totalBytes += chunk.length;
+    }
 
-      await sink.flush();
-      await sink.close();
-      session.transferredBytes += totalBytes;
-    } catch (_) {}
+    await sink.flush();
+    await sink.close();
 
-    session.dataSocket?.close();
-    session.dataSocket = null;
+    session.dataServer?.close();
+    session.dataServer = null;
+    session.bytesTransferred += totalBytes;
+    session.filesTransferred++;
 
-    _send(session.socket, '226 Transfer complete');
+    session.socket.write('226 Transfer complete\r\n');
 
     eventEmitter?.call('ftpServer.fileUploaded', {
       'sessionId': session.id,
-      'file': filename,
+      'file': fileName,
+      'size': totalBytes,
     });
   }
 
-  void _handleDele(_FtpSession session, String filename) {
-    if (!session.authenticated) {
-      _send(session.socket, '530 Not logged in');
-      return;
-    }
-
-    final filePath = _resolveFile(session, filename);
-    final file = File(filePath);
-
-    if (file.existsSync()) {
-      file.deleteSync();
-      _send(session.socket, '250 File deleted');
-    } else {
-      _send(session.socket, '550 File not found');
-    }
-  }
-
-  void _handleMkd(_FtpSession session, String dirname) {
-    if (!session.authenticated) {
-      _send(session.socket, '530 Not logged in');
-      return;
-    }
-
-    final dirPath = _resolveDir(session, dirname);
-    Directory(dirPath).createSync(recursive: true);
-    _send(session.socket, '257 "$dirname" created');
-  }
-
-  void _handleRmd(_FtpSession session, String dirname) {
-    if (!session.authenticated) {
-      _send(session.socket, '530 Not logged in');
-      return;
-    }
-
-    final dirPath = _resolveDir(session, dirname);
-    final dir = Directory(dirPath);
-
-    if (dir.existsSync()) {
-      dir.deleteSync(recursive: true);
-      _send(session.socket, '250 Directory removed');
-    } else {
-      _send(session.socket, '550 Directory not found');
-    }
-  }
-
-  void _handleSize(_FtpSession session, String filename) {
-    final filePath = _resolveFile(session, filename);
-    final file = File(filePath);
-
-    if (file.existsSync()) {
-      _send(session.socket, '213 ${file.lengthSync()}');
-    } else {
-      _send(session.socket, '550 File not found');
-    }
-  }
-
-  // ── Helpers ──
-
-  void _send(Socket socket, String message) {
-    try {
-      socket.write('$message\r\n');
-    } catch (_) {}
-  }
-
-  String _resolveDir(_FtpSession session, String path) {
-    if (path.startsWith('/')) {
-      return p.normalize(p.join(_rootDir!, path.substring(1)));
-    }
-    return p.normalize(p.join(_rootDir!, session.currentDir.substring(1), path));
-  }
-
-  String _resolveFile(_FtpSession session, String filename) {
-    return _resolveDir(session, filename);
-  }
-
-  String _monthName(int month) {
-    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    return months[month - 1];
-  }
-
-  Future<Map<String, dynamic>> _stopServer() async {
+  Future<Map<String, dynamic>> _stop() async {
     if (!_running) return {'stopped': false, 'reason': 'not_running'};
 
-    for (final s in _sessions.values) {
-      s.socket.close();
-      s.dataSocket?.close();
+    for (final session in _sessions.values) {
+      session.socket.write('421 Server shutting down\r\n');
+      await session.socket.close();
     }
     _sessions.clear();
 
@@ -526,61 +473,53 @@ class FtpServerPlugin extends Plugin {
 
   Map<String, dynamic> _getClients() {
     return {
-      'clients': _sessions.values.map((s) => {
-        return {
-          'id': s.id,
-          'remoteAddress': s.remoteAddress,
-          'authenticated': s.authenticated,
-          'username': s.username,
-          'currentDir': s.currentDir,
-          'commands': s.commandCount,
-          'transferred': s.transferredBytes,
-        };
-      }).toList(),
+      'clients': _sessions.values.map((s) => s.toJson()).toList(),
       'count': _sessions.length,
     };
   }
 
+  Future<Map<String, dynamic>> _disconnectClient(Map<String, dynamic> args) async {
+    final sessionId = args['sessionId'] as String;
+    final session = _sessions.remove(sessionId);
+
+    if (session != null) {
+      session.socket.write('421 Disconnected by server\r\n');
+      await session.socket.close();
+      return {'disconnected': true};
+    }
+
+    return {'disconnected': false, 'reason': 'not_found'};
+  }
+
   Map<String, dynamic> _getStats() {
-    int totalTransferred = 0;
+    int totalBytes = 0;
+    int totalFiles = 0;
     for (final s in _sessions.values) {
-      totalTransferred += s.transferredBytes;
+      totalBytes += s.bytesTransferred;
+      totalFiles += s.filesTransferred;
     }
 
     return {
       'running': _running,
       'port': _port,
-      'activeClients': _sessions.length,
-      'totalConnections': _clientCount,
-      'totalTransferredBytes': totalTransferred,
       'rootDir': _rootDir,
+      'totalClients': _sessions.length,
+      'totalBytesTransferred': totalBytes,
+      'totalFilesTransferred': totalFiles,
     };
   }
 
-  Future<Map<String, dynamic>> _kickClient(Map<String, dynamic> args) async {
-    final sessionId = args['sessionId'] as String;
-    final session = _sessions.remove(sessionId);
-
-    if (session != null) {
-      _send(session.socket, '421 Kicked by server');
-      session.socket.close();
-      return {'kicked': true, 'sessionId': sessionId};
-    }
-
-    return {'kicked': false, 'reason': 'not_found'};
+  String _formatFtpDate(DateTime dt) {
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return '${months[dt.month - 1]} ${dt.day.toString().padLeft(2)} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
   }
 
   @override
   Future<ValidationResult> validateArgs(String method, Map<String, dynamic> args) async {
     switch (method) {
       case 'start':
-        if (args['rootDir'] is! String) {
+        if (args['rootDir'] is! String || (args['rootDir'] as String).isEmpty) {
           return ValidationResult.invalid('rootDir is required');
-        }
-        return ValidationResult.valid();
-      case 'kickClient':
-        if (args['sessionId'] is! String) {
-          return ValidationResult.invalid('sessionId required');
         }
         return ValidationResult.valid();
       default:
@@ -594,12 +533,13 @@ class _FtpSession {
   final Socket socket;
   final String rootDir;
   final String remoteAddress;
-  String currentDir = '/';
-  String? username;
+  String username = '';
   bool authenticated = false;
-  ServerSocket? dataSocket;
-  int commandCount = 0;
-  int transferredBytes = 0;
+  String currentDir = '/';
+  ServerSocket? dataServer;
+  int bytesTransferred = 0;
+  int filesTransferred = 0;
+  final DateTime connectedAt = DateTime.now();
 
   _FtpSession({
     required this.id,
@@ -607,4 +547,20 @@ class _FtpSession {
     required this.rootDir,
     required this.remoteAddress,
   });
+
+  String resolveDir(String path) {
+    if (path.startsWith('/')) return path;
+    return p.normalize(p.join(currentDir, path));
+  }
+
+  Map<String, dynamic> toJson() => {
+        'sessionId': id,
+        'remoteAddress': remoteAddress,
+        'username': username,
+        'authenticated': authenticated,
+        'currentDir': currentDir,
+        'bytesTransferred': bytesTransferred,
+        'filesTransferred': filesTransferred,
+        'connectedAt': connectedAt.toIso8601String(),
+      };
 }

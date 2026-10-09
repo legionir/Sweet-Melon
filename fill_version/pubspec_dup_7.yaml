@@ -1,4 +1,0 @@
-dependencies:
-  # ... existing ...
-  yaml: ^3.1.2
-  yaml_writer: ^2.0.0

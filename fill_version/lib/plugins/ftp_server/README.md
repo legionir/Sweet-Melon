@@ -1,67 +1,68 @@
 # FTP Server Plugin
 
-Simple FTP server for sharing files from device.
+Share files over local network via FTP.
 
 ## Plugin Name
 `ftpServer`
 
 ## Methods
 
-| Method | Args | Description |
-|--------|------|-------------|
-| `start` | `rootDir, port?, username?, password?` | Start FTP server |
-| `stop` | — | Stop server |
-| `getClients` | — | Connected clients |
-| `getStats` | — | Server statistics |
-| `kickClient` | `sessionId` | Disconnect a client |
+| Method | Description |
+|--------|-------------|
+| `start` | Start FTP server |
+| `stop` | Stop server |
+| `configure` | Set credentials |
+| `getClients` | List connected clients |
+| `getStats` | Server statistics |
+
+### configure
+| Param | Type | Default |
+|-------|------|---------|
+| `username` | `string` | `"anonymous"` |
+| `password` | `string` | `""` |
+| `allowAnonymous` | `bool` | `true` |
+
+### start
+| Param | Type | Default |
+|-------|------|---------|
+| `rootDir` | `string` | ✅ required |
+| `port` | `number` | `2121` |
 
 ## Events
-
 | Event | Data |
 |-------|------|
 | `ftpServer.started` | `{ port, rootDir }` |
 | `ftpServer.clientConnected` | `{ sessionId, remoteAddress }` |
 | `ftpServer.clientDisconnected` | `{ sessionId }` |
-| `ftpServer.login` | `{ sessionId, username }` |
-| `ftpServer.fileUploaded` | `{ sessionId, file }` |
-| `ftpServer.fileDownloaded` | `{ sessionId, file }` |
-
-## Supported FTP Commands
-USER, PASS, PWD, CWD, LIST, RETR, STOR, DELE, MKD, RMD, SIZE, PASV, TYPE, SYST, FEAT, QUIT, NOOP
+| `ftpServer.fileUploaded` | `{ sessionId, file, size }` |
+| `ftpServer.fileDownloaded` | `{ sessionId, file, size }` |
+| `ftpServer.command` | `{ sessionId, command }` |
 
 ## Usage
-
 ```javascript
-// Start FTP server
+// Get a directory to share
 const dirs = await NativeSDK.fileSystem.getDirectories();
-const { port, url } = await NativeSDK.ftpServer.start({
-  rootDir: dirs.documents,
-  port: 2121,
-  username: 'user',
-  password: 'pass123'
-});
-console.log('FTP server:', url);  // ftp://0.0.0.0:2121
+const shareDir = dirs.documents + '/shared';
 
-// Show connection info
+// Configure
+await NativeSDK.ftpServer.configure({
+  username: 'admin',
+  password: 'secret123',
+  allowAnonymous: false
+});
+
+// Start
+const srv = await NativeSDK.ftpServer.start(shareDir, { port: 2121 });
+console.log('FTP Server:', srv.url);
+
+// Get local IP for sharing
 const { ip } = await NativeSDK.networkInfo.getLocalIp();
-await NativeSDK.dialog.alert({
-  title: 'FTP Server Running',
-  message: `Connect with any FTP client:\n\nHost: ${ip}\nPort: ${port}\nUser: user\nPass: pass123`
-});
+console.log(`Connect: ftp://${ip}:${srv.port}`);
 
-// Monitor uploads
+// Monitor
 NativeSDK.on('ftpServer.fileUploaded', (data) => {
-  NativeSDK.toast.show('File received: ' + data.file);
+  console.log(`File received: ${data.file} (${data.size} bytes)`);
 });
-
-// Monitor activity
-NativeSDK.on('ftpServer.clientConnected', (data) => {
-  console.log('FTP client connected:', data.remoteAddress);
-});
-
-// Get stats
-const stats = await NativeSDK.ftpServer.getStats();
-console.log('Active clients:', stats.activeClients);
 
 // Stop
 await NativeSDK.ftpServer.stop();

@@ -1,9 +1,15 @@
 import 'dart:async';
 import 'package:geolocator/geolocator.dart';
 import 'package:sweetmelon/packages/plugin_engine/lib/plugin_engine.dart';
+import 'package:sweetmelon/packages/core/lib/core.dart';
+
+typedef PluginEventEmitter = Future<void> Function(String event, dynamic data);
 
 class GeolocationPlugin extends Plugin {
   StreamSubscription<Position>? _positionStream;
+  final PluginEventEmitter? eventEmitter;
+
+  GeolocationPlugin({this.eventEmitter});
 
   @override
   String get name => 'geolocation';
@@ -77,8 +83,26 @@ class GeolocationPlugin extends Plugin {
       locationSettings: settings,
     ).listen(
       (position) {
+        final data = _positionToMap(position);
+
+        if (eventEmitter != null) {
+          eventEmitter!('geolocation.position', data);
+        } else {
+          BridgeLogger.warn(
+            'Geolocation',
+            'No event emitter set, position update dropped',
+          );
+        }
       },
-      onError: (error) {},
+      onError: (error) {
+        BridgeLogger.error('Geolocation', 'Watch error: $error');
+
+        if (eventEmitter != null) {
+          eventEmitter!('geolocation.error', {
+            'message': error.toString(),
+          });
+        }
+      },
     );
 
     return 'watch_started';

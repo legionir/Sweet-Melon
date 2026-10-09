@@ -17,19 +17,27 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final bridge = sl<MessageBridge>();
     final config = sl<WebViewHostConfig>();
+    final assetConfig = sl<AssetServerConfig>();
     final inspector = sl<BridgeInspector>();
 
     return Scaffold(
       body: Stack(
         children: [
           WebViewHost(
-            initialHtml: _buildDemoHtml(),
+            // ✅ حالت ۱: بارگذاری از assets/www/index.html
+            loadFromAssets: true,
             config: config,
+            assetConfig: assetConfig,
             bridge: bridge,
             onPageLoaded: () {
-              debugPrint('Page loaded successfully');
+              debugPrint('✅ Page loaded successfully');
+            },
+            onError: (error) {
+              debugPrint('❌ Load error: $error');
             },
           ),
+
+          // Inspector panel
           if (_showInspector)
             DraggableScrollableSheet(
               initialChildSize: 0.5,
@@ -63,187 +71,4 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-
-  String _buildDemoHtml() => '''
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Flutter Native Bridge Demo</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: #0a0a1a;
-      color: #e0e0e0;
-      min-height: 100vh;
-    }
-    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-    header { text-align: center; padding: 30px 0 20px; }
-    header h1 {
-      font-size: 24px;
-      background: linear-gradient(135deg, #6C63FF, #03DAC6);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      font-weight: 800;
-    }
-    header p { color: #888; font-size: 13px; margin-top: 8px; }
-    .card {
-      background: #1a1a2e; border: 1px solid #2a2a4a;
-      border-radius: 12px; padding: 20px; margin-bottom: 16px;
-    }
-    .card-title {
-      font-size: 14px; font-weight: 700; color: #6C63FF;
-      text-transform: uppercase; letter-spacing: 1px;
-      margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
-    }
-    .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    button {
-      background: linear-gradient(135deg, #6C63FF22, #6C63FF44);
-      border: 1px solid #6C63FF66; color: #c0b8ff;
-      padding: 12px 16px; border-radius: 8px; font-size: 13px;
-      cursor: pointer; transition: all 0.2s; font-weight: 600;
-    }
-    button:active { transform: translateY(0); }
-    .log-container {
-      background: #0d0d1f; border: 1px solid #2a2a4a;
-      border-radius: 8px; padding: 12px; height: 200px;
-      overflow-y: auto; font-family: monospace; font-size: 11px;
-    }
-    .log-entry { padding: 3px 0; border-bottom: 1px solid #1a1a2e; line-height: 1.6; }
-    .log-entry.success { color: #4CAF50; }
-    .log-entry.error { color: #f44336; }
-    .log-entry.info { color: #2196F3; }
-    .log-entry.pending { color: #FF9800; }
-    .status-bar {
-      display: flex; gap: 16px; font-size: 12px; color: #888;
-      margin-top: 16px; padding: 12px; background: #1a1a2e; border-radius: 8px;
-    }
-    .status-item span { color: #03DAC6; font-weight: bold; }
-    .progress {
-      height: 2px; background: #6C63FF; width: 0%;
-      transition: width 0.3s; border-radius: 2px; margin-bottom: 16px;
-    }
-  </style>
-</head>
-<body>
-<div class="container">
-  <header>
-    <h1>Native Bridge</h1>
-    <p>Flutter JS Bridge Demo Application</p>
-  </header>
-  <div class="progress" id="progress"></div>
-  <div class="card">
-    <div class="card-title">Camera Plugin</div>
-    <div class="btn-grid">
-      <button onclick="testTakePhoto()">Take Photo</button>
-      <button onclick="testGallery()">Pick Gallery</button>
-    </div>
-  </div>
-  <div class="card">
-    <div class="card-title">Storage Plugin</div>
-    <div class="btn-grid">
-      <button onclick="testSetStorage()">Set Value</button>
-      <button onclick="testGetStorage()">Get Value</button>
-      <button onclick="testListKeys()">List Keys</button>
-      <button onclick="testRemove()">Remove</button>
-    </div>
-  </div>
-  <div class="card">
-    <div class="card-title">Geolocation Plugin</div>
-    <div class="btn-grid">
-      <button onclick="testLocation()">Get Location</button>
-      <button onclick="testPermission()">Check Permission</button>
-    </div>
-  </div>
-  <div class="card">
-    <div class="card-title">Batch and Advanced</div>
-    <div class="btn-grid">
-      <button onclick="testBatch()">Batch Request</button>
-      <button onclick="testParallel()">Parallel Calls</button>
-      <button onclick="testTimeout()">Test Timeout</button>
-      <button onclick="clearLog()">Clear Log</button>
-    </div>
-  </div>
-  <div class="status-bar">
-    <div class="status-item">Requests: <span id="reqCount">0</span></div>
-    <div class="status-item">Errors: <span id="errCount">0</span></div>
-    <div class="status-item">Pending: <span id="pendCount">0</span></div>
-  </div>
-  <div class="card" style="margin-top:16px">
-    <div class="card-title">Console Log</div>
-    <div class="log-container" id="log"></div>
-  </div>
-</div>
-<script>
-  var errorCount = 0;
-  function log(msg, type) {
-    type = type || 'info';
-    var container = document.getElementById('log');
-    var entry = document.createElement('div');
-    entry.className = 'log-entry ' + type;
-    var now = new Date();
-    var time = now.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    entry.textContent = '[' + time + '] ' + msg;
-    container.insertBefore(entry, container.firstChild);
-    if (type === 'error') errorCount++;
-    updateStats();
-  }
-  function updateStats() {
-    var info = (window.Native && window.Native.info) ? window.Native.info() : {};
-    document.getElementById('reqCount').textContent = info.totalRequests || 0;
-    document.getElementById('errCount').textContent = errorCount;
-    document.getElementById('pendCount').textContent = info.pendingRequests || 0;
-  }
-  function clearLog() { document.getElementById('log').innerHTML = ''; errorCount = 0; updateStats(); }
-  function showProgress(show) { document.getElementById('progress').style.width = show ? '60%' : '0%'; }
-  function callPlugin(plugin, method, args, label) {
-    args = args || {};
-    var display = label || (plugin + '.' + method);
-    log('-> Calling ' + display + '...', 'pending');
-    showProgress(true);
-    return Native.call({ plugin: plugin, method: method, args: args })
-      .then(function(result) { var t = JSON.stringify(result); if (t && t.length > 100) t = t.substring(0, 100) + '...'; log('OK ' + display + ': ' + t, 'success'); return result; })
-      .catch(function(err) { log('FAIL ' + display + ': ' + (err.message || err.code || JSON.stringify(err)), 'error'); throw err; })
-      .finally(function() { showProgress(false); updateStats(); });
-  }
-  function testTakePhoto() { callPlugin('camera', 'takePhoto', { quality: 80 }); }
-  function testGallery() { callPlugin('camera', 'pickFromGallery', { multiple: false }); }
-  function testSetStorage() { callPlugin('storage', 'set', { key: 'test_key', value: { timestamp: Date.now(), message: 'Hello from JS!', data: [1,2,3] } }); }
-  function testGetStorage() { callPlugin('storage', 'get', { key: 'test_key' }); }
-  function testListKeys() { callPlugin('storage', 'keys', {}); }
-  function testRemove() { callPlugin('storage', 'remove', { key: 'test_key' }); }
-  function testLocation() { callPlugin('geolocation', 'getCurrentPosition', { accuracy: 'high' }); }
-  function testPermission() { callPlugin('geolocation', 'checkPermission', {}); }
-  function testBatch() {
-    log('-> Sending batch request...', 'pending'); showProgress(true);
-    Native.batch([
-      { plugin: 'storage', method: 'keys', args: {} },
-      { plugin: 'geolocation', method: 'checkPermission', args: {} },
-      { plugin: 'camera', method: 'getInfo', args: {} }
-    ], { parallel: true })
-    .then(function(results) { log('OK Batch complete: ' + results.length + ' results', 'success'); })
-    .catch(function(err) { log('FAIL Batch: ' + JSON.stringify(err), 'error'); })
-    .finally(function() { showProgress(false); updateStats(); });
-  }
-  function testParallel() {
-    log('-> Running 5 parallel calls...', 'pending');
-    var promises = [];
-    for (var i = 0; i < 5; i++) { (function(idx) { promises.push(Native.call({ plugin: 'storage', method: 'get', args: { key: 'key_' + idx } }).then(function() { return 'OK key_' + idx; }).catch(function(e) { return 'FAIL key_' + idx; })); })(i); }
-    Promise.allSettled(promises).then(function(results) { results.forEach(function(r) { log(r.value || r.reason, 'info'); }); updateStats(); });
-  }
-  function testTimeout() {
-    log('-> Testing with 1ms timeout...', 'pending');
-    Native.call({ plugin: 'geolocation', method: 'getCurrentPosition', args: {}, timeout: 1 })
-    .then(function() { log('? Unexpectedly succeeded', 'info'); })
-    .catch(function(err) { if (err.code === 'TIMEOUT') { log('OK Timeout handled correctly', 'success'); } else { log('? Unexpected error: ' + JSON.stringify(err), 'error'); } })
-    .finally(function() { updateStats(); });
-  }
-  if (window.Native && window.Native.on) { Native.on('bridge_event', function(data) { log('Event: ' + JSON.stringify(data), 'info'); }); }
-  window.addEventListener('load', function() { setTimeout(function() { log('Native Bridge initialized', 'success'); updateStats(); }, 500); });
-</script>
-</body>
-</html>
-  ''';
 }

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'plugin_registry.dart';
+import 'lazy_plugin_loader.dart';
 import 'package:sweetmelon/packages/core/lib/core.dart';
 import 'package:sweetmelon/packages/performance/lib/performance.dart';
 import 'package:sweetmelon/packages/security/lib/security.dart';
@@ -12,9 +13,14 @@ class PluginManager {
   final RateLimiter rateLimiter;
   final ExecutionGuard executionGuard;
   final CacheManager cacheManager;
+  final CircuitBreakerRegistry circuitBreakers;
+
+  /// Lazy loader — اختیاری
+  LazyPluginLoader? lazyLoader;
 
   final Map<String, PluginStats> _stats = {};
   final _traceController = StreamController<PluginTrace>.broadcast();
+  bool _disposed = false;
 
   Stream<PluginTrace> get traces => _traceController.stream;
 
@@ -24,11 +30,27 @@ class PluginManager {
     required this.rateLimiter,
     required this.executionGuard,
     required this.cacheManager,
-  });
+    CircuitBreakerRegistry? circuitBreakers,
+    this.lazyLoader,
+  }) : circuitBreakers = circuitBreakers ?? CircuitBreakerRegistry();
+
+  /// ست کردن lazy loader
+  void setLazyLoader(LazyPluginLoader loader) {
+    lazyLoader = loader;
+  }
 
   Future<PluginResponse> execute(PluginRequest request) async {
+    if (_disposed) {
+      return _errorResponse(
+        request.requestId,
+        PluginErrorCode.executionError,
+        'PluginManager is disposed',
+      );
+    }
+
     final startTime = DateTime.now();
     final traceId = 'trace_${request.requestId}';
+    final pluginKey = request.plugin;
 
     BridgeLogger.info(
       'Manager',
@@ -36,6 +58,17 @@ class PluginManager {
     );
 
     try {
+      // Circuit Breaker check
+      final breaker = circuitBreakers.get(pluginKey);
+      if (!breaker.isAllowed) {
+        return _errorResponse(
+          request.requestId,
+          PluginErrorCode.executionError,
+          'Circuit breaker open for "${request.plugin}"',
+        );
+      }
+
+      // Rate limit
       final rateLimitResult = await rateLimiter.check(
         request.plugin,
         request.method,
@@ -48,10 +81,36 @@ class PluginManager {
         );
       }
 
-      final plugin = registry.resolve(
+      // ═══ Resolve plugin — with lazy loading ═══
+      var plugin = registry.resolve(
         request.plugin,
         version: request.version == '1.0.0' ? null : request.version,
       );
+
+      // پلاگین وجود ندارد — بررسی lazy loading
+      if (plugin == null && lazyLoader != null) {
+        if (lazyLoader!.canLoad(request.plugin)) {
+          BridgeLogger.info(
+            'Manager',
+            'Lazy loading plugin: ${request.plugin}',
+          );
+
+          try {
+            plugin = await lazyLoader!.load(request.plugin);
+          } catch (e) {
+            BridgeLogger.error(
+              'Manager',
+              'Lazy load failed: ${request.plugin} — $e',
+            );
+            return _errorResponse(
+              request.requestId,
+              PluginErrorCode.pluginNotFound,
+              'Plugin "${request.plugin}" failed to load: $e',
+            );
+          }
+        }
+      }
+
       if (plugin == null) {
         return _errorResponse(
           request.requestId,
@@ -60,6 +119,16 @@ class PluginManager {
         );
       }
 
+      // پلاگین هست ولی initialize نشده
+      if (!plugin.isReady) {
+        BridgeLogger.info(
+          'Manager',
+          'Auto-initializing plugin: ${request.plugin}',
+        );
+        await plugin.initialize();
+      }
+
+      // Method check
       if (!plugin.supportsMethod(request.method)) {
         return _errorResponse(
           request.requestId,
@@ -68,17 +137,19 @@ class PluginManager {
         );
       }
 
+      // Permission check
       for (final permission in plugin.requiredPermissions) {
         final hasPermission = await permissionManager.check(permission);
         if (!hasPermission) {
           return _errorResponse(
             request.requestId,
             PluginErrorCode.permissionDenied,
-            'Permission "$permission" denied for "${request.plugin}"',
+            'Permission "$permission" denied',
           );
         }
       }
 
+      // Validate args
       final validation = await plugin.validateArgs(
         request.method,
         request.args,
@@ -91,11 +162,13 @@ class PluginManager {
         );
       }
 
-      if (plugin.cacheable) {
+      // Cache check
+      final isMutation = cacheManager.isMutationMethod(request.method);
+
+      if (plugin.cacheable && !isMutation) {
         final cacheKey = _buildCacheKey(request);
         final cached = await cacheManager.get(cacheKey);
         if (cached != null) {
-          BridgeLogger.debug('Manager', 'Cache hit: $cacheKey');
           _recordStats(request.plugin, request.method, 0, true);
           return PluginResponse.success(
             requestId: request.requestId,
@@ -109,22 +182,25 @@ class PluginManager {
         }
       }
 
-      final result = await executionGuard.execute(
-        requestId: request.requestId,
-        timeoutMs: 30000,
-        fn: () => plugin.onCall(request.method, request.args),
-      );
+      // Execute with circuit breaker
+      final result = await breaker.execute(() async {
+        return await executionGuard.execute(
+          requestId: request.requestId,
+          timeoutMs: 30000,
+          fn: () => plugin!.onCall(request.method, request.args),
+        );
+      });
 
       final processingTime =
           DateTime.now().difference(startTime).inMilliseconds;
 
-      if (plugin.cacheable && result != null) {
+      if (plugin.cacheable && !isMutation && result != null) {
         final cacheKey = _buildCacheKey(request);
-        await cacheManager.set(
-          cacheKey,
-          result,
-          ttl: plugin.defaultCacheTtl,
-        );
+        await cacheManager.set(cacheKey, result, ttl: plugin.defaultCacheTtl);
+      }
+
+      if (plugin.cacheable && isMutation) {
+        await cacheManager.invalidatePlugin(request.plugin);
       }
 
       _recordStats(request.plugin, request.method, processingTime, false);
@@ -147,11 +223,15 @@ class PluginManager {
           fromCache: false,
         ),
       );
+    } on CircuitBreakerOpenException catch (e) {
+      return _errorResponse(
+        request.requestId,
+        PluginErrorCode.executionError,
+        e.toString(),
+      );
     } catch (e, stackTrace) {
       final processingTime =
           DateTime.now().difference(startTime).inMilliseconds;
-
-      BridgeLogger.error('Manager', 'Execution error: $e');
 
       _emitTrace(
         traceId: traceId,
@@ -184,29 +264,45 @@ class PluginManager {
     List<PluginRequest> requests,
     BatchOptions options,
   ) async {
-    BridgeLogger.info(
-      'Manager',
-      'Batch execution: ${requests.length} requests (parallel: ${options.parallel})',
-    );
-
     if (options.parallel) {
-      return Future.wait(requests.map(execute).toList());
+      final futures = requests.map((request) async {
+        try {
+          return await execute(request);
+        } catch (e) {
+          return PluginResponse.failure(
+            requestId: request.requestId,
+            error: PluginError(
+              code: PluginErrorCode.executionError,
+              message: e.toString(),
+            ),
+          );
+        }
+      }).toList();
+
+      final results = await Future.wait(futures);
+
+      if (options.stopOnError) {
+        final firstError = results.indexWhere((r) => !r.success);
+        if (firstError >= 0) {
+          return results.sublist(0, firstError + 1);
+        }
+      }
+
+      return results;
     } else {
       final responses = <PluginResponse>[];
       for (final request in requests) {
         final response = await execute(request);
         responses.add(response);
-        if (options.stopOnError && !response.success) {
-          BridgeLogger.warn(
-            'Manager',
-            'Batch stopped due to error in: ${request.requestId}',
-          );
-          break;
-        }
+        if (options.stopOnError && !response.success) break;
       }
       return responses;
     }
   }
+
+  Map<String, dynamic> get circuitBreakerStats => circuitBreakers.allStats;
+  void resetCircuitBreaker(String plugin) => circuitBreakers.reset(plugin);
+  void resetAllCircuitBreakers() => circuitBreakers.resetAll();
 
   PluginResponse _errorResponse(
     String requestId,
@@ -243,12 +339,7 @@ class PluginManager {
     return jsonEncode(sortedMap);
   }
 
-  void _recordStats(
-    String plugin,
-    String method,
-    int timeMs,
-    bool fromCache,
-  ) {
+  void _recordStats(String plugin, String method, int timeMs, bool fromCache) {
     final key = '$plugin.$method';
     _stats[key] ??= PluginStats(plugin: plugin, method: method);
     _stats[key]!.record(timeMs, fromCache);
@@ -265,25 +356,26 @@ class PluginManager {
     String? error,
   }) {
     if (!_traceController.isClosed) {
-      _traceController.add(
-        PluginTrace(
-          traceId: traceId,
-          requestId: requestId,
-          plugin: plugin,
-          method: method,
-          processingTimeMs: processingTimeMs,
-          success: success,
-          fromCache: fromCache,
-          error: error,
-        ),
-      );
+      _traceController.add(PluginTrace(
+        traceId: traceId,
+        requestId: requestId,
+        plugin: plugin,
+        method: method,
+        processingTimeMs: processingTimeMs,
+        success: success,
+        fromCache: fromCache,
+        error: error,
+      ));
     }
   }
 
   Map<String, PluginStats> get stats => Map.unmodifiable(_stats);
 
   void dispose() {
-    _traceController.close();
+    _disposed = true;
+    if (!_traceController.isClosed) {
+      _traceController.close();
+    }
   }
 }
 

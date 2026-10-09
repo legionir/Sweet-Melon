@@ -8,5 +8,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  webview_flutter: ^4.4.0
+  webview_flutter: ^4.8.0
   uuid: ^4.2.1
+  path_provider: ^2.1.1
+  mime: ^1.0.5

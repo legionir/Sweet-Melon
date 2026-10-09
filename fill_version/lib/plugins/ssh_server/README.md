@@ -1,74 +1,74 @@
 # SSH Server Plugin
 
-Simple command execution server (sandbox-safe, not full SSH protocol).
+Command server with authentication and whitelisting.
 
 ## Plugin Name
 `sshServer`
 
-## Important Note
-This is a simplified command server using plain TCP, NOT the real SSH protocol. It provides a shell-like interface with sandbox restrictions for safe command execution. For production SSH, use the `sshClient` plugin with a real SSH server.
-
 ## Methods
 
-| Method | Args | Description |
-|--------|------|-------------|
-| `start` | `port?, host?, username?, password?` | Start server |
-| `stop` | — | Stop server |
-| `getClients` | — | Connected sessions |
-| `getStats` | — | Statistics |
-| `kickClient` | `sessionId` | Disconnect a session |
-| `setAllowedCommands` | `commands[]` | Set sandbox whitelist |
+| Method | Description |
+|--------|-------------|
+| `start` | Start server |
+| `stop` | Stop server |
+| `configure` | Set credentials and command rules |
+| `addAllowedCommand` | Whitelist a command |
+| `addBlockedCommand` | Block a command |
+| `getClients` | List sessions |
+| `getCommandLog` | Get command history |
+
+### configure
+| Param | Type | Default |
+|-------|------|---------|
+| `username` | `string` | `"admin"` |
+| `password` | `string` | `"admin"` |
+| `allowAllCommands` | `bool` | `false` |
+| `allowedCommands` | `string[]` | — |
+
+### start
+| Param | Type | Default |
+|-------|------|---------|
+| `port` | `number` | `2222` |
 
 ## Events
-
 | Event | Data |
 |-------|------|
-| `sshServer.started` | `{ port, host }` |
+| `sshServer.started` | `{ port }` |
 | `sshServer.clientConnected` | `{ sessionId, remoteAddress }` |
-| `sshServer.clientDisconnected` | `{ sessionId }` |
-| `sshServer.login` | `{ sessionId, username }` |
-| `sshServer.command` | `{ sessionId, command, args, fullCommand }` |
-| `sshServer.commandOutput` | `{ sessionId, command, exitCode, outputLength }` |
+| `sshServer.command` | `{ sessionId, command }` |
+| `sshServer.commandResult` | `{ sessionId, command, exitCode }` |
 
-## Default Allowed Commands (Sandbox)
-`ls`, `pwd`, `whoami`, `date`, `echo`, `cat`, `head`, `tail`, `wc`, `grep`, `uname`, `uptime`, `df`, `du`, `free`, `hostname`, `id`, `env`, `printenv`
+## Security
+- Commands `rm -rf`, `format`, `mkfs`, `dd` are blocked by default
+- Use whitelist mode for maximum security
 
 ## Usage
-
 ```javascript
-// Start command server
-const { port } = await NativeSDK.sshServer.start({
-  port: 2222,
+// Configure with whitelist
+await NativeSDK.sshServer.configure({
   username: 'admin',
-  password: 'secret'
+  password: 'secure_password',
+  allowAllCommands: false,
+  allowedCommands: ['ls', 'cat', 'echo', 'date', 'whoami', 'uname', 'df', 'free']
 });
 
-// Connect with: telnet <device_ip> 2222
-// Or: nc <device_ip> 2222
+// Start
+const srv = await NativeSDK.sshServer.start({ port: 2222 });
+
+const { ip } = await NativeSDK.networkInfo.getLocalIp();
+console.log(`Connect via: telnet ${ip} ${srv.port}`);
 
 // Monitor commands
 NativeSDK.on('sshServer.command', (data) => {
-  console.log(`[${data.sessionId}] ${data.fullCommand}`);
+  console.log(`[${data.sessionId}] ${data.command}`);
 });
 
-// Custom allowed commands
-await NativeSDK.sshServer.setAllowedCommands([
-  'ls', 'pwd', 'date', 'echo', 'cat', 'df'
-]);
-
-// Monitor logins
-NativeSDK.on('sshServer.login', (data) => {
-  NativeSDK.toast.show('Shell login: ' + data.username);
+NativeSDK.on('sshServer.commandResult', (data) => {
+  console.log(`Exit code: ${data.exitCode}`);
 });
 
-// Get active sessions
-const { clients } = await NativeSDK.sshServer.getClients();
-clients.forEach(c => {
-  console.log(`${c.id}: ${c.username} from ${c.remoteAddress} (${c.commands} commands)`);
-});
-
-// Kick user
-await NativeSDK.sshServer.kickClient('ssh_session_3');
+// View command log
+const { log } = await NativeSDK.sshServer.getCommandLog('ssh_1');
 
 // Stop
 await NativeSDK.sshServer.stop();

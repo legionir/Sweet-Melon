@@ -50,10 +50,12 @@ class PluginRequest extends BaseMessage {
 
   factory PluginRequest.fromJson(Map<String, dynamic> json) {
     return PluginRequest(
-      requestId: json['requestId'] as String,
-      timestamp: DateTime.parse(
-        json['timestamp'] as String? ?? DateTime.now().toIso8601String(),
-      ),
+      requestId: json['requestId'] as String? ??
+          const Uuid().v4(),
+      timestamp: DateTime.tryParse(
+            json['timestamp'] as String? ?? '',
+          ) ??
+          DateTime.now(),
       plugin: json['plugin'] as String,
       version: json['version'] as String? ?? '1.0.0',
       method: json['method'] as String,
@@ -127,10 +129,11 @@ class PluginResponse extends BaseMessage {
   factory PluginResponse.fromJson(Map<String, dynamic> json) {
     return PluginResponse(
       requestId: json['requestId'] as String,
-      timestamp: DateTime.parse(
-        json['timestamp'] as String? ?? DateTime.now().toIso8601String(),
-      ),
-      success: json['success'] as bool,
+      timestamp: DateTime.tryParse(
+            json['timestamp'] as String? ?? '',
+          ) ??
+          DateTime.now(),
+      success: json['success'] as bool? ?? false,
       data: json['data'],
       error: json['error'] != null
           ? PluginError.fromJson(json['error'] as Map<String, dynamic>)
@@ -192,8 +195,8 @@ class PluginError {
 
   factory PluginError.fromJson(Map<String, dynamic> json) {
     return PluginError(
-      code: PluginErrorCode.fromString(json['code'] as String),
-      message: json['message'] as String,
+      code: PluginErrorCode.fromString(json['code'] as String? ?? 'UNKNOWN'),
+      message: json['message'] as String? ?? 'Unknown error',
       details: json['details'] as Map<String, dynamic>?,
       stackTrace: json['stackTrace'] as String?,
     );

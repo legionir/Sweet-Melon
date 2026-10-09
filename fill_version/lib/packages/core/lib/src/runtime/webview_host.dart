@@ -4,20 +4,31 @@ import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import '../bridge/message_bridge.dart';
 import '../utils/logger.dart';
+import 'asset_server.dart';
 
 class WebViewHost extends StatefulWidget {
-  final String initialUrl;
+  /// بارگذاری از URL خارجی
+  final String? initialUrl;
+
+  /// بارگذاری HTML inline
   final String? initialHtml;
+
+  /// بارگذاری از assets/www/ با local HTTP server
+  final bool loadFromAssets;
+
   final WebViewHostConfig config;
+  final AssetServerConfig assetConfig;
   final MessageBridge bridge;
   final VoidCallback? onPageLoaded;
   final Function(String error)? onError;
 
   const WebViewHost({
     super.key,
-    this.initialUrl = '',
+    this.initialUrl,
     this.initialHtml,
+    this.loadFromAssets = false,
     required this.config,
+    required this.assetConfig,
     required this.bridge,
     this.onPageLoaded,
     this.onError,
@@ -27,14 +38,35 @@ class WebViewHost extends StatefulWidget {
   State<WebViewHost> createState() => _WebViewHostState();
 }
 
-class _WebViewHostState extends State<WebViewHost> {
+class _WebViewHostState extends State<WebViewHost> with WidgetsBindingObserver {
   late final WebViewController _controller;
+  AssetServer? _assetServer;
   bool _isReady = false;
+  bool _bridgeInjected = false;
+  String? _loadError;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _initController();
+    _loadContent();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _assetServer?.stop();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused) {
+      // WebView pause
+    } else if (state == AppLifecycleState.resumed) {
+      // WebView resume
+    }
   }
 
   void _initController() {
@@ -48,20 +80,64 @@ class _WebViewHostState extends State<WebViewHost> {
       ..addJavaScriptChannel(
         '__bridgeInternal',
         onMessageReceived: _onInternalMessage,
-      );
+      )
+      ..setBackgroundColor(const Color(0xFF0A0A1A));
+
+    // Apply config
+    if (widget.config.enableDebugging) {
+      // Android debugging
+      // WebViewController اجازه setWebContentsDebuggingEnabled رو نمی‌ده مستقیم
+      // ولی از طریق platform specific settings قابل تنظیمه
+    }
 
     widget.bridge.setWebViewController(_controller);
-    if (widget.initialHtml != null) {
-      _controller.loadHtmlString(widget.initialHtml!);
-    } else if (widget.initialUrl.isNotEmpty) {
-      _controller.loadRequest(Uri.parse(widget.initialUrl));
+  }
+
+  Future<void> _loadContent() async {
+    try {
+      if (widget.loadFromAssets) {
+        await _loadFromAssetServer();
+      } else if (widget.initialHtml != null) {
+        await _controller.loadHtmlString(widget.initialHtml!);
+      } else if (widget.initialUrl != null &&
+          widget.initialUrl!.isNotEmpty) {
+        await _controller.loadRequest(Uri.parse(widget.initialUrl!));
+      }
+    } catch (e) {
+      BridgeLogger.error('WebView', 'Failed to load content: $e');
+      if (mounted) {
+        setState(() => _loadError = e.toString());
+      }
+      widget.onError?.call(e.toString());
     }
+  }
+
+  /// شروع AssetServer و load کردن index.html
+  Future<void> _loadFromAssetServer() async {
+    BridgeLogger.info('WebView', 'Starting asset server...');
+
+    _assetServer = AssetServer(config: widget.assetConfig);
+    final url = await _assetServer!.start();
+
+    BridgeLogger.info('WebView', 'Loading from: $url');
+    await _controller.loadRequest(Uri.parse(url));
   }
 
   NavigationDelegate _buildNavigationDelegate() {
     return NavigationDelegate(
       onPageStarted: (url) {
         BridgeLogger.info('WebView', 'Page started: $url');
+
+        // Reset bridge state وقتی صفحه جدید load می‌شود
+        widget.bridge.resetBridgeState();
+        _bridgeInjected = false;
+
+        if (mounted) {
+          setState(() {
+            _isReady = false;
+            _loadError = null;
+          });
+        }
       },
       onPageFinished: (url) async {
         BridgeLogger.info('WebView', 'Page finished: $url');
@@ -74,16 +150,45 @@ class _WebViewHostState extends State<WebViewHost> {
       onWebResourceError: (error) {
         BridgeLogger.error(
           'WebView',
-          'Resource error: ${error.description}',
+          'Resource error [${error.errorCode}]: ${error.description}',
         );
-        widget.onError?.call(error.description);
+        // فقط main frame error رو نشون بده
+        if (error.isForMainFrame ?? false) {
+          if (mounted) {
+            setState(() => _loadError = error.description);
+          }
+          widget.onError?.call(error.description);
+        }
       },
       onNavigationRequest: (request) {
+        final uri = Uri.tryParse(request.url);
+
+        // اجازه localhost (asset server)
+        if (uri != null && uri.host == 'localhost') {
+          return NavigationDecision.navigate;
+        }
+
+        // اجازه file URIs
+        if (uri != null && uri.scheme == 'file') {
+          return NavigationDecision.navigate;
+        }
+
+        // اجازه data URIs
+        if (uri != null && uri.scheme == 'data') {
+          return NavigationDecision.navigate;
+        }
+
+        // اجازه about:blank
+        if (request.url == 'about:blank') {
+          return NavigationDecision.navigate;
+        }
+
+        // بررسی allowed hosts
         if (widget.config.allowedHosts.isNotEmpty) {
-          final uri = Uri.tryParse(request.url);
           if (uri != null &&
               uri.host.isNotEmpty &&
-              !widget.config.allowedHosts.contains(uri.host)) {
+              !widget.config.allowedHosts.contains(uri.host) &&
+              uri.host != 'localhost') {
             BridgeLogger.warn(
               'WebView',
               'Blocked navigation to: ${request.url}',
@@ -91,12 +196,16 @@ class _WebViewHostState extends State<WebViewHost> {
             return NavigationDecision.prevent;
           }
         }
+
         return NavigationDecision.navigate;
       },
     );
   }
 
   Future<void> _injectBridgeScript() async {
+    if (_bridgeInjected) return;
+    _bridgeInjected = true;
+
     const script = r'''
       (function() {
         'use strict';
@@ -148,11 +257,11 @@ class _WebViewHostState extends State<WebViewHost> {
               
               window.__pending[id] = {
                 resolve: function(data) {
-                  clearTimeout(timeoutHandle);
+                  if (timeoutHandle) clearTimeout(timeoutHandle);
                   resolve(data);
                 },
                 reject: function(error) {
-                  clearTimeout(timeoutHandle);
+                  if (timeoutHandle) clearTimeout(timeoutHandle);
                   reject(error);
                 }
               };
@@ -167,8 +276,17 @@ class _WebViewHostState extends State<WebViewHost> {
                 metadata: { headers: {} }
               });
               
-              window.flutterBridge.postMessage(message);
-              window.__requestCount++;
+              try {
+                window.flutterBridge.postMessage(message);
+                window.__requestCount++;
+              } catch (e) {
+                delete window.__pending[id];
+                if (timeoutHandle) clearTimeout(timeoutHandle);
+                reject({
+                  code: 'BRIDGE_ERROR',
+                  message: 'Failed to send message: ' + e.message
+                });
+              }
             });
           },
 
@@ -188,20 +306,51 @@ class _WebViewHostState extends State<WebViewHost> {
               };
             });
 
-            var batchMessage = JSON.stringify({
-              type: 'batch',
-              batchId: batchId,
-              requests: mappedRequests,
-              options: {
-                parallel: options.parallel !== false,
-                stopOnError: options.stopOnError || false,
-                timeoutMs: options.timeout
-              }
-            });
-            
+            var timeout = options.timeout || 60000;
+
             return new Promise(function(resolve, reject) {
-              window.__pending[batchId] = { resolve: resolve, reject: reject };
-              window.flutterBridge.postMessage(batchMessage);
+              var timeoutHandle = setTimeout(function() {
+                if (window.__pending[batchId]) {
+                  delete window.__pending[batchId];
+                  reject({
+                    code: 'TIMEOUT',
+                    message: 'Batch request timed out'
+                  });
+                }
+              }, timeout);
+
+              window.__pending[batchId] = {
+                resolve: function(data) {
+                  clearTimeout(timeoutHandle);
+                  resolve(data);
+                },
+                reject: function(error) {
+                  clearTimeout(timeoutHandle);
+                  reject(error);
+                }
+              };
+
+              var batchMessage = JSON.stringify({
+                type: 'batch',
+                batchId: batchId,
+                requests: mappedRequests,
+                options: {
+                  parallel: options.parallel !== false,
+                  stopOnError: options.stopOnError || false,
+                  timeoutMs: options.timeout
+                }
+              });
+
+              try {
+                window.flutterBridge.postMessage(batchMessage);
+              } catch (e) {
+                delete window.__pending[batchId];
+                clearTimeout(timeoutHandle);
+                reject({
+                  code: 'BRIDGE_ERROR',
+                  message: 'Failed to send batch: ' + e.message
+                });
+              }
             });
           },
 
@@ -211,8 +360,9 @@ class _WebViewHostState extends State<WebViewHost> {
             }
             window.__eventListeners[event].push(callback);
 
-            var self = this;
-            return function() { self.off(event, callback); };
+            return function() {
+              window.Native.off(event, callback);
+            };
           },
 
           off: function(event, callback) {
@@ -230,13 +380,38 @@ class _WebViewHostState extends State<WebViewHost> {
               totalRequests: window.__requestCount,
               version: '1.0.0'
             };
+          },
+
+          ready: function() {
+            return new Promise(function(resolve) {
+              if (window.__NativeBridgeInitialized) {
+                resolve(window.Native.info());
+              } else {
+                var check = setInterval(function() {
+                  if (window.__NativeBridgeInitialized) {
+                    clearInterval(check);
+                    resolve(window.Native.info());
+                  }
+                }, 50);
+                setTimeout(function() {
+                  clearInterval(check);
+                  resolve(null);
+                }, 5000);
+              }
+            });
           }
         };
         
         window.__resolveCall = function(requestId, responseJson) {
-          var response = typeof responseJson === 'string' 
-            ? JSON.parse(responseJson) 
-            : responseJson;
+          var response;
+          try {
+            response = typeof responseJson === 'string' 
+              ? JSON.parse(responseJson) 
+              : responseJson;
+          } catch (e) {
+            console.error('[Bridge] Failed to parse response:', e);
+            return;
+          }
             
           var pending = window.__pending[requestId];
           
@@ -250,14 +425,23 @@ class _WebViewHostState extends State<WebViewHost> {
           if (response.success) {
             pending.resolve(response.data);
           } else {
-            pending.reject(response.error);
+            pending.reject(response.error || {
+              code: 'UNKNOWN',
+              message: 'Unknown error'
+            });
           }
         };
         
         window.__resolveBatch = function(batchId, responseJson) {
-          var response = typeof responseJson === 'string'
-            ? JSON.parse(responseJson)
-            : responseJson;
+          var response;
+          try {
+            response = typeof responseJson === 'string'
+              ? JSON.parse(responseJson)
+              : responseJson;
+          } catch (e) {
+            console.error('[Bridge] Failed to parse batch response:', e);
+            return;
+          }
             
           var pending = window.__pending[batchId];
           if (!pending) return;
@@ -267,9 +451,15 @@ class _WebViewHostState extends State<WebViewHost> {
         };
         
         window.__emitEvent = function(event, dataJson) {
-          var data = typeof dataJson === 'string'
-            ? JSON.parse(dataJson)
-            : dataJson;
+          var data;
+          try {
+            data = typeof dataJson === 'string'
+              ? JSON.parse(dataJson)
+              : dataJson;
+          } catch (e) {
+            console.error('[Bridge] Failed to parse event data:', e);
+            return;
+          }
             
           var listeners = window.__eventListeners[event] || [];
           listeners.forEach(function(cb) {
@@ -304,18 +494,25 @@ class _WebViewHostState extends State<WebViewHost> {
           }
         };
         
-        window.__bridgeInternal.postMessage(JSON.stringify({
-          type: 'bridge_ready',
-          timestamp: new Date().toISOString()
-        }));
+        try {
+          window.__bridgeInternal.postMessage(JSON.stringify({
+            type: 'bridge_ready',
+            timestamp: new Date().toISOString()
+          }));
+        } catch (e) {
+          console.error('[Bridge] Failed to signal ready:', e);
+        }
         
         console.log('[NativeBridge] SDK initialized successfully');
-        
       })();
     ''';
 
-    await _controller.runJavaScript(script);
-    BridgeLogger.info('WebView', 'Bridge script injected');
+    try {
+      await _controller.runJavaScript(script);
+      BridgeLogger.info('WebView', 'Bridge script injected');
+    } catch (e) {
+      BridgeLogger.error('WebView', 'Failed to inject bridge script: $e');
+    }
   }
 
   void _onJsMessage(JavaScriptMessage message) {
@@ -344,12 +541,77 @@ class _WebViewHostState extends State<WebViewHost> {
     return Stack(
       children: [
         WebViewWidget(controller: _controller),
-        if (!_isReady)
+
+        // Loading overlay
+        if (!_isReady && _loadError == null)
           Container(
             color: const Color(0xFF0A0A1A),
             child: const Center(
-              child: CircularProgressIndicator(
-                color: Color(0xFF6C63FF),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(
+                    color: Color(0xFF6C63FF),
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    'Loading...',
+                    style: TextStyle(
+                      color: Colors.white54,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+        // Error overlay
+        if (_loadError != null)
+          Container(
+            color: const Color(0xFF0A0A1A),
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      color: Colors.redAccent,
+                      size: 48,
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Failed to load',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      _loadError!,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.white54,
+                        fontSize: 12,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      onPressed: () {
+                        setState(() => _loadError = null);
+                        _loadContent();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF6C63FF),
+                      ),
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -373,11 +635,13 @@ class WebViewHostConfig {
 
   factory WebViewHostConfig.development() => const WebViewHostConfig(
         enableDebugging: true,
+        allowFileAccess: true,
         defaultTimeoutMs: 60000,
       );
 
   factory WebViewHostConfig.production() => const WebViewHostConfig(
         enableDebugging: false,
+        allowFileAccess: false,
         defaultTimeoutMs: 30000,
       );
 }

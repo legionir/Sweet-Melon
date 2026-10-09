@@ -1,64 +1,64 @@
 # TCP Server Plugin
 
-Multi-client TCP server with message routing.
+Accept incoming TCP connections and exchange data.
 
 ## Plugin Name
 `tcpServer`
 
 ## Methods
 
-| Method | Args | Description |
-|--------|------|-------------|
-| `start` | `port?, host?, maxClients?, id?` | Start TCP server |
-| `stop` | `id` | Stop server |
-| `stopAll` | — | Stop all servers |
-| `sendToClient` | `serverId, clientId, data` | Send to one client |
-| `sendToAll` | `serverId, data, exclude?` | Broadcast to all clients |
-| `disconnectClient` | `serverId, clientId` | Kick a client |
-| `getClients` | `serverId` | List connected clients |
-| `getServers` | — | List active servers |
-| `getStats` | `id` | Server statistics |
+| Method | Description |
+|--------|-------------|
+| `start` | Start TCP server on port |
+| `stop` | Stop specific server |
+| `stopAll` | Stop all servers |
+| `sendToClient` | Send data to specific client |
+| `sendToAll` | Broadcast to all clients |
+| `disconnectClient` | Disconnect a client |
+| `getClients` | List connected clients |
+| `getServers` | List running servers |
+
+### start
+| Param | Type | Default |
+|-------|------|---------|
+| `port` | `number` | `0` (random) |
+| `host` | `string` | `"0.0.0.0"` |
+| `id` | `string` | auto |
+| `maxClients` | `number` | `100` |
+| `encoding` | `string` | `"utf8"` |
 
 ## Events
-
 | Event | Data |
 |-------|------|
-| `tcpServer.started` | `{ id, port, host, maxClients }` |
-| `tcpServer.clientConnected` | `{ serverId, clientId, remoteAddress, remotePort }` |
-| `tcpServer.data` | `{ serverId, clientId, data, bytes, messageNumber }` |
-| `tcpServer.clientDisconnected` | `{ serverId, clientId, totalClients }` |
-| `tcpServer.clientError` | `{ serverId, clientId, error }` |
+| `tcpServer.started` | `{ serverId, port }` |
+| `tcpServer.clientConnected` | `{ serverId, clientId, remoteAddress }` |
+| `tcpServer.data` | `{ serverId, clientId, data, bytes }` |
+| `tcpServer.clientDisconnected` | `{ serverId, clientId }` |
 
 ## Usage
-
 ```javascript
-// Chat server
+// Start server
 const srv = await NativeSDK.tcpServer.start({ port: 9000, maxClients: 50 });
-console.log('TCP server on port:', srv.port);
+console.log('Server on port', srv.port);
 
-// Handle messages
+// Handle data
 NativeSDK.on('tcpServer.data', (msg) => {
   console.log(`[${msg.clientId}]: ${msg.data}`);
-  
-  // Broadcast to all except sender
-  NativeSDK.tcpServer.sendToAll(msg.serverId, `${msg.clientId}: ${msg.data}`, msg.clientId);
+  // Echo back
+  NativeSDK.tcpServer.sendToClient(msg.serverId, msg.clientId, 'ACK: ' + msg.data);
 });
 
-// Welcome new clients
-NativeSDK.on('tcpServer.clientConnected', (client) => {
-  NativeSDK.tcpServer.sendToClient(client.serverId, client.clientId, 'Welcome!\n');
-  NativeSDK.tcpServer.sendToAll(client.serverId, `${client.clientId} joined\n`, client.clientId);
+// Handle connections
+NativeSDK.on('tcpServer.clientConnected', (info) => {
+  NativeSDK.tcpServer.sendToClient(info.serverId, info.clientId, 'Welcome!');
 });
 
-// Handle disconnection
-NativeSDK.on('tcpServer.clientDisconnected', (client) => {
-  NativeSDK.tcpServer.sendToAll(client.serverId, `${client.clientId} left\n`);
-});
+// Broadcast to all
+await NativeSDK.tcpServer.sendToAll(srv.id, 'Server announcement');
 
-// Admin kick
-await NativeSDK.tcpServer.disconnectClient(srv.id, 'client_5');
+// List clients
+const { clients } = await NativeSDK.tcpServer.getClients(srv.id);
 
-// Stats
-const stats = await NativeSDK.tcpServer.getStats(srv.id);
-console.log('Clients:', stats.clients, 'Total bytes:', stats.totalReceivedBytes);
+// Stop
+await NativeSDK.tcpServer.stop(srv.id);
 ```
