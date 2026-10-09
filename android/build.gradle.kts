@@ -23,11 +23,9 @@ tasks.register<Delete>("clean") {
 // Library plugins compiled against an older SDK fail release resource linking
 // (e.g. flutter_app_badger_plus: android:attr/lStar not found). Align them.
 subprojects {
-    afterEvaluate {
-        if (plugins.hasPlugin("com.android.library")) {
-            extensions.configure<com.android.build.gradle.LibraryExtension> {
-                compileSdk = 37
-            }
+    pluginManager.withPlugin("com.android.library") {
+        extensions.configure<com.android.build.gradle.LibraryExtension> {
+            compileSdk = 37
         }
     }
 }
