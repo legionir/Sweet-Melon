@@ -59,7 +59,10 @@ void main() {
         ));
 
       expect(await manager.checkStatus('gps'), PermissionStatus.notDetermined);
-    test('expired cache entries are re-fetched', () async {
+      expect(
+        await manager.requestStatus('gps'),
+        PermissionStatus.notDetermined,
+      );
     });
 
     test('caches checked statuses until invalidated', () async {
