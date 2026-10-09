@@ -37,7 +37,7 @@ void main() {
 
     test('check and request report granted only when granted', () async {
       final manager = PermissionManager()
-        ..setProvider(StaticPermissionProvider(grants: {
+        ..setProvider(const StaticPermissionProvider(grants: {
           'camera': PermissionStatus.granted,
           'mic': PermissionStatus.permanentlyDenied,
         }));
@@ -106,7 +106,7 @@ void main() {
 
     test('setProvider clears the existing cache', () async {
       final manager = PermissionManager()
-        ..setProvider(StaticPermissionProvider(
+        ..setProvider(const StaticPermissionProvider(
           grants: {'camera': PermissionStatus.granted},
         ));
       await manager.checkStatus('camera');
@@ -119,7 +119,7 @@ void main() {
     test('checkAll and batch helpers return one entry per permission',
         () async {
       final manager = PermissionManager()
-        ..setProvider(StaticPermissionProvider(grants: {
+        ..setProvider(const StaticPermissionProvider(grants: {
           'camera': PermissionStatus.granted,
           'location': PermissionStatus.pending,
         }));
@@ -144,7 +144,7 @@ void main() {
 
     test('checkPlugin requires every required permission', () async {
       final manager = PermissionManager()
-        ..setProvider(StaticPermissionProvider(grants: {
+        ..setProvider(const StaticPermissionProvider(grants: {
           'camera': PermissionStatus.granted,
           'microphone': PermissionStatus.denied,
         }))
@@ -158,7 +158,7 @@ void main() {
 
       expect(await manager.checkPlugin('recorder'), false);
 
-      manager.setProvider(StaticPermissionProvider(grants: {
+      manager.setProvider(const StaticPermissionProvider(grants: {
         'camera': PermissionStatus.granted,
         'microphone': PermissionStatus.granted,
       }));
