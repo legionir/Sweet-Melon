@@ -1,11 +1,14 @@
 name: native_settings_plugin
 description: Open native system settings
 version: 1.0.0
+publish_to: 'none'
 
 environment:
   sdk: ^3.0.0
 
 dependencies:
+  sweetmelon:
+    path: ../../..
   flutter:
     sdk: flutter
   plugin_engine:

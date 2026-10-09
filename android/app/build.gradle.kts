@@ -60,3 +60,14 @@ android {
 flutter {
     source = "../.."
 }
+
+dependencies {
+    // Firebase (used by the firebase_* plugins and lib/main.dart init).
+    implementation(platform("com.google.firebase:firebase-bom:33.4.0"))
+    implementation("com.google.firebase:firebase-analytics")
+    implementation("com.google.firebase:firebase-crashlytics")
+    implementation("com.google.firebase:firebase-messaging")
+    implementation("com.google.firebase:firebase-config")
+    implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.android.gms:play-services-auth:21.2.0")
+}

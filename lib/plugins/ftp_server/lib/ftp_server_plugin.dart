@@ -334,11 +334,20 @@ class FtpServerPlugin extends Plugin {
       final p1 = port >> 8;
       final p2 = port & 0xFF;
 
-      final ip = (await NetworkInterface.list(type: InternetAddressType.IPv4))
-          .expand((i) => i.addresses)
-          .firstWhere((a) => !a.isLoopback, orElse: () => InternetAddress('127.0.0.1'))
-          .address
-          .replaceAll('.', ',');
+      final interfaces =
+          await NetworkInterface.list(type: InternetAddressType.IPv4);
+      var ip = InternetAddress.loopbackIPv4.address.replaceAll('.', ',');
+      for (final interface in interfaces) {
+        for (final address in interface.addresses) {
+          if (!address.isLoopback) {
+            ip = address.address.replaceAll('.', ',');
+            break;
+          }
+        }
+        if (ip != InternetAddress.loopbackIPv4.address.replaceAll('.', ',')) {
+          break;
+        }
+      }
 
       session.socket.write('227 Entering Passive Mode ($ip,$p1,$p2)\r\n');
     } catch (e) {

@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sweetmelon/plugins/firebase_auth/lib/firebase_auth_plugin.dart';
-import '../helpers/plugin_test_utils.dart';
 
 void main() {
   group('FirebaseAuthPlugin', () {

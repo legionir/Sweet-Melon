@@ -7,8 +7,8 @@ import '../utils/logger.dart';
 /// [4 bytes magic] [4 bytes version] [4 bytes type]
 /// [4 bytes payload_length] [N bytes payload]
 class BinaryProtocol {
-  static const Uint8List magic =
-      [0x53, 0x57, 0x4D, 0x4C]; // SWML (SweetMelon)
+  static final Uint8List magic =
+      Uint8List.fromList([0x53, 0x57, 0x4D, 0x4C]); // SWML (SweetMelon)
   static const int version = 1;
   static const int headerSize = 16;
 

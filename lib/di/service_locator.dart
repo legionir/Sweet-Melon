@@ -124,7 +124,7 @@ class ServiceLocator {
 
       sl.registerLazySingleton<PermissionManager>(() {
         final manager = PermissionManager(cacheTtl: const Duration(minutes: 3));
-        manager.setProvider(NativePermissionProvider(
+        manager.setProvider(const NativePermissionProvider(
           fallbackStatus: kReleaseMode
               ? PermissionStatus.denied
               : PermissionStatus.granted,

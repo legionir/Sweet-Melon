@@ -1,8 +1,3 @@
-import 'dart:async';
-
-import 'package:sweetmelon/packages/core/lib/core.dart';
-import 'plugin_interface.dart';
-
 /// نسخه semantic
 class SemanticVersion implements Comparable<SemanticVersion> {
   final int major;

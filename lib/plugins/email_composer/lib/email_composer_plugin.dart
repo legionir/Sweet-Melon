@@ -38,7 +38,6 @@ class EmailComposerPlugin extends Plugin {
     final bcc = _parseRecipients(args['bcc']);
     final subject = args['subject'] as String? ?? '';
     final body = args['body'] as String? ?? '';
-    final isHtml = args['isHtml'] as bool? ?? false;
 
     if (to.isEmpty) {
       return {'opened': false, 'reason': 'no_recipients'};

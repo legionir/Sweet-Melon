@@ -30,8 +30,6 @@ void main() {
     });
 
     test('handles incoming message with missing fields', () async {
-      bool errorSent = false;
-
       bridge.setMessageHandler((request) async {
         return PluginResponse.success(
           requestId: request.requestId,

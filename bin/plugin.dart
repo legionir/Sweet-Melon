@@ -1,7 +1,7 @@
+// ignore_for_file: avoid_print
 import 'dart:io';
 
 import 'package:yaml/yaml.dart';
-import 'package:yaml_writer/yaml_writer.dart';
 
 /// CLI tool برای فعال/غیرفعال کردن پلاگین‌ها
 /// اجرا:
@@ -73,36 +73,6 @@ void _printUsage() {
   print('');
   print('After changes, run:');
   print('  dart run bin/configure.dart');
-}
-
-Future<Map<String, dynamic>> _readConfig() async {
-  final file = File('sweetmelon.yaml');
-  if (!await file.exists()) {
-    print('sweetmelon.yaml not found');
-    exit(1);
-  }
-
-  final content = await file.readAsString();
-  final yaml = loadYaml(content);
-
-  // Deep convert YamlMap to regular Map
-  return _yamlToMap(yaml);
-}
-
-Map<String, dynamic> _yamlToMap(dynamic yaml) {
-  if (yaml is YamlMap) {
-    return yaml.map((key, value) => MapEntry(key.toString(), _yamlToMap(value)));
-  }
-  if (yaml is YamlList) {
-    return {'list': yaml.map(_yamlToMap).toList()};
-  }
-  return {'value': yaml};
-}
-
-Future<void> _writeConfig(Map<String, dynamic> config) async {
-  final writer = YamlWriter();
-  final yamlString = writer.write(config);
-  await File('sweetmelon.yaml').writeAsString(yamlString);
 }
 
 Future<void> _setPlugins(List<String> pluginIds, bool enabled) async {
@@ -193,9 +163,6 @@ Future<void> _listPlugins() async {
 }
 
 void _showInfo(String pluginId) {
-  final allPlugins = [
-    // simplified - in real impl, import from plugin_registry_data.dart
-  ];
 
   print('Plugin info for: $pluginId');
   print('(Use plugin_registry_data.dart for full details)');

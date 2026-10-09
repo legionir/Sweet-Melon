@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:isolate';
 
 import '../utils/logger.dart';
@@ -38,9 +39,7 @@ typedef WorkerTask<I, O> = FutureOr<O> Function(I input);
 class WorkerPool {
   final int poolSize;
   final List<_Worker> _workers = [];
-  final List<WorkerTask<dynamic, dynamic>> _registeredTasks = [];
   bool _initialized = false;
-  int _roundRobin = 0;
 
   WorkerPool({this.poolSize = 2});
 
@@ -145,12 +144,10 @@ class ComputeHelper {
   }
 
   static String _encodeJson(Map<String, dynamic> data) {
-    import 'dart:convert';
     return jsonEncode(data);
   }
 
   static Map<String, dynamic> _decodeJson(String json) {
-    import 'dart:convert';
     return jsonDecode(json) as Map<String, dynamic>;
   }
 

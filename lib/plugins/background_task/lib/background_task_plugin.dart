@@ -74,7 +74,6 @@ class BackgroundTaskPlugin extends Plugin {
   final Map<String, TaskDefinition> _taskDefinitions = {};
   final Map<String, TaskState> _taskStates = {};
   final Map<String, Timer> _timers = {};
-  final Map<String, Completer<dynamic>> _runningTasks = {};
 
   BackgroundTaskPlugin({this.eventEmitter});
 
@@ -145,7 +144,6 @@ class BackgroundTaskPlugin extends Plugin {
   Map<String, dynamic> _register(Map<String, dynamic> args) {
     final taskId = args['taskId'] as String;
     final taskName = args['name'] as String? ?? taskId;
-    final taskType = args['type'] as String? ?? 'custom';
     final params = (args['params'] as Map<String, dynamic>?) ?? {};
 
     // Task definition — the actual execution will come from JS via runOnce

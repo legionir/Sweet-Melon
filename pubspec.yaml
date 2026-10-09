@@ -42,7 +42,7 @@ dependencies:
 
   # Media
   local_auth: ^2.3.0
-  mobile_scanner: ^5.2.3
+  mobile_scanner: ^6.0.0
   record: ^5.1.2
   audioplayers: ^6.1.0
   sms_autofill: ^2.4.0
@@ -84,6 +84,10 @@ dependencies:
   in_app_purchase: ^3.2.0
   dartssh2: ^2.8.2
 
+  # CLI tools (bin/)
+  yaml: ^3.1.2
+  args: ^2.4.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -91,9 +95,6 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^3.0.0
 
-  yaml: ^3.1.2
-  yaml_writer: ^2.0.0
-  args: ^2.4.2
 
 flutter:
   uses-material-design: true

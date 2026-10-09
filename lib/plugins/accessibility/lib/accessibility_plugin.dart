@@ -113,7 +113,6 @@ class AccessibilityPlugin extends Plugin {
       'highContrast': features.highContrast,
       'invertColors': features.invertColors,
       'disableAnimations': features.disableAnimations,
-      'reduceTransparency': features.reduceTransparency,
       'onOffSwitchLabels': features.onOffSwitchLabels,
     };
   }

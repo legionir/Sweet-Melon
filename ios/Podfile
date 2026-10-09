@@ -1,7 +1,7 @@
 # Flutter iOS CocoaPods configuration (standard Flutter app template).
 # The iOS permission macros for permission_handler are added by
 # .github/scripts/ios_permissions.py in CI.
-platform :ios, '13.0'
+platform :ios, '15.5'
 
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
 

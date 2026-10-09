@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:flutter/services.dart';
 import 'package:sweetmelon/packages/core/lib/core.dart';
 import 'package:sweetmelon/packages/plugin_engine/lib/plugin_engine.dart';
 
@@ -9,7 +8,6 @@ typedef WifiEventEmitter = Future<void> Function(String event, dynamic data);
 
 class WifiManagerPlugin extends Plugin {
   final WifiEventEmitter? eventEmitter;
-  static const _channel = MethodChannel('sweetmelon/wifi');
 
   WifiManagerPlugin({this.eventEmitter});
 

@@ -33,7 +33,6 @@ class ExecutionGuard {
           );
           throw TimeoutException(
             'Execution timeout after ${timeout}ms',
-            Duration(milliseconds: timeout),
           );
         },
       );

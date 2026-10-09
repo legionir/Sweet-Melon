@@ -64,14 +64,12 @@ class MigrationResult {
     this.transformedArgs,
   });
 
-  const MigrationResult.ok([String? message])
+  const MigrationResult.ok([this.message])
       : success = true,
-        message = message,
         transformedArgs = null;
 
-  const MigrationResult.failed(String message)
+  const MigrationResult.failed(this.message)
       : success = false,
-        message = message,
         transformedArgs = null;
 }
 

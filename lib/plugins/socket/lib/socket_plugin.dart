@@ -14,7 +14,6 @@ class SocketPlugin extends Plugin {
   final Map<String, _TcpConnection> _tcpConnections = {};
   final Map<String, RawDatagramSocket> _udpSockets = {};
   ServerSocket? _tcpServer;
-  String? _tcpServerId;
   StreamSubscription<Socket>? _tcpServerSub;
 
   SocketPlugin({this.eventEmitter});
@@ -391,19 +390,15 @@ class SocketPlugin extends Plugin {
   Map<String, dynamic> _getConnections() {
     return {
       'tcp': _tcpConnections.values.map((c) => {
-        return {
-          'id': c.id,
-          'host': c.host,
-          'port': c.port,
-          'sentBytes': c.sentBytes,
-          'receivedBytes': c.receivedBytes,
-        };
+        'id': c.id,
+        'host': c.host,
+        'port': c.port,
+        'sentBytes': c.sentBytes,
+        'receivedBytes': c.receivedBytes,
       }).toList(),
       'udp': _udpSockets.entries.map((e) => {
-        return {
-          'id': e.key,
-          'port': e.value.port,
-        };
+        'id': e.key,
+        'port': e.value.port,
       }).toList(),
       'tcpServer': _tcpServer != null
           ? {'port': _tcpServer!.port, 'clients': _tcpConnections.length}

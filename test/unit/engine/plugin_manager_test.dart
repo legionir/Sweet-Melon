@@ -172,7 +172,7 @@ void main() {
       final stats = manager.stats;
       expect(stats, isNotEmpty);
 
-      final key = 'mockPlugin.doSomething';
+      const key = 'mockPlugin.doSomething';
       expect(stats[key]!.totalCalls, 2);
     });
 

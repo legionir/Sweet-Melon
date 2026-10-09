@@ -2,6 +2,8 @@ import '../utils/logger.dart';
 
 /// Content Security Policy for WebView
 class ContentSecurityPolicy {
+  ContentSecurityPolicy();
+
   final Set<String> _allowedOrigins = {'localhost'};
   final Set<String> _blockedOrigins = {};
   final Set<String> _allowedSchemes = {'http', 'https', 'file', 'data', 'blob'};

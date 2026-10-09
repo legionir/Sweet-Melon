@@ -32,7 +32,7 @@ void main() {
     });
 
     test('resets after window', () async {
-      limiter.addRule('test', RateLimitRule(
+      limiter.addRule('test', const RateLimitRule(
         maxCalls: 2,
         window: const Duration(milliseconds: 100),
       ));

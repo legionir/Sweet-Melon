@@ -1,3 +1,4 @@
+// ignore_for_file: avoid_print
 import 'dart:io';
 import 'package:args/args.dart';
 import 'package:yaml/yaml.dart';
@@ -439,7 +440,6 @@ class SweetmelonCLI {
   // ── List ──
 
   Future<void> list(List<String> args) async {
-    final showAll = args.contains('--all');
 
     print('🔌 Available Plugins (90 total)');
     print('');
@@ -654,9 +654,13 @@ class SweetmelonCLI {
         print('   Hint: ${check.hint}');
       }
 
-      if (check.status == _DoctorStatus.ok) passed++;
-      else if (check.status == _DoctorStatus.warning) warnings++;
-      else failed++;
+      if (check.status == _DoctorStatus.ok) {
+        passed++;
+      } else if (check.status == _DoctorStatus.warning) {
+        warnings++;
+      } else {
+        failed++;
+      }
     }
 
     print('');
@@ -913,7 +917,7 @@ import 'package:sweetmelon/plugins/$id/lib/${id}_plugin.dart';
 import '../helpers/plugin_test_utils.dart';
 
 void main() {
-  group('${className}', () {
+  group('$className', () {
     late $className plugin;
 
     setUp(() async {

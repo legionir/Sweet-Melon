@@ -195,7 +195,6 @@ class CameraPreviewPlugin extends Plugin {
 
     final fileName = args['fileName'] as String? ??
         'photo_${DateTime.now().millisecondsSinceEpoch}.jpg';
-    final saveToGallery = args['saveToGallery'] as bool? ?? false;
 
     try {
       final xFile = await _controller!.takePicture();
@@ -301,7 +300,6 @@ class CameraPreviewPlugin extends Plugin {
 
     _currentCameraIndex = (_currentCameraIndex + 1) % _cameras!.length;
 
-    final wasRecording = _recording;
     await _stop();
     final result = await _start({
       'cameraIndex': _currentCameraIndex,

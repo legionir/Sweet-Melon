@@ -1,7 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'plugin_registry.dart';
-import 'lazy_plugin_loader.dart';
 import 'package:sweetmelon/packages/core/lib/core.dart';
 import 'package:sweetmelon/packages/performance/lib/performance.dart';
 import 'package:sweetmelon/packages/security/lib/security.dart';

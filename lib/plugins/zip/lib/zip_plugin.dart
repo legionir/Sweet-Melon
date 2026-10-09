@@ -44,7 +44,6 @@ class ZipPlugin extends Plugin {
   Future<Map<String, dynamic>> _zip(Map<String, dynamic> args) async {
     final inputPaths = List<String>.from(args['paths'] as List);
     final outputPath = args['outputPath'] as String?;
-    final password = args['password'] as String?;
 
     final archive = Archive();
     int totalSize = 0;
@@ -181,7 +180,6 @@ class ZipPlugin extends Plugin {
     final files = archive.files.map((f) => {
       'name': f.name,
       'size': f.size,
-      'compressedSize': f.compressedSize,
       'isFile': f.isFile,
       'isDirectory': !f.isFile,
     }).toList();

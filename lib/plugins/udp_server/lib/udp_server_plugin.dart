@@ -76,7 +76,6 @@ class UdpServerPlugin extends Plugin {
     final host = args['host'] as String? ?? '0.0.0.0';
     final id = args['id'] as String? ?? 'udp_srv_${DateTime.now().millisecondsSinceEpoch}';
     final enableBroadcast = args['broadcast'] as bool? ?? true;
-    final bufferSize = (args['bufferSize'] as num?)?.toInt();
     final encoding = args['encoding'] as String? ?? 'utf8';
 
     if (_servers.containsKey(id)) {

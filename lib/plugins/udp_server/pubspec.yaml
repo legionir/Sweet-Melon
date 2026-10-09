@@ -1,9 +1,12 @@
 name: udp_server_plugin
 description: UDP server plugin
 version: 1.0.0
+publish_to: 'none'
 environment:
   sdk: ^3.0.0
 dependencies:
+  sweetmelon:
+    path: ../../..
   flutter:
     sdk: flutter
   plugin_engine:

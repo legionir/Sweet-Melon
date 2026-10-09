@@ -283,11 +283,10 @@ class DownloadManagerPlugin extends Plugin {
 class _DownloadTask {
   final String taskId;
   final http.Client client;
-  bool cancelled;
+  bool cancelled = false;
 
   _DownloadTask({
     required this.taskId,
     required this.client,
-    this.cancelled = false,
   });
 }

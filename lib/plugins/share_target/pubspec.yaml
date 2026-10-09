@@ -1,11 +1,14 @@
 name: share_target_plugin
 description: Receive shared content from other apps
 version: 1.0.0
+publish_to: 'none'
 
 environment:
   sdk: ^3.0.0
 
 dependencies:
+  sweetmelon:
+    path: ../../..
   flutter:
     sdk: flutter
   plugin_engine:

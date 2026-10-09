@@ -115,7 +115,7 @@ class AntiTampering {
   /// اعتبارسنجی همه فایل‌های ثبت‌شده
   Future<TamperingReport> verifyAll(String baseDir) async {
     if (!_enabled) {
-      return TamperingReport(
+      return const TamperingReport(
         verified: true,
         totalFiles: 0,
         validFiles: 0,

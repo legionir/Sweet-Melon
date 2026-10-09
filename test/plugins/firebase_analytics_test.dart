@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sweetmelon/plugins/firebase_analytics/lib/firebase_analytics_plugin.dart';
-import '../helpers/plugin_test_utils.dart';
 
 void main() {
   group('FirebaseAnalyticsPlugin', () {

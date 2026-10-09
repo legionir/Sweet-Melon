@@ -1,11 +1,14 @@
 name: privacy_screen_plugin
 description: Privacy screen protection plugin
 version: 1.0.0
+publish_to: 'none'
 
 environment:
   sdk: ^3.0.0
 
 dependencies:
+  sweetmelon:
+    path: ../../..
   flutter:
     sdk: flutter
   plugin_engine:

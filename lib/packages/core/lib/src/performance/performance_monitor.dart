@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:sweetmelon/packages/core/lib/core.dart';
 
 class PerformanceMetric {
   final String name;
@@ -71,7 +70,7 @@ class PerformanceAudit {
 
   AuditReport generateReport() {
     if (_metrics.isEmpty) {
-      return AuditReport(
+      return const AuditReport(
         totalOperations: 0,
         successRate: 0,
         avgDurationMs: 0,

@@ -250,10 +250,16 @@ class LazyPluginLoader {
   void preload(List<String> pluginIds) {
     for (final id in pluginIds) {
       if (!isLoaded(id) && canLoad(id)) {
-        load(id).catchError((e) {
-          BridgeLogger.warn('LazyLoader', 'Preload failed: $id — $e');
-        });
+        _preloadOne(id);
       }
+    }
+  }
+
+  Future<void> _preloadOne(String id) async {
+    try {
+      await load(id);
+    } catch (e) {
+      BridgeLogger.warn('LazyLoader', 'Preload failed: $id — $e');
     }
   }
 

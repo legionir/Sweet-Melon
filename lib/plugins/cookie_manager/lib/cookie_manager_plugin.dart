@@ -48,9 +48,6 @@ class CookieManagerPlugin extends Plugin {
     final name = args['name'] as String;
     final value = args['value'] as String;
     final path = args['path'] as String? ?? '/';
-    final secure = args['secure'] as bool? ?? false;
-    final httpOnly = args['httpOnly'] as bool? ?? false;
-    final expiresEpoch = (args['expiresEpoch'] as num?)?.toInt();
 
     try {
       await _cookieManager.setCookie(

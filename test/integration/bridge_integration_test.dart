@@ -1,8 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sweetmelon/packages/core/lib/core.dart';
-import 'package:sweetmelon/packages/performance/lib/performance.dart';
-import 'package:sweetmelon/packages/security/lib/security.dart';
 import 'package:sweetmelon/packages/plugin_engine/lib/plugin_engine.dart';
 import 'package:sweetmelon/plugins/storage/lib/storage_plugin.dart';
 import 'package:sweetmelon/plugins/clipboard/lib/clipboard_plugin.dart';

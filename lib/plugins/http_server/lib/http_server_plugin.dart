@@ -414,13 +414,11 @@ class HttpServerPlugin extends Plugin {
   Map<String, dynamic> _getServers() {
     return {
       'servers': _servers.values.map((s) => {
-        return {
-          'id': s.id,
-          'port': s.server.port,
-          'requestCount': s.requestCount,
-          'hasStaticDir': s.staticDir != null,
-          'routeCount': _routes[s.id]?.length ?? 0,
-        };
+        'id': s.id,
+        'port': s.server.port,
+        'requestCount': s.requestCount,
+        'hasStaticDir': s.staticDir != null,
+        'routeCount': _routes[s.id]?.length ?? 0,
       }).toList(),
       'count': _servers.length,
     };

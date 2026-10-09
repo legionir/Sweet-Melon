@@ -9,7 +9,7 @@ typedef BackButtonEventEmitter = Future<void> Function(
   dynamic data,
 );
 
-class BackButtonPlugin extends Plugin with WidgetsBindingObserver {
+class BackButtonPlugin extends Plugin {
   final BackButtonEventEmitter? eventEmitter;
 
   bool _interceptEnabled = false;

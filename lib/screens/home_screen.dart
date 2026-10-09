@@ -24,6 +24,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final bridge = sl<MessageBridge>();
     final config = sl<WebViewHostConfig>();
+    final assetConfig = sl<AssetServerConfig>();
     final inspector = sl<BridgeInspector>();
 
     return Scaffold(
@@ -32,6 +33,7 @@ class _HomeScreenState extends State<HomeScreen> {
           WebViewHost(
             initialHtml: _buildDemoHtml(),
             config: config,
+            assetConfig: assetConfig,
             bridge: bridge,
             onPageLoaded: () {
               debugPrint('Page loaded successfully');

@@ -245,6 +245,16 @@ class PushNotificationPlugin extends Plugin {
     }
   }
 
+  /// Foreground message received while the app is in the foreground.
+  /// Stores the message and emits the `push.received` event. Exposed for
+  /// tests and for manual message injection.
+  void handleForegroundMessage(Map<String, dynamic> data) {
+    final map = Map<String, dynamic>.from(data);
+    _receivedMessages.add(map);
+    if (_receivedMessages.length > 100) _receivedMessages.removeAt(0);
+    eventEmitter?.call('push.received', map);
+  }
+
   void _handleForegroundMessage(RemoteMessage message) {
     final data = _messageToMap(message, foreground: true);
     _receivedMessages.add(data);
