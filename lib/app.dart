@@ -1,16 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:sweetmelon/packages/core/lib/core.dart';
 import 'screens/home_screen.dart';
 
-// ============================================================
-// ROOT APP
-// ============================================================
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+final GlobalKey<ScaffoldMessengerState> scaffoldKey =
+    GlobalKey<ScaffoldMessengerState>();
 
 class BridgeApp extends StatelessWidget {
   const BridgeApp({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // ست کردن context مرکزی
+    AppContext().setNavigatorKey(navigatorKey);
+    AppContext().setScaffoldKey(scaffoldKey);
+
     return MaterialApp(
+      navigatorKey: navigatorKey,
+      scaffoldMessengerKey: scaffoldKey,
       title: 'Flutter Native Bridge',
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark().copyWith(

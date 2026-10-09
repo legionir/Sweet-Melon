@@ -53,5 +53,22 @@
 	<string>The app lets a web page pick photos from your library when you choose to share them.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>The app uses your location only while it is open, when a web page asks for it.</string>
+
+    <!-- Added from full_version: background location + ATS + embedded views -->
+    <key>NSLocationAlwaysUsageDescription</key>
+    <string>This app needs location access in background.</string>
+
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <key>NSAllowsArbitraryLoads</key>
+        <true/>
+        <key>NSAllowsArbitraryLoadsInWebContent</key>
+        <true/>
+        <key>NSAllowsLocalNetworking</key>
+        <true/>
+    </dict>
+
+    <key>io.flutter.embedded_views_preview</key>
+    <true/>
 </dict>
 </plist>
