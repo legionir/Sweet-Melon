@@ -54,7 +54,7 @@ class NotificationPlugin extends Plugin {
       requestSoundPermission: false,
     );
 
-    final initSettings = const InitializationSettings(
+    const initSettings = InitializationSettings(
       android: androidSettings,
       iOS: iosSettings,
     );

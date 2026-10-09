@@ -15,4 +15,4 @@ dependencies:
     path: ../../packages/plugin_engine
   core:
     path: ../../packages/core
-  mobile_scanner: ^5.2.3
+  mobile_scanner: ^7.0.0

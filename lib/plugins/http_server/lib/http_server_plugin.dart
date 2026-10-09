@@ -478,7 +478,6 @@ class _ManagedServer {
     required this.id,
     required this.server,
     this.enableCors = true,
-    this.staticDir,
   });
 }
 

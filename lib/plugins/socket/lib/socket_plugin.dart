@@ -215,8 +215,6 @@ class SocketPlugin extends Plugin {
         port,
       );
 
-      _tcpServerId = 'tcp_server_${_tcpServer!.port}';
-
       _tcpServerSub = _tcpServer!.listen((clientSocket) {
         final clientId = 'client_${clientSocket.remoteAddress.address}_${clientSocket.remotePort}';
 
@@ -275,7 +273,6 @@ class SocketPlugin extends Plugin {
     await _tcpServerSub?.cancel();
     await _tcpServer?.close();
     _tcpServer = null;
-    _tcpServerId = null;
 
     return {'stopped': true};
   }

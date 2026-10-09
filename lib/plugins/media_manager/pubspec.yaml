@@ -15,5 +15,5 @@ dependencies:
     path: ../../packages/plugin_engine
   core:
     path: ../../packages/core
-  image_gallery_saver: ^2.0.3
+  image_gallery_saver_plus: ^5.0.0
   path: ^1.9.0

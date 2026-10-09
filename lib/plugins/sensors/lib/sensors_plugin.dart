@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:sensors_plus/sensors_plus.dart';
-import 'package:sweetmelon/packages/core/lib/core.dart';
 import 'package:sweetmelon/packages/plugin_engine/lib/plugin_engine.dart';
 
 typedef SensorEventEmitter = Future<void> Function(String event, dynamic data);

@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:nfc_manager/nfc_manager.dart';
 import 'package:sweetmelon/packages/core/lib/core.dart';

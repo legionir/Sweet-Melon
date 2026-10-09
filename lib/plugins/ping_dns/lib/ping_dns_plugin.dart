@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:sweetmelon/packages/core/lib/core.dart';
 import 'package:sweetmelon/packages/plugin_engine/lib/plugin_engine.dart';
 
 class PingDnsPlugin extends Plugin {
@@ -179,7 +178,7 @@ class PingDnsPlugin extends Plugin {
         } else if (line.contains('* * *')) {
           final hopNum = RegExp(r'^\s*(\d+)').firstMatch(line);
           hops.add({
-            'hop': int.parse(hopNum?.group(1) ?? '${i}'),
+            'hop': int.parse(hopNum?.group(1) ?? '$i'),
             'host': '*',
             'ip': '*',
             'rttMs': null,

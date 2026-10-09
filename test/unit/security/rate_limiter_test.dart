@@ -34,7 +34,7 @@ void main() {
     test('resets after window', () async {
       limiter.addRule('test', const RateLimitRule(
         maxCalls: 2,
-        window: const Duration(milliseconds: 100),
+        window: Duration(milliseconds: 100),
       ));
 
       await limiter.check('test', 'method');

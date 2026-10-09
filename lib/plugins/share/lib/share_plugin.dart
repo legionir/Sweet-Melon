@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:cross_file/cross_file.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:sweetmelon/packages/plugin_engine/lib/plugin_engine.dart';
 

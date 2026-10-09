@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:collection';
-import 'dart:convert';
 
 import '../protocol/message_protocol.dart';
 import '../utils/logger.dart';

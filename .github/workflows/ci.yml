@@ -236,7 +236,7 @@ jobs:
         shell: bash
         run: |
           rc=0
-          flutter build ios --debug --no-codesign > ios-build.txt 2>&1 || rc=$?
+          flutter build ios --debug --no-codesign --simulator > ios-build.txt 2>&1 || rc=$?
           if [ "$rc" != "0" ]; then
             grep -n -i "error" ios-build.txt | head -40 | sed 's/^/::error::/'
             tail -n 80 ios-build.txt | sed 's/^/::notice::/'

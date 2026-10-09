@@ -1,4 +1,4 @@
-import 'package:flutter_app_badger/flutter_app_badger.dart';
+import 'package:flutter_app_badger_plus/flutter_app_badger_plus.dart';
 import 'package:sweetmelon/packages/core/lib/core.dart';
 import 'package:sweetmelon/packages/plugin_engine/lib/plugin_engine.dart';
 
@@ -56,9 +56,9 @@ class BadgePlugin extends Plugin {
 
     try {
       if (count == 0) {
-        FlutterAppBadger.removeBadge();
+        FlutterAppBadgerPlus.removeBadge();
       } else {
-        FlutterAppBadger.updateBadgeCount(count);
+        FlutterAppBadgerPlus.updateBadgeCount(count);
       }
       _currentCount = count;
       return {'count': _currentCount, 'set': true};
@@ -70,7 +70,7 @@ class BadgePlugin extends Plugin {
 
   Future<Map<String, dynamic>> _clear() async {
     try {
-      FlutterAppBadger.removeBadge();
+      FlutterAppBadgerPlus.removeBadge();
       _currentCount = 0;
       return {'count': 0, 'cleared': true};
     } catch (e) {
@@ -90,7 +90,7 @@ class BadgePlugin extends Plugin {
 
   Future<Map<String, dynamic>> _isSupported() async {
     try {
-      final supported = await FlutterAppBadger.isAppBadgeSupported();
+      final supported = await FlutterAppBadgerPlus.isAppBadgeSupported();
       return {'supported': supported};
     } catch (e) {
       return {'supported': false, 'error': e.toString()};

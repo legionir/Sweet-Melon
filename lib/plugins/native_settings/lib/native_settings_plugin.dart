@@ -125,7 +125,6 @@ class NativeSettingsPlugin extends Plugin {
     }
 
     try {
-      final uri = Uri.parse('android.intent.action.VIEW');
       // استفاده از intent
       final intent = Uri.parse(
         'intent://#Intent;action=$action;end',

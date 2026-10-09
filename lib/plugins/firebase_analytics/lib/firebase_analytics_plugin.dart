@@ -252,7 +252,7 @@ class FirebaseAnalyticsPlugin extends Plugin {
   ) async {
     await _analytics?.logLevelEnd(
       levelName: args['levelName'] as String? ?? '',
-      success: args['success'] as String? ?? 'true',
+      success: (args['success'] as String? ?? 'true') == 'true' ? 1 : 0,
     );
     return {'logged': true};
   }
@@ -270,11 +270,17 @@ class FirebaseAnalyticsPlugin extends Plugin {
     if (params.isEmpty) return null;
     final result = <String, Object>{};
     params.forEach((key, value) {
-      if (value is String) result[key] = value;
-      else if (value is int) result[key] = value;
-      else if (value is double) result[key] = value;
-      else if (value is bool) result[key] = value;
-      else result[key] = value.toString();
+      if (value is String) {
+        result[key] = value;
+      } else if (value is int) {
+        result[key] = value;
+      } else if (value is double) {
+        result[key] = value;
+      } else if (value is bool) {
+        result[key] = value;
+      } else {
+        result[key] = value.toString();
+      }
     });
     return result;
   }

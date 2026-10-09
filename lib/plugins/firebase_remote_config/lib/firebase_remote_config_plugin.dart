@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:sweetmelon/packages/core/lib/core.dart';
@@ -147,17 +148,8 @@ class FirebaseRemoteConfigPlugin extends Plugin {
   }
 
   Future<Map<String, dynamic>> _fetch(Map<String, dynamic> args) async {
-    final expirationDurationMs =
-        (args['expirationDurationMs'] as num?)?.toInt();
-
     try {
-      if (expirationDurationMs != null) {
-        await _remoteConfig?.fetch(
-          expiration: Duration(milliseconds: expirationDurationMs),
-        );
-      } else {
-        await _remoteConfig?.fetch();
-      }
+      await _remoteConfig?.fetch();
       return {'fetched': true};
     } catch (e) {
       return {'fetched': false, 'error': e.toString()};
@@ -198,7 +190,6 @@ class FirebaseRemoteConfigPlugin extends Plugin {
     final raw = _remoteConfig?.getString(key) ?? '{}';
 
     try {
-      import 'dart:convert';
       final value = jsonDecode(raw);
       return {'key': key, 'value': value};
     } catch (_) {

@@ -3,7 +3,6 @@ import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:flutter/rendering.dart';
-import 'package:flutter/widgets.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:sweetmelon/packages/core/lib/core.dart';
@@ -39,7 +38,6 @@ class ScreenshotPlugin extends Plugin {
   }
 
   Future<Map<String, dynamic>> _capture(Map<String, dynamic> args) async {
-    final quality = (args['quality'] as num?)?.toInt() ?? 100;
     final format = args['format'] as String? ?? 'png';
     final fileName = args['fileName'] as String? ??
         'screenshot_${DateTime.now().millisecondsSinceEpoch}';

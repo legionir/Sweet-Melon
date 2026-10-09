@@ -468,7 +468,6 @@ class LiveUpdaterPlugin extends Plugin {
   Future<Map<String, dynamic>> _checkAndApply(
     Map<String, dynamic> args,
   ) async {
-    final silent = args['silent'] as bool? ?? false;
 
     // Check
     final checkResult = await _checkForUpdate();

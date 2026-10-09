@@ -1,4 +1,3 @@
-import 'package:webview_flutter/webview_flutter.dart';
 import 'package:sweetmelon/packages/core/lib/core.dart';
 import 'package:sweetmelon/packages/plugin_engine/lib/plugin_engine.dart';
 

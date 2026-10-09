@@ -177,7 +177,6 @@ class SshServerPlugin extends Plugin {
     client.write('Sweetmelon Command Server\r\n');
     client.write('Username: ');
 
-    final buffer = StringBuffer();
 
     client.listen(
       (data) async {

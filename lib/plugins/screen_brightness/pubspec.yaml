@@ -15,4 +15,4 @@ dependencies:
     path: ../../packages/plugin_engine
   core:
     path: ../../packages/core
-  screen_brightness: ^1.0.1
+  screen_brightness: ^2.1.11

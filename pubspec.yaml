@@ -42,22 +42,22 @@ dependencies:
 
   # Media
   local_auth: ^2.3.0
-  mobile_scanner: ^6.0.0
+  mobile_scanner: ^7.0.0
   record: ^5.1.2
   audioplayers: ^6.1.0
   sms_autofill: ^2.4.0
   sqflite: ^2.3.3+2
   flutter_contacts: ^1.1.9+2
-  image_gallery_saver: ^2.0.3
-  flutter_image_compress: ^2.3.0
+  image_gallery_saver_plus: ^5.0.0
+  flutter_image_compress: ^2.4.0
   archive: ^3.6.1
   file_picker: ^8.0.0+1
   in_app_review: ^2.0.9
   sensors_plus: ^5.0.1
-  screen_brightness: ^1.0.1
+  screen_brightness: ^2.1.11
   torch_light: ^1.0.0
   pedometer: ^4.0.1
-  flutter_app_badger: ^1.5.0
+  flutter_app_badger_plus: ^1.0.1
   flutter_tts: ^4.0.2
   speech_to_text: ^7.0.0
   video_player: ^2.9.2

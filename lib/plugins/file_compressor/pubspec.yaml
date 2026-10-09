@@ -15,6 +15,6 @@ dependencies:
     path: ../../packages/plugin_engine
   core:
     path: ../../packages/core
-  flutter_image_compress: ^2.3.0
+  flutter_image_compress: ^2.4.0
   path_provider: ^2.1.1
   path: ^1.9.0

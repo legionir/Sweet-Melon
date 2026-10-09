@@ -131,7 +131,7 @@ class SshClientPlugin extends Plugin {
 
     try {
       final result = await client.run(command);
-      final stdout = result.map((e) => String.fromCharCodes(e)).join();
+      final stdout = String.fromCharCodes(result);
 
       eventEmitter?.call('ssh.output', {
         'connectionId': id,

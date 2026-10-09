@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:sweetmelon/packages/core/lib/core.dart';
 import 'package:sweetmelon/packages/plugin_engine/lib/plugin_engine.dart';
 
 class RootDetectionPlugin extends Plugin {

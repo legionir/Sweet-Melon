@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:image_gallery_saver/image_gallery_saver.dart';
+import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
 import 'package:path/path.dart' as p;
 import 'package:sweetmelon/packages/core/lib/core.dart';
 import 'package:sweetmelon/packages/plugin_engine/lib/plugin_engine.dart';
@@ -46,7 +46,6 @@ class MediaManagerPlugin extends Plugin {
   ) async {
     final path = args['path'] as String;
     final quality = (args['quality'] as num?)?.toInt() ?? 100;
-    final albumName = args['album'] as String?;
 
     final file = File(path);
     if (!await file.exists()) {
@@ -55,7 +54,7 @@ class MediaManagerPlugin extends Plugin {
 
     try {
       final bytes = await file.readAsBytes();
-      final result = await ImageGallerySaver.saveImage(
+      final result = await ImageGallerySaverPlus.saveImage(
         Uint8List.fromList(bytes),
         quality: quality,
         name: p.basenameWithoutExtension(path),
@@ -88,7 +87,7 @@ class MediaManagerPlugin extends Plugin {
     }
 
     try {
-      final result = await ImageGallerySaver.saveFile(
+      final result = await ImageGallerySaverPlus.saveFile(
         path,
         name: p.basenameWithoutExtension(path),
       );
@@ -115,7 +114,7 @@ class MediaManagerPlugin extends Plugin {
     }
 
     try {
-      final result = await ImageGallerySaver.saveFile(path);
+      final result = await ImageGallerySaverPlus.saveFile(path);
       final success = result['isSuccess'] == true;
 
       return {
