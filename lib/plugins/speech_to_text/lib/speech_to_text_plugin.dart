@@ -126,8 +126,8 @@ class SpeechToTextPlugin extends Plugin {
           completer.complete(data);
         }
       },
-      localeId: localeId,
       listenOptions: stt.SpeechListenOptions(
+        localeId: localeId,
         listenFor: Duration(seconds: listenFor),
         pauseFor: Duration(seconds: pauseFor),
         partialResults: partialResults,

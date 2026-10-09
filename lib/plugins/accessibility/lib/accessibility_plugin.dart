@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/semantics.dart';
+import 'package:flutter/widgets.dart';
 import 'package:sweetmelon/packages/core/lib/core.dart';
 import 'package:sweetmelon/packages/plugin_engine/lib/plugin_engine.dart';
 
@@ -65,7 +66,9 @@ class AccessibilityPlugin extends Plugin {
     final assertiveness = args['assertiveness'] as String? ?? 'polite';
 
     try {
-      await SemanticsService.announce(
+      final view = WidgetsBinding.instance.platformDispatcher.views.first;
+      await SemanticsService.sendAnnouncement(
+        view,
         message,
         TextDirection.ltr,
         assertiveness: assertiveness == 'assertive'

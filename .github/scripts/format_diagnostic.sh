@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
-# Publish the exact `dart format` diffs for every unformatted file as a
-# pull-request comment, so the formatting can be fixed without access to the
-# raw job log. The comment body is a unified diff that `patch -p1` can apply.
+# Publish the exact `dart format` diffs for every unformatted file as one or
+# more pull-request comments, so the formatting can be fixed without access to
+# the raw job log. Comment bodies are unified diffs that `patch -p1` can apply.
+# Large diff sets are split across multiple comments (GitHub caps comments at
+# 65536 characters).
 #
 # Usage: format_diagnostic.sh [targets...]
 set -uo pipefail
@@ -21,37 +23,20 @@ trap 'rm -rf "$TMPDIR_FMT"' EXIT
 
 dart format --output=none --set-exit-if-changed $TARGETS > "$TMPDIR_FMT/format.txt" 2>&1 || true
 
-CHANGED="$(grep '^Changed ' "$TMPDIR_FMT/format.txt" | sed 's/^Changed //' | head -40)"
+CHANGED="$(grep '^Changed ' "$TMPDIR_FMT/format.txt" | sed 's/^Changed //' | head -60)"
 if [ -z "$CHANGED" ]; then
   echo "format_diagnostic: everything is formatted"
   exit 0
 fi
 
-PATCH_FILE="$TMPDIR_FMT/format.patch"
-: > "$PATCH_FILE"
-while IFS= read -r f; do
-  [ -f "$f" ] || continue
-  cp "$f" "$TMPDIR_FMT/orig"
-  dart format "$f" > /dev/null 2>&1 || true
-  diff -u --label "a/$f" --label "b/$f" "$TMPDIR_FMT/orig" "$f" >> "$PATCH_FILE" || true
-  cp "$TMPDIR_FMT/orig" "$f"
-done <<< "$CHANGED"
-
-BODY_FILE="$TMPDIR_FMT/comment.md"
-{
-  echo "## CI diagnostic: dart format diffs"
-  echo ""
-  echo "- Run: ${GITHUB_SERVER_URL:-https://github.com}/$REPO/actions/runs/${GITHUB_RUN_ID:-unknown}"
-  echo "- Commit: ${GITHUB_SHA:-unknown}"
-  echo ""
-  echo "Unformatted files (apply with \`patch -p1\`):"
-  echo ""
-  echo '```diff'
-  cat "$PATCH_FILE"
-  echo '```'
-} > "$BODY_FILE"
-
-python3 - "$BODY_FILE" <<'PY'
+# Accumulate per-file diffs, flushing a PR comment whenever the body grows
+# past ~48k characters.
+BODY="$TMPDIR_FMT/body.md"
+PART=1
+TOTAL=0
+flush() {
+  [ -s "$BODY" ] || return 0
+  python3 - "$BODY" <<'PY'
 import sys
 p = sys.argv[1]
 data = open(p, encoding="utf-8", errors="replace").read()
@@ -59,7 +44,53 @@ if len(data) > 60000:
     data = data[:60000] + "\n\n… (truncated)"
 open(p, "w", encoding="utf-8").write(data)
 PY
+  gh pr comment "$PR" --repo "$REPO" --body-file "$BODY" > /dev/null 2>&1 \
+    || echo "format_diagnostic: failed to post comment part $PART on PR #$PR"
+  echo "format_diagnostic: posted part $PART ($TOTAL files so far)"
+  : > "$BODY"
+  PART=$((PART + 1))
+  TOTAL=0
+}
 
-gh pr comment "$PR" --repo "$REPO" --body-file "$BODY_FILE" > /dev/null 2>&1 \
-  || echo "format_diagnostic: failed to post comment on PR #$PR"
+{
+  echo "## CI diagnostic: dart format diffs (part $PART)"
+  echo ""
+  echo "- Run: ${GITHUB_SERVER_URL:-https://github.com}/$REPO/actions/runs/${GITHUB_RUN_ID:-unknown}"
+  echo "- Commit: ${GITHUB_SHA:-unknown}"
+  echo ""
+  echo "Unformatted files (apply with \`patch -p1\`):"
+  echo ""
+  echo '```diff'
+} > "$BODY"
+
+while IFS= read -r f; do
+  [ -f "$f" ] || continue
+  cp "$f" "$TMPDIR_FMT/orig"
+  dart format "$f" > /dev/null 2>&1 || true
+  diff -u --label "a/$f" --label "b/$f" "$TMPDIR_FMT/orig" "$f" > "$TMPDIR_FMT/one.patch" || true
+  cp "$TMPDIR_FMT/orig" "$f"
+  SIZE=$(wc -c < "$TMPDIR_FMT/one.patch")
+  if [ "$SIZE" -gt 0 ]; then
+    if [ "$(wc -c < "$BODY")" -gt 48000 ]; then
+      echo '```' >> "$BODY"
+      flush
+      {
+        echo "## CI diagnostic: dart format diffs (part $PART)"
+        echo ""
+        echo "- Run: ${GITHUB_SERVER_URL:-https://github.com}/$REPO/actions/runs/${GITHUB_RUN_ID:-unknown}"
+        echo "- Commit: ${GITHUB_SHA:-unknown}"
+        echo ""
+        echo "Unformatted files (apply with \`patch -p1\`):"
+        echo ""
+        echo '```diff'
+      } > "$BODY"
+    fi
+    cat "$TMPDIR_FMT/one.patch" >> "$BODY"
+    TOTAL=$((TOTAL + 1))
+  fi
+done <<< "$CHANGED"
+
+echo '```' >> "$BODY"
+flush
+echo "format_diagnostic: $TOTAL unformatted files, $((PART - 1)) comment(s)"
 exit 0

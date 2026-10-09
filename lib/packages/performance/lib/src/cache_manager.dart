@@ -33,7 +33,7 @@ class CacheManager {
 
   /// متدهایی که mutation هستند و نباید cache بشن
   final Set<String> _mutationMethods = {
-    'set', 'remove', 'clear', 'delete', 'write', 'update',
+    'set', 'setData', 'remove', 'clear', 'delete', 'write', 'update',
     'insert', 'create', 'put', 'patch', 'post',
     'deleteFile', 'writeFile',
   };

@@ -166,7 +166,7 @@ class _InAppBrowserPageState extends State<_InAppBrowserPage> {
               onReceivedError: (controller, request, error) {
                 widget.eventEmitter?.call('inAppBrowser.error', {
                   'url': request.url.toString(),
-                  'code': error.errorCode,
+                  'code': error.type.name,
                   'message': error.description,
                 });
               },
