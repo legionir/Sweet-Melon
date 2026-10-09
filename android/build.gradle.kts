@@ -22,10 +22,23 @@ tasks.register<Delete>("clean") {
 
 // Library plugins compiled against an older SDK fail release resource linking
 // (e.g. flutter_app_badger_plus: android:attr/lStar not found). Align them.
+// Must run AFTER the plugin's own android {} block (which sets its own
+// compileSdk), so the override is applied in afterEvaluate. Projects that are
+// already evaluated (evaluationDependsOn(":app")) get it immediately.
 subprojects {
-    pluginManager.withPlugin("com.android.library") {
-        extensions.configure<com.android.build.gradle.LibraryExtension> {
-            compileSdk = 37
+    if (state.executed) {
+        pluginManager.withPlugin("com.android.library") {
+            extensions.configure<com.android.build.gradle.LibraryExtension> {
+                compileSdk = 37
+            }
+        }
+    } else {
+        afterEvaluate {
+            pluginManager.withPlugin("com.android.library") {
+                extensions.configure<com.android.build.gradle.LibraryExtension> {
+                    compileSdk = 37
+                }
+            }
         }
     }
 }
