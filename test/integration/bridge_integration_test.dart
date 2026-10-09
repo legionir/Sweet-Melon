@@ -41,7 +41,10 @@ void main() {
         'requestId': 'set_1',
         'plugin': 'storage',
         'method': 'set',
-        'args': {'key': 'integration_test', 'value': {'data': 42}},
+        'args': {
+          'key': 'integration_test',
+          'value': {'data': 42}
+        },
       });
 
       // Get

@@ -103,9 +103,8 @@ class StoragePlugin extends Plugin {
   }
 
   Map<String, dynamic> _keys() {
-    final keys = _getBridgeKeys()
-        .map((k) => k.substring(_keyPrefix.length))
-        .toList();
+    final keys =
+        _getBridgeKeys().map((k) => k.substring(_keyPrefix.length)).toList();
 
     return {'keys': keys};
   }

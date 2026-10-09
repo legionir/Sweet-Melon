@@ -158,7 +158,8 @@ class PingDnsPlugin extends Plugin {
       ).timeout(const Duration(seconds: 30));
 
       final output = result.stdout.toString();
-      final lines = output.split('\n').where((l) => l.trim().isNotEmpty).toList();
+      final lines =
+          output.split('\n').where((l) => l.trim().isNotEmpty).toList();
 
       final hops = <Map<String, dynamic>>[];
 
@@ -218,16 +219,19 @@ class PingDnsPlugin extends Plugin {
   }
 
   @override
-  Future<ValidationResult> validateArgs(String method, Map<String, dynamic> args) async {
+  Future<ValidationResult> validateArgs(
+      String method, Map<String, dynamic> args) async {
     switch (method) {
       case 'ping':
       case 'dnsLookup':
       case 'traceroute':
       case 'isReachable':
-        if (args['host'] is! String) return ValidationResult.invalid('host is required');
+        if (args['host'] is! String)
+          return ValidationResult.invalid('host is required');
         return ValidationResult.valid();
       case 'reverseDns':
-        if (args['ip'] is! String) return ValidationResult.invalid('ip is required');
+        if (args['ip'] is! String)
+          return ValidationResult.invalid('ip is required');
         return ValidationResult.valid();
       default:
         return ValidationResult.valid();

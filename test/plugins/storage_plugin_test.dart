@@ -20,7 +20,11 @@ void main() {
     });
 
     test('set and get complex value', () async {
-      final data = {'name': 'Ali', 'age': 30, 'tags': ['a', 'b']};
+      final data = {
+        'name': 'Ali',
+        'age': 30,
+        'tags': ['a', 'b']
+      };
       await plugin.onCall('set', {'key': 'user', 'value': data});
       final result = await plugin.onCall('get', {'key': 'user'});
 

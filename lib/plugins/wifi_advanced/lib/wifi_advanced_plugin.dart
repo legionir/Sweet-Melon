@@ -94,7 +94,9 @@ class WifiAdvancedPlugin extends Plugin {
         for (final addr in iface.addresses) {
           if (addr.isLoopback) continue;
           final name = iface.name.toLowerCase();
-          if (name.contains('wlan') || name.contains('wifi') || name.contains('en0')) {
+          if (name.contains('wlan') ||
+              name.contains('wifi') ||
+              name.contains('en0')) {
             wifiIp = addr.address;
             interfaceName = iface.name;
           }

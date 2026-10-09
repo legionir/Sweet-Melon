@@ -4,7 +4,8 @@ import 'package:flutter/services.dart';
 import 'package:sweetmelon/packages/core/lib/core.dart';
 import 'package:sweetmelon/packages/plugin_engine/lib/plugin_engine.dart';
 
-typedef ShareTargetEventEmitter = Future<void> Function(String event, dynamic data);
+typedef ShareTargetEventEmitter = Future<void> Function(
+    String event, dynamic data);
 
 class ShareTargetPlugin extends Plugin {
   final ShareTargetEventEmitter? eventEmitter;

@@ -180,7 +180,8 @@ class TextToSpeechPlugin extends Plugin {
   }
 
   @override
-  Future<ValidationResult> validateArgs(String method, Map<String, dynamic> args) async {
+  Future<ValidationResult> validateArgs(
+      String method, Map<String, dynamic> args) async {
     if (method == 'speak') {
       if (args['text'] is! String || (args['text'] as String).isEmpty) {
         return ValidationResult.invalid('text is required');

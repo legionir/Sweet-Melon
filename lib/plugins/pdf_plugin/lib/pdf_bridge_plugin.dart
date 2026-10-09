@@ -46,7 +46,8 @@ class PdfBridgePlugin extends Plugin {
     }
   }
 
-  Future<Map<String, dynamic>> _generateFromText(Map<String, dynamic> args) async {
+  Future<Map<String, dynamic>> _generateFromText(
+      Map<String, dynamic> args) async {
     final text = args['text'] as String;
     final title = args['title'] as String? ?? 'Document';
     final fileName = args['fileName'] as String? ??
@@ -88,7 +89,8 @@ class PdfBridgePlugin extends Plugin {
     return _saveDoc(doc, fileName);
   }
 
-  Future<Map<String, dynamic>> _generateFromHtml(Map<String, dynamic> args) async {
+  Future<Map<String, dynamic>> _generateFromHtml(
+      Map<String, dynamic> args) async {
     final html = args['html'] as String;
     final fileName = args['fileName'] as String? ??
         'doc_${DateTime.now().millisecondsSinceEpoch}.pdf';
@@ -163,7 +165,8 @@ class PdfBridgePlugin extends Plugin {
     return {'shared': true, 'path': path};
   }
 
-  Future<Map<String, dynamic>> _saveDoc(pw.Document doc, String fileName) async {
+  Future<Map<String, dynamic>> _saveDoc(
+      pw.Document doc, String fileName) async {
     final dir = await getApplicationDocumentsDirectory();
     final pdfDir = Directory(p.join(dir.path, 'pdfs'));
     await pdfDir.create(recursive: true);
@@ -183,7 +186,8 @@ class PdfBridgePlugin extends Plugin {
   }
 
   @override
-  Future<ValidationResult> validateArgs(String method, Map<String, dynamic> args) async {
+  Future<ValidationResult> validateArgs(
+      String method, Map<String, dynamic> args) async {
     switch (method) {
       case 'generateFromText':
         if (args['text'] is! String || (args['text'] as String).isEmpty) {

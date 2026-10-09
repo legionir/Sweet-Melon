@@ -5,7 +5,8 @@ import 'dart:io';
 import 'package:sweetmelon/packages/core/lib/core.dart';
 import 'package:sweetmelon/packages/plugin_engine/lib/plugin_engine.dart';
 
-typedef UdpServerEventEmitter = Future<void> Function(String event, dynamic data);
+typedef UdpServerEventEmitter = Future<void> Function(
+    String event, dynamic data);
 
 class UdpServerPlugin extends Plugin {
   final UdpServerEventEmitter? eventEmitter;
@@ -74,7 +75,8 @@ class UdpServerPlugin extends Plugin {
   Future<Map<String, dynamic>> _start(Map<String, dynamic> args) async {
     final port = (args['port'] as num?)?.toInt() ?? 0;
     final host = args['host'] as String? ?? '0.0.0.0';
-    final id = args['id'] as String? ?? 'udp_srv_${DateTime.now().millisecondsSinceEpoch}';
+    final id = args['id'] as String? ??
+        'udp_srv_${DateTime.now().millisecondsSinceEpoch}';
     final enableBroadcast = args['broadcast'] as bool? ?? true;
     final encoding = args['encoding'] as String? ?? 'utf8';
 
@@ -175,7 +177,8 @@ class UdpServerPlugin extends Plugin {
         bytes = utf8.encode(data);
       }
 
-      final sent = instance.socket.send(bytes, InternetAddress(targetHost), targetPort);
+      final sent =
+          instance.socket.send(bytes, InternetAddress(targetHost), targetPort);
       instance.sentBytes += sent;
 
       return {'sent': true, 'bytes': sent};
@@ -247,7 +250,8 @@ class UdpServerPlugin extends Plugin {
   }
 
   @override
-  Future<ValidationResult> validateArgs(String method, Map<String, dynamic> args) async {
+  Future<ValidationResult> validateArgs(
+      String method, Map<String, dynamic> args) async {
     switch (method) {
       case 'stop':
       case 'getStats':
@@ -256,15 +260,22 @@ class UdpServerPlugin extends Plugin {
         }
         return ValidationResult.valid();
       case 'sendTo':
-        if (args['serverId'] is! String) return ValidationResult.invalid('serverId is required');
-        if (args['host'] is! String) return ValidationResult.invalid('host is required');
-        if (args['port'] is! num) return ValidationResult.invalid('port is required');
-        if (args['data'] is! String) return ValidationResult.invalid('data is required');
+        if (args['serverId'] is! String)
+          return ValidationResult.invalid('serverId is required');
+        if (args['host'] is! String)
+          return ValidationResult.invalid('host is required');
+        if (args['port'] is! num)
+          return ValidationResult.invalid('port is required');
+        if (args['data'] is! String)
+          return ValidationResult.invalid('data is required');
         return ValidationResult.valid();
       case 'broadcast':
-        if (args['serverId'] is! String) return ValidationResult.invalid('serverId is required');
-        if (args['port'] is! num) return ValidationResult.invalid('port is required');
-        if (args['data'] is! String) return ValidationResult.invalid('data is required');
+        if (args['serverId'] is! String)
+          return ValidationResult.invalid('serverId is required');
+        if (args['port'] is! num)
+          return ValidationResult.invalid('port is required');
+        if (args['data'] is! String)
+          return ValidationResult.invalid('data is required');
         return ValidationResult.valid();
       default:
         return ValidationResult.valid();

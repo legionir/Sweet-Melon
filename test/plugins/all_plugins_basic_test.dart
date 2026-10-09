@@ -43,7 +43,9 @@ void main() {
       test('writeText validation', () async {
         await PluginTestUtils.testValidation(plugin, 'writeText', {});
         await PluginTestUtils.testValidArgs(
-          plugin, 'writeText', {'text': 'hello'},
+          plugin,
+          'writeText',
+          {'text': 'hello'},
         );
       });
 
@@ -101,7 +103,8 @@ void main() {
 
       test('base64 roundtrip', () async {
         final enc = await plugin.onCall('base64Encode', {'data': 'Hello!'});
-        final dec = await plugin.onCall('base64Decode', {'data': enc['encoded']});
+        final dec =
+            await plugin.onCall('base64Decode', {'data': enc['encoded']});
         expect(dec['decoded'], 'Hello!');
       });
 
@@ -178,7 +181,10 @@ void main() {
       });
 
       test('complex value', () async {
-        final data = {'name': 'Ali', 'scores': [1, 2, 3]};
+        final data = {
+          'name': 'Ali',
+          'scores': [1, 2, 3]
+        };
         await plugin.onCall('set', {'key': 'complex', 'value': data});
         final result = await plugin.onCall('get', {'key': 'complex'});
         expect(result['name'], 'Ali');
@@ -286,7 +292,9 @@ void main() {
 
       test('validation', () async {
         await PluginTestUtils.testValidation(
-          plugin, 'setColor', {'color': ''},
+          plugin,
+          'setColor',
+          {'color': ''},
         );
       });
     });

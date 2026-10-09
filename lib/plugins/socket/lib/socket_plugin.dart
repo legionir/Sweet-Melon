@@ -91,7 +91,8 @@ class SocketPlugin extends Plugin {
   Future<Map<String, dynamic>> _tcpConnect(Map<String, dynamic> args) async {
     final host = args['host'] as String;
     final port = (args['port'] as num).toInt();
-    final id = args['id'] as String? ?? 'tcp_${DateTime.now().millisecondsSinceEpoch}';
+    final id =
+        args['id'] as String? ?? 'tcp_${DateTime.now().millisecondsSinceEpoch}';
     final timeoutMs = (args['timeoutMs'] as num?)?.toInt() ?? 10000;
     final encoding = args['encoding'] as String? ?? 'utf8';
 
@@ -197,7 +198,8 @@ class SocketPlugin extends Plugin {
 
   // ── TCP Server ──
 
-  Future<Map<String, dynamic>> _tcpStartServer(Map<String, dynamic> args) async {
+  Future<Map<String, dynamic>> _tcpStartServer(
+      Map<String, dynamic> args) async {
     final port = (args['port'] as num?)?.toInt() ?? 0;
     final host = args['host'] as String? ?? '0.0.0.0';
 
@@ -216,7 +218,8 @@ class SocketPlugin extends Plugin {
       );
 
       _tcpServerSub = _tcpServer!.listen((clientSocket) {
-        final clientId = 'client_${clientSocket.remoteAddress.address}_${clientSocket.remotePort}';
+        final clientId =
+            'client_${clientSocket.remoteAddress.address}_${clientSocket.remotePort}';
 
         BridgeLogger.info('Socket', 'TCP client connected: $clientId');
 
@@ -252,7 +255,8 @@ class SocketPlugin extends Plugin {
         _tcpConnections[clientId] = conn;
       });
 
-      BridgeLogger.info('Socket', 'TCP server started on port ${_tcpServer!.port}');
+      BridgeLogger.info(
+          'Socket', 'TCP server started on port ${_tcpServer!.port}');
 
       return {
         'started': true,
@@ -281,7 +285,8 @@ class SocketPlugin extends Plugin {
 
   Future<Map<String, dynamic>> _udpBind(Map<String, dynamic> args) async {
     final port = (args['port'] as num?)?.toInt() ?? 0;
-    final id = args['id'] as String? ?? 'udp_${DateTime.now().millisecondsSinceEpoch}';
+    final id =
+        args['id'] as String? ?? 'udp_${DateTime.now().millisecondsSinceEpoch}';
     final host = args['host'] as String? ?? '0.0.0.0';
     final broadcast = args['broadcast'] as bool? ?? false;
 
@@ -386,17 +391,21 @@ class SocketPlugin extends Plugin {
 
   Map<String, dynamic> _getConnections() {
     return {
-      'tcp': _tcpConnections.values.map((c) => {
-        'id': c.id,
-        'host': c.host,
-        'port': c.port,
-        'sentBytes': c.sentBytes,
-        'receivedBytes': c.receivedBytes,
-      }).toList(),
-      'udp': _udpSockets.entries.map((e) => {
-        'id': e.key,
-        'port': e.value.port,
-      }).toList(),
+      'tcp': _tcpConnections.values
+          .map((c) => {
+                'id': c.id,
+                'host': c.host,
+                'port': c.port,
+                'sentBytes': c.sentBytes,
+                'receivedBytes': c.receivedBytes,
+              })
+          .toList(),
+      'udp': _udpSockets.entries
+          .map((e) => {
+                'id': e.key,
+                'port': e.value.port,
+              })
+          .toList(),
       'tcpServer': _tcpServer != null
           ? {'port': _tcpServer!.port, 'clients': _tcpConnections.length}
           : null,
@@ -424,21 +433,29 @@ class SocketPlugin extends Plugin {
   }
 
   @override
-  Future<ValidationResult> validateArgs(String method, Map<String, dynamic> args) async {
+  Future<ValidationResult> validateArgs(
+      String method, Map<String, dynamic> args) async {
     switch (method) {
       case 'tcpConnect':
-        if (args['host'] is! String) return ValidationResult.invalid('host is required');
-        if (args['port'] is! num) return ValidationResult.invalid('port is required');
+        if (args['host'] is! String)
+          return ValidationResult.invalid('host is required');
+        if (args['port'] is! num)
+          return ValidationResult.invalid('port is required');
         return ValidationResult.valid();
       case 'tcpSend':
       case 'tcpClose':
-        if (args['id'] is! String) return ValidationResult.invalid('id is required');
+        if (args['id'] is! String)
+          return ValidationResult.invalid('id is required');
         return ValidationResult.valid();
       case 'udpSend':
-        if (args['id'] is! String) return ValidationResult.invalid('id is required');
-        if (args['host'] is! String) return ValidationResult.invalid('host is required');
-        if (args['port'] is! num) return ValidationResult.invalid('port is required');
-        if (args['data'] is! String) return ValidationResult.invalid('data is required');
+        if (args['id'] is! String)
+          return ValidationResult.invalid('id is required');
+        if (args['host'] is! String)
+          return ValidationResult.invalid('host is required');
+        if (args['port'] is! num)
+          return ValidationResult.invalid('port is required');
+        if (args['data'] is! String)
+          return ValidationResult.invalid('data is required');
         return ValidationResult.valid();
       default:
         return ValidationResult.valid();

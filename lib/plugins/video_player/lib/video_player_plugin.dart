@@ -127,7 +127,8 @@ class VideoPlayerPlugin extends Plugin {
       await controller.play();
     }
 
-    _players[playerId] = _ManagedPlayer(controller: controller, listener: listener);
+    _players[playerId] =
+        _ManagedPlayer(controller: controller, listener: listener);
 
     BridgeLogger.info('VideoPlayer', 'Created: $playerId');
 
@@ -172,7 +173,8 @@ class VideoPlayerPlugin extends Plugin {
     return {'volume': v};
   }
 
-  Future<Map<String, dynamic>> _setPlaybackSpeed(Map<String, dynamic> args) async {
+  Future<Map<String, dynamic>> _setPlaybackSpeed(
+      Map<String, dynamic> args) async {
     final c = _getController(args['playerId'] as String);
     final s = (args['speed'] as num).toDouble().clamp(0.25, 4.0);
     await c.setPlaybackSpeed(s);
@@ -242,10 +244,19 @@ class VideoPlayerPlugin extends Plugin {
   }
 
   @override
-  Future<ValidationResult> validateArgs(String method, Map<String, dynamic> args) async {
+  Future<ValidationResult> validateArgs(
+      String method, Map<String, dynamic> args) async {
     final needsPlayerId = [
-      'play', 'pause', 'seekTo', 'setVolume', 'setPlaybackSpeed',
-      'setLooping', 'getPosition', 'getDuration', 'getState', 'dispose',
+      'play',
+      'pause',
+      'seekTo',
+      'setVolume',
+      'setPlaybackSpeed',
+      'setLooping',
+      'getPosition',
+      'getDuration',
+      'getState',
+      'dispose',
     ];
 
     if (needsPlayerId.contains(method)) {

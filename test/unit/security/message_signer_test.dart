@@ -156,7 +156,11 @@ void main() {
 
       // دوم بار replay
       final result = signer.validate(
-        message, 'token', signature, 'secret', 'token',
+        message,
+        'token',
+        signature,
+        'secret',
+        'token',
       );
 
       expect(result.valid, false);

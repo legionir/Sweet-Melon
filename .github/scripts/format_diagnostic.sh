@@ -23,7 +23,7 @@ trap 'rm -rf "$TMPDIR_FMT"' EXIT
 
 dart format --output=none --set-exit-if-changed $TARGETS > "$TMPDIR_FMT/format.txt" 2>&1 || true
 
-CHANGED="$(grep '^Changed ' "$TMPDIR_FMT/format.txt" | sed 's/^Changed //' | head -60)"
+CHANGED="$(grep '^Changed ' "$TMPDIR_FMT/format.txt" | sed 's/^Changed //' | head -500)"
 if [ -z "$CHANGED" ]; then
   echo "format_diagnostic: everything is formatted"
   exit 0

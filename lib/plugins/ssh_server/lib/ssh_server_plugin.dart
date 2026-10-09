@@ -5,7 +5,8 @@ import 'dart:io';
 import 'package:sweetmelon/packages/core/lib/core.dart';
 import 'package:sweetmelon/packages/plugin_engine/lib/plugin_engine.dart';
 
-typedef SshServerEventEmitter = Future<void> Function(String event, dynamic data);
+typedef SshServerEventEmitter = Future<void> Function(
+    String event, dynamic data);
 
 /// SSH Server ساده‌شده — اجرای command روی دستگاه
 /// توجه: این یک SSH server واقعی نیست (نیاز به crypto handshake داره)
@@ -177,7 +178,6 @@ class SshServerPlugin extends Plugin {
     client.write('Sweetmelon Command Server\r\n');
     client.write('Username: ');
 
-
     client.listen(
       (data) async {
         final input = utf8.decode(data).trim();
@@ -236,7 +236,8 @@ class SshServerPlugin extends Plugin {
     if (!_allowAllCommands && _allowedCommands.isNotEmpty) {
       final cmdBase = command.split(' ').first;
       if (!_allowedCommands.contains(cmdBase)) {
-        session.socket.write('ERROR: Command "$cmdBase" not in whitelist.\r\n> ');
+        session.socket
+            .write('ERROR: Command "$cmdBase" not in whitelist.\r\n> ');
         return;
       }
     }
@@ -316,7 +317,8 @@ class SshServerPlugin extends Plugin {
     };
   }
 
-  Future<Map<String, dynamic>> _disconnectClient(Map<String, dynamic> args) async {
+  Future<Map<String, dynamic>> _disconnectClient(
+      Map<String, dynamic> args) async {
     final sessionId = args['sessionId'] as String;
     final session = _sessions.remove(sessionId);
 
@@ -343,7 +345,8 @@ class SshServerPlugin extends Plugin {
   }
 
   @override
-  Future<ValidationResult> validateArgs(String method, Map<String, dynamic> args) async {
+  Future<ValidationResult> validateArgs(
+      String method, Map<String, dynamic> args) async {
     switch (method) {
       case 'start':
         return ValidationResult.valid();
@@ -398,7 +401,8 @@ class _CommandEntry {
 
   Map<String, dynamic> toJson() => {
         'command': command,
-        'output': output.length > 500 ? '${output.substring(0, 500)}...' : output,
+        'output':
+            output.length > 500 ? '${output.substring(0, 500)}...' : output,
         'exitCode': exitCode,
         'timestamp': timestamp.toIso8601String(),
       };

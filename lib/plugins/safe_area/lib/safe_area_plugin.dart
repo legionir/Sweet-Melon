@@ -93,9 +93,8 @@ class SafeAreaPlugin extends Plugin {
     final size = view.physicalSize;
 
     final context = QrScannerPlugin.navigatorKey?.currentContext;
-    final orientation = context != null
-        ? MediaQuery.of(context).orientation.name
-        : 'unknown';
+    final orientation =
+        context != null ? MediaQuery.of(context).orientation.name : 'unknown';
 
     return {
       'width': size.width / dpr,
@@ -104,9 +103,8 @@ class SafeAreaPlugin extends Plugin {
       'physicalHeight': size.height,
       'devicePixelRatio': dpr,
       'orientation': orientation,
-      'textScaleFactor': context != null
-          ? MediaQuery.of(context).textScaler.scale(1.0)
-          : 1.0,
+      'textScaleFactor':
+          context != null ? MediaQuery.of(context).textScaler.scale(1.0) : 1.0,
     };
   }
 }

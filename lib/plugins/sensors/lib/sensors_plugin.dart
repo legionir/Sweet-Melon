@@ -24,7 +24,8 @@ class SensorsPlugin extends Plugin {
   String get version => '1.0.0';
 
   @override
-  String get description => 'Device sensors: accelerometer, gyroscope, magnetometer';
+  String get description =>
+      'Device sensors: accelerometer, gyroscope, magnetometer';
 
   @override
   List<String> get supportedMethods => [

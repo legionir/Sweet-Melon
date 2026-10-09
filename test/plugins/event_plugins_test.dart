@@ -27,7 +27,9 @@ void main() {
 
     test('info', () async {
       await PluginTestUtils.testPluginInfo(
-        plugin, expectedName: 'alarm', expectedVersion: '1.0.0',
+        plugin,
+        expectedName: 'alarm',
+        expectedVersion: '1.0.0',
       );
     });
 
@@ -91,7 +93,9 @@ void main() {
 
     test('info', () async {
       await PluginTestUtils.testPluginInfo(
-        plugin, expectedName: 'shakeDetection', expectedVersion: '1.0.0',
+        plugin,
+        expectedName: 'shakeDetection',
+        expectedVersion: '1.0.0',
       );
     });
 
@@ -138,7 +142,9 @@ void main() {
 
     test('info', () async {
       await PluginTestUtils.testPluginInfo(
-        plugin, expectedName: 'rootDetection', expectedVersion: '1.0.0',
+        plugin,
+        expectedName: 'rootDetection',
+        expectedVersion: '1.0.0',
       );
     });
 

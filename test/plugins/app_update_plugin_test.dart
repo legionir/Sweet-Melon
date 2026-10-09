@@ -13,7 +13,8 @@ void main() {
     test('configure sets URLs', () async {
       final r = await plugin.onCall('configure', {
         'updateCheckUrl': 'https://api.example.com/version',
-        'playStoreUrl': 'https://play.google.com/store/apps/details?id=com.example',
+        'playStoreUrl':
+            'https://play.google.com/store/apps/details?id=com.example',
       });
 
       expect(r['configured'], true);

@@ -50,8 +50,12 @@ void main() {
 
     test('all methods are declared', () {
       final expectedMethods = [
-        'getCurrentUser', 'signInWithEmail', 'signUpWithEmail',
-        'signInWithGoogle', 'signOut', 'isSignedIn'
+        'getCurrentUser',
+        'signInWithEmail',
+        'signUpWithEmail',
+        'signInWithGoogle',
+        'signOut',
+        'isSignedIn'
       ];
       for (final method in expectedMethods) {
         expect(plugin.supportsMethod(method), true, reason: 'Missing: $method');

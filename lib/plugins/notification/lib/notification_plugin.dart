@@ -305,7 +305,8 @@ class NotificationPlugin extends Plugin {
       case 'cancel':
         final id = args['id'];
         if (id is! num) {
-          return ValidationResult.invalid('id is required and must be a number');
+          return ValidationResult.invalid(
+              'id is required and must be a number');
         }
         return ValidationResult.valid();
 

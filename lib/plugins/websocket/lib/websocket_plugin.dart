@@ -70,8 +70,8 @@ class WebSocketPlugin extends Plugin {
 
   Future<Map<String, dynamic>> _connect(Map<String, dynamic> args) async {
     final url = args['url'] as String;
-    final id = args['id'] as String? ??
-        'ws_${DateTime.now().millisecondsSinceEpoch}';
+    final id =
+        args['id'] as String? ?? 'ws_${DateTime.now().millisecondsSinceEpoch}';
     final protocols = args['protocols'] != null
         ? List<String>.from(args['protocols'] as List)
         : <String>[];
@@ -226,8 +226,7 @@ class WebSocketPlugin extends Plugin {
   void _scheduleReconnect(_ManagedSocket managed) {
     managed.reconnectAttempts++;
 
-    final delay = managed.reconnectDelayMs *
-        managed.reconnectAttempts;
+    final delay = managed.reconnectDelayMs * managed.reconnectAttempts;
 
     BridgeLogger.info(
       'WebSocket',
@@ -257,7 +256,8 @@ class WebSocketPlugin extends Plugin {
 
   Future<Map<String, dynamic>> _disconnect(Map<String, dynamic> args) async {
     final id = args['id'] as String;
-    final code = (args['code'] as num?)?.toInt() ?? WebSocketStatus.normalClosure;
+    final code =
+        (args['code'] as num?)?.toInt() ?? WebSocketStatus.normalClosure;
     final reason = args['reason'] as String? ?? '';
 
     final managed = _sockets[id];
@@ -332,13 +332,15 @@ class WebSocketPlugin extends Plugin {
 
   Map<String, dynamic> _getConnections() {
     return {
-      'connections': _sockets.values.map((m) => {
-            'id': m.id,
-            'url': m.url,
-            'connected': m.isConnected,
-            'messageCount': m.messageCount,
-            'sentCount': m.sentCount,
-          }).toList(),
+      'connections': _sockets.values
+          .map((m) => {
+                'id': m.id,
+                'url': m.url,
+                'connected': m.isConnected,
+                'messageCount': m.messageCount,
+                'sentCount': m.sentCount,
+              })
+          .toList(),
       'count': _sockets.length,
     };
   }

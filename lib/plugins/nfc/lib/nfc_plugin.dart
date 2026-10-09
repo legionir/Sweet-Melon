@@ -303,7 +303,8 @@ class NfcPlugin extends Plugin {
   }
 
   @override
-  Future<ValidationResult> validateArgs(String method, Map<String, dynamic> args) async {
+  Future<ValidationResult> validateArgs(
+      String method, Map<String, dynamic> args) async {
     switch (method) {
       case 'writeText':
         if (args['text'] is! String || (args['text'] as String).isEmpty) {

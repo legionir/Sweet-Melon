@@ -93,9 +93,8 @@ class ZipPlugin extends Plugin {
     await outputFile.writeAsBytes(encoded);
 
     final compressedSize = encoded.length;
-    final ratio = totalSize > 0
-        ? ((1 - compressedSize / totalSize) * 100).round()
-        : 0;
+    final ratio =
+        totalSize > 0 ? ((1 - compressedSize / totalSize) * 100).round() : 0;
 
     BridgeLogger.info(
       'Zip',
@@ -177,12 +176,14 @@ class ZipPlugin extends Plugin {
     final bytes = await zipFile.readAsBytes();
     final archive = ZipDecoder().decodeBytes(bytes);
 
-    final files = archive.files.map((f) => {
-      'name': f.name,
-      'size': f.size,
-      'isFile': f.isFile,
-      'isDirectory': !f.isFile,
-    }).toList();
+    final files = archive.files
+        .map((f) => {
+              'name': f.name,
+              'size': f.size,
+              'isFile': f.isFile,
+              'isDirectory': !f.isFile,
+            })
+        .toList();
 
     return {
       'files': files,

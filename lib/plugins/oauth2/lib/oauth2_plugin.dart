@@ -60,7 +60,8 @@ class OAuth2Plugin extends Plugin {
     };
 
     final queryString = params.entries
-        .map((e) => '${Uri.encodeComponent(e.key)}=${Uri.encodeComponent(e.value)}')
+        .map((e) =>
+            '${Uri.encodeComponent(e.key)}=${Uri.encodeComponent(e.value)}')
         .join('&');
 
     final fullUrl = '$authUrl?$queryString';

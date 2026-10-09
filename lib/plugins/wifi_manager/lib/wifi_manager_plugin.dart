@@ -38,7 +38,11 @@ class WifiManagerPlugin extends Plugin {
       case 'isEnabled':
         return _isEnabled();
       case 'getInfo':
-        return {'name': name, 'version': version, 'platform': Platform.operatingSystem};
+        return {
+          'name': name,
+          'version': version,
+          'platform': Platform.operatingSystem
+        };
       default:
         throw UnsupportedError('Method "$method" not supported');
     }
@@ -83,10 +87,12 @@ class WifiManagerPlugin extends Plugin {
         'connected': wifiIp != null,
         'ip': wifiIp,
         'interfaceName': wifiName,
-        'interfaces': interfaces.map((i) => {
-          'name': i.name,
-          'addresses': i.addresses.map((a) => a.address).toList(),
-        }).toList(),
+        'interfaces': interfaces
+            .map((i) => {
+                  'name': i.name,
+                  'addresses': i.addresses.map((a) => a.address).toList(),
+                })
+            .toList(),
       };
     } catch (e) {
       BridgeLogger.error('WifiManager', 'Connection info failed: $e');

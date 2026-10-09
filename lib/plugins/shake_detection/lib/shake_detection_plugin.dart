@@ -104,7 +104,8 @@ class ShakeDetectionPlugin extends Plugin {
         _lastShakeTime = now;
         _shakeCount++;
 
-        BridgeLogger.debug('Shake', 'Shake detected (magnitude: ${magnitude.toStringAsFixed(1)})');
+        BridgeLogger.debug('Shake',
+            'Shake detected (magnitude: ${magnitude.toStringAsFixed(1)})');
 
         eventEmitter?.call('shake.detected', {
           'magnitude': magnitude,

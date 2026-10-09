@@ -54,7 +54,10 @@ class SshClientPlugin extends Plugin {
       case 'download':
         return _download(args);
       case 'getConnections':
-        return {'connections': _connections.keys.toList(), 'count': _connections.length};
+        return {
+          'connections': _connections.keys.toList(),
+          'count': _connections.length
+        };
       case 'disconnectAll':
         return _disconnectAll();
       case 'getInfo':
@@ -74,7 +77,8 @@ class SshClientPlugin extends Plugin {
     final username = args['username'] as String;
     final password = args['password'] as String?;
     final privateKey = args['privateKey'] as String?;
-    final id = args['id'] as String? ?? 'ssh_${DateTime.now().millisecondsSinceEpoch}';
+    final id =
+        args['id'] as String? ?? 'ssh_${DateTime.now().millisecondsSinceEpoch}';
 
     try {
       final socket = await SSHSocket.connect(host, port);
@@ -168,7 +172,9 @@ class SshClientPlugin extends Plugin {
       final sftp = await client.sftp();
       final remoteFile = await sftp.open(
         remotePath,
-        mode: SftpFileOpenMode.create | SftpFileOpenMode.write | SftpFileOpenMode.truncate,
+        mode: SftpFileOpenMode.create |
+            SftpFileOpenMode.write |
+            SftpFileOpenMode.truncate,
       );
 
       final bytes = await file.readAsBytes();
@@ -227,15 +233,20 @@ class SshClientPlugin extends Plugin {
   }
 
   @override
-  Future<ValidationResult> validateArgs(String method, Map<String, dynamic> args) async {
+  Future<ValidationResult> validateArgs(
+      String method, Map<String, dynamic> args) async {
     switch (method) {
       case 'connect':
-        if (args['host'] is! String) return ValidationResult.invalid('host is required');
-        if (args['username'] is! String) return ValidationResult.invalid('username is required');
+        if (args['host'] is! String)
+          return ValidationResult.invalid('host is required');
+        if (args['username'] is! String)
+          return ValidationResult.invalid('username is required');
         return ValidationResult.valid();
       case 'execute':
-        if (args['id'] is! String) return ValidationResult.invalid('id is required');
-        if (args['command'] is! String) return ValidationResult.invalid('command is required');
+        if (args['id'] is! String)
+          return ValidationResult.invalid('id is required');
+        if (args['command'] is! String)
+          return ValidationResult.invalid('command is required');
         return ValidationResult.valid();
       default:
         return ValidationResult.valid();

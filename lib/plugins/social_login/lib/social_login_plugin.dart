@@ -85,8 +85,8 @@ class SocialLoginPlugin extends Plugin {
         idToken: auth.idToken,
       );
 
-      final result = await FirebaseAuth.instance
-          .signInWithCredential(credential);
+      final result =
+          await FirebaseAuth.instance.signInWithCredential(credential);
 
       final user = _userToMap(result.user);
 
@@ -124,8 +124,8 @@ class SocialLoginPlugin extends Plugin {
         phoneNumber: phoneNumber,
         timeout: const Duration(seconds: 60),
         verificationCompleted: (credential) async {
-          final result = await FirebaseAuth.instance
-              .signInWithCredential(credential);
+          final result =
+              await FirebaseAuth.instance.signInWithCredential(credential);
 
           if (!completer.isCompleted) {
             completer.complete({
@@ -188,8 +188,8 @@ class SocialLoginPlugin extends Plugin {
         smsCode: code,
       );
 
-      final result = await FirebaseAuth.instance
-          .signInWithCredential(credential);
+      final result =
+          await FirebaseAuth.instance.signInWithCredential(credential);
 
       eventEmitter?.call('socialLogin.signedIn', {
         'provider': 'phone',

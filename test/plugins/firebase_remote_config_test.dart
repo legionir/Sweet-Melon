@@ -15,7 +15,13 @@ void main() {
     });
 
     test('validation requires key for getters', () async {
-      final methods = ['getString', 'getInt', 'getDouble', 'getBool', 'getJson'];
+      final methods = [
+        'getString',
+        'getInt',
+        'getDouble',
+        'getBool',
+        'getJson'
+      ];
       for (final method in methods) {
         final r = await plugin.validateArgs(method, {});
         expect(r.isValid, false, reason: '$method should require key');
@@ -26,7 +32,8 @@ void main() {
     });
 
     test('validation requires map for setDefaults', () async {
-      final r = await plugin.validateArgs('setDefaults', {'defaults': 'invalid'});
+      final r =
+          await plugin.validateArgs('setDefaults', {'defaults': 'invalid'});
       expect(r.isValid, false);
 
       final r2 = await plugin.validateArgs('setDefaults', {

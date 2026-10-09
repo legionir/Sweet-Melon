@@ -119,8 +119,7 @@ class PermissionPlugin extends Plugin {
       'permission': permission,
       'status': status.name,
       'granted': status == sec.PermissionStatus.granted,
-      'permanentlyDenied':
-          status == sec.PermissionStatus.permanentlyDenied,
+      'permanentlyDenied': status == sec.PermissionStatus.permanentlyDenied,
     };
   }
 

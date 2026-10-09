@@ -1,7 +1,8 @@
 import 'package:sweetmelon/packages/core/lib/core.dart';
 import 'package:sweetmelon/packages/plugin_engine/lib/plugin_engine.dart';
 
-typedef TextZoomEventEmitter = Future<void> Function(String event, dynamic data);
+typedef TextZoomEventEmitter = Future<void> Function(
+    String event, dynamic data);
 
 class TextZoomPlugin extends Plugin {
   final TextZoomEventEmitter? eventEmitter;

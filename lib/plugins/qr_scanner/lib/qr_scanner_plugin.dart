@@ -43,9 +43,19 @@ class QrScannerPlugin extends Plugin {
           'name': name,
           'version': version,
           'supportedFormats': [
-            'qr', 'ean13', 'ean8', 'code128', 'code39',
-            'code93', 'upcA', 'upcE', 'itf', 'pdf417',
-            'aztec', 'dataMatrix', 'codabar',
+            'qr',
+            'ean13',
+            'ean8',
+            'code128',
+            'code39',
+            'code93',
+            'upcA',
+            'upcE',
+            'itf',
+            'pdf417',
+            'aztec',
+            'dataMatrix',
+            'codabar',
           ],
         };
       default:

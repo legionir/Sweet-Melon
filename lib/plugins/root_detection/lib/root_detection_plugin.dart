@@ -134,7 +134,11 @@ class RootDetectionPlugin extends Plugin {
   }
 
   bool _checkBusybox() {
-    final paths = ['/system/xbin/busybox', '/system/bin/busybox', '/sbin/busybox'];
+    final paths = [
+      '/system/xbin/busybox',
+      '/system/bin/busybox',
+      '/sbin/busybox'
+    ];
     for (final path in paths) {
       if (File(path).existsSync()) return true;
     }
@@ -151,12 +155,28 @@ class RootDetectionPlugin extends Plugin {
 
   bool _isEmulator() {
     try {
-      final brand = Process.runSync('getprop', ['ro.product.brand']).stdout.toString().trim();
-      final device = Process.runSync('getprop', ['ro.product.device']).stdout.toString().trim();
-      final model = Process.runSync('getprop', ['ro.product.model']).stdout.toString().trim();
-      final hardware = Process.runSync('getprop', ['ro.hardware']).stdout.toString().trim();
+      final brand = Process.runSync('getprop', ['ro.product.brand'])
+          .stdout
+          .toString()
+          .trim();
+      final device = Process.runSync('getprop', ['ro.product.device'])
+          .stdout
+          .toString()
+          .trim();
+      final model = Process.runSync('getprop', ['ro.product.model'])
+          .stdout
+          .toString()
+          .trim();
+      final hardware =
+          Process.runSync('getprop', ['ro.hardware']).stdout.toString().trim();
 
-      final emulatorIndicators = ['generic', 'emulator', 'sdk', 'goldfish', 'ranchu'];
+      final emulatorIndicators = [
+        'generic',
+        'emulator',
+        'sdk',
+        'goldfish',
+        'ranchu'
+      ];
       final combined = '$brand $device $model $hardware'.toLowerCase();
 
       return emulatorIndicators.any((e) => combined.contains(e));

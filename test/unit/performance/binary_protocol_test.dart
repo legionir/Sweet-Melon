@@ -30,7 +30,8 @@ void main() {
     });
 
     test('rejects invalid magic', () {
-      final bad = Uint8List.fromList([0x00, 0x00, 0x00, 0x00, ...List.filled(12, 0)]);
+      final bad =
+          Uint8List.fromList([0x00, 0x00, 0x00, 0x00, ...List.filled(12, 0)]);
       final result = BinaryProtocol.decode(bad);
       expect(result, isNull);
     });

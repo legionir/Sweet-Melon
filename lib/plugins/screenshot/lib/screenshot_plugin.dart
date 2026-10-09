@@ -55,7 +55,8 @@ class ScreenshotPlugin extends Plugin {
       }
 
       final boundary = renderObject;
-      final pixelRatio = ui.PlatformDispatcher.instance.views.first.devicePixelRatio;
+      final pixelRatio =
+          ui.PlatformDispatcher.instance.views.first.devicePixelRatio;
       final image = await boundary.toImage(pixelRatio: pixelRatio);
       final byteData = await image.toByteData(
         format: format == 'jpg' || format == 'jpeg'

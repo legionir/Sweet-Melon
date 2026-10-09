@@ -89,7 +89,8 @@ class SpeechToTextPlugin extends Plugin {
     return {'initialized': _available};
   }
 
-  Future<Map<String, dynamic>> _startListening(Map<String, dynamic> args) async {
+  Future<Map<String, dynamic>> _startListening(
+      Map<String, dynamic> args) async {
     if (!_available) {
       await _initialize();
       if (!_available) {

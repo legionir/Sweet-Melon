@@ -19,7 +19,9 @@ void main() {
 
     test('info', () async {
       await PluginTestUtils.testPluginInfo(
-        plugin, expectedName: 'appIntegrity', expectedVersion: '1.0.0',
+        plugin,
+        expectedName: 'appIntegrity',
+        expectedVersion: '1.0.0',
       );
     });
 
@@ -40,7 +42,9 @@ void main() {
 
     test('info', () async {
       await PluginTestUtils.testPluginInfo(
-        plugin, expectedName: 'wifiManager', expectedVersion: '1.0.0',
+        plugin,
+        expectedName: 'wifiManager',
+        expectedVersion: '1.0.0',
       );
     });
 
@@ -61,14 +65,18 @@ void main() {
 
     test('info', () async {
       await PluginTestUtils.testPluginInfo(
-        plugin, expectedName: 'emailComposer', expectedVersion: '1.0.0',
+        plugin,
+        expectedName: 'emailComposer',
+        expectedVersion: '1.0.0',
       );
     });
 
     test('validation requires to', () async {
       await PluginTestUtils.testValidation(plugin, 'compose', {});
       await PluginTestUtils.testValidArgs(
-        plugin, 'compose', {'to': 'test@test.com'},
+        plugin,
+        'compose',
+        {'to': 'test@test.com'},
       );
     });
   });
@@ -84,7 +92,9 @@ void main() {
 
     test('info', () async {
       await PluginTestUtils.testPluginInfo(
-        plugin, expectedName: 'intentLauncher', expectedVersion: '1.0.0',
+        plugin,
+        expectedName: 'intentLauncher',
+        expectedVersion: '1.0.0',
       );
     });
 

@@ -9,7 +9,8 @@ class NavigationBarPlugin extends Plugin {
   String get version => '1.0.0';
 
   @override
-  String get description => 'Android navigation bar color and visibility control';
+  String get description =>
+      'Android navigation bar color and visibility control';
 
   @override
   List<String> get supportedMethods => [

@@ -5,7 +5,8 @@ import 'dart:io';
 import 'package:sweetmelon/packages/core/lib/core.dart';
 import 'package:sweetmelon/packages/plugin_engine/lib/plugin_engine.dart';
 
-typedef WsServerEventEmitter = Future<void> Function(String event, dynamic data);
+typedef WsServerEventEmitter = Future<void> Function(
+    String event, dynamic data);
 
 class WebSocketServerPlugin extends Plugin {
   final WsServerEventEmitter? eventEmitter;
@@ -131,10 +132,12 @@ class WebSocketServerPlugin extends Plugin {
 
     _clients[clientId] = ws;
 
-    final remoteAddress = request.connectionInfo?.remoteAddress.address ?? 'unknown';
+    final remoteAddress =
+        request.connectionInfo?.remoteAddress.address ?? 'unknown';
     final remotePort = request.connectionInfo?.remotePort ?? 0;
 
-    BridgeLogger.info('WsServer', 'Client connected: $clientId ($remoteAddress:$remotePort)');
+    BridgeLogger.info(
+        'WsServer', 'Client connected: $clientId ($remoteAddress:$remotePort)');
 
     eventEmitter?.call('wsServer.clientConnected', {
       'clientId': clientId,
@@ -222,7 +225,8 @@ class WebSocketServerPlugin extends Plugin {
     final data = args['data'];
     final excludeClient = args['exclude'] as String?;
 
-    final payload = (data is Map || data is List) ? jsonEncode(data) : data.toString();
+    final payload =
+        (data is Map || data is List) ? jsonEncode(data) : data.toString();
 
     int sentCount = 0;
     for (final entry in _clients.entries) {
@@ -234,7 +238,8 @@ class WebSocketServerPlugin extends Plugin {
     return {'sent': sentCount, 'totalClients': _clients.length};
   }
 
-  Future<Map<String, dynamic>> _disconnectClient(Map<String, dynamic> args) async {
+  Future<Map<String, dynamic>> _disconnectClient(
+      Map<String, dynamic> args) async {
     final clientId = args['clientId'] as String;
     final ws = _clients.remove(clientId);
 
@@ -254,7 +259,8 @@ class WebSocketServerPlugin extends Plugin {
   }
 
   @override
-  Future<ValidationResult> validateArgs(String method, Map<String, dynamic> args) async {
+  Future<ValidationResult> validateArgs(
+      String method, Map<String, dynamic> args) async {
     switch (method) {
       case 'sendToClient':
       case 'disconnectClient':

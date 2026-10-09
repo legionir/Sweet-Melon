@@ -103,7 +103,8 @@ void main() {
 
       final report = audit.generateReport();
       expect(
-        report.recommendations.any((r) => r.contains('P95') || r.contains('Average')),
+        report.recommendations
+            .any((r) => r.contains('P95') || r.contains('Average')),
         true,
       );
     });

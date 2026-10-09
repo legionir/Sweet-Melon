@@ -98,7 +98,9 @@ void main() {
     test('toJson/fromJson roundtrip', () {
       final original = PluginResponse.success(
         requestId: 'req_1',
-        data: {'items': [1, 2, 3]},
+        data: {
+          'items': [1, 2, 3]
+        },
         metadata: const ResponseMetadata(
           processingTimeMs: 42,
           pluginVersion: '1.0.0',

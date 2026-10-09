@@ -120,9 +120,11 @@ void main() {
     });
 
     test('batch execution parallel', () async {
-      final requests = List.generate(5, (i) => createTestRequest(
-        args: {'index': i},
-      ));
+      final requests = List.generate(
+          5,
+          (i) => createTestRequest(
+                args: {'index': i},
+              ));
 
       final responses = await manager.executeBatch(
         requests,
@@ -150,9 +152,11 @@ void main() {
 
       await registry.register(failPlugin);
 
-      final requests = List.generate(5, (i) => createTestRequest(
-        plugin: 'failAt3',
-      ));
+      final requests = List.generate(
+          5,
+          (i) => createTestRequest(
+                plugin: 'failAt3',
+              ));
 
       final responses = await manager.executeBatch(
         requests,

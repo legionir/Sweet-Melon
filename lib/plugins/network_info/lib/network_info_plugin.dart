@@ -139,9 +139,13 @@ class NetworkInfoPlugin extends Plugin {
 
           final name = iface.name.toLowerCase();
 
-          if (name.contains('wlan') || name.contains('wifi') || name.contains('en0')) {
+          if (name.contains('wlan') ||
+              name.contains('wifi') ||
+              name.contains('en0')) {
             wifiIp = addr.address;
-          } else if (name.contains('rmnet') || name.contains('pdp') || name.contains('cellular')) {
+          } else if (name.contains('rmnet') ||
+              name.contains('pdp') ||
+              name.contains('cellular')) {
             mobileIp = addr.address;
           }
 
@@ -153,7 +157,8 @@ class NetworkInfoPlugin extends Plugin {
         'ip': wifiIp ?? mobileIp ?? anyIp,
         'wifiIp': wifiIp,
         'mobileIp': mobileIp,
-        'type': wifiIp != null ? 'wifi' : (mobileIp != null ? 'mobile' : 'other'),
+        'type':
+            wifiIp != null ? 'wifi' : (mobileIp != null ? 'mobile' : 'other'),
       };
     } catch (e) {
       return {'ip': null, 'error': e.toString()};
@@ -247,10 +252,13 @@ class NetworkInfoPlugin extends Plugin {
   }
 
   @override
-  Future<ValidationResult> validateArgs(String method, Map<String, dynamic> args) async {
+  Future<ValidationResult> validateArgs(
+      String method, Map<String, dynamic> args) async {
     if (method == 'isPortOpen') {
-      if (args['host'] is! String) return ValidationResult.invalid('host is required');
-      if (args['port'] is! num) return ValidationResult.invalid('port is required');
+      if (args['host'] is! String)
+        return ValidationResult.invalid('host is required');
+      if (args['port'] is! num)
+        return ValidationResult.invalid('port is required');
     }
     return ValidationResult.valid();
   }

@@ -45,7 +45,8 @@ class PushNotificationPlugin extends Plugin {
   String get version => '2.0.0';
 
   @override
-  String get description => 'Firebase Cloud Messaging (FCM) push notification plugin';
+  String get description =>
+      'Firebase Cloud Messaging (FCM) push notification plugin';
 
   @override
   List<String> get requiredPermissions => ['notification'];
@@ -78,7 +79,8 @@ class PushNotificationPlugin extends Plugin {
       // Local notifications setup
       _localNotifications = FlutterLocalNotificationsPlugin();
 
-      const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+      const androidSettings =
+          AndroidInitializationSettings('@mipmap/ic_launcher');
       const iosSettings = DarwinInitializationSettings(
         requestAlertPermission: false,
         requestBadgePermission: false,
@@ -102,10 +104,12 @@ class PushNotificationPlugin extends Plugin {
       }
 
       // Listen foreground messages
-      _foregroundSub = FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
+      _foregroundSub =
+          FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
 
       // Listen notification opened
-      _openedSub = FirebaseMessaging.onMessageOpenedApp.listen(_handleOpenedMessage);
+      _openedSub =
+          FirebaseMessaging.onMessageOpenedApp.listen(_handleOpenedMessage);
 
       // Token refresh
       _tokenSub = _messaging?.onTokenRefresh.listen((newToken) {
@@ -116,7 +120,8 @@ class PushNotificationPlugin extends Plugin {
 
       // Get initial token
       _token = await _messaging?.getToken();
-      BridgeLogger.info('FCM', 'Initialized, token: ${_token?.substring(0, 16)}...');
+      BridgeLogger.info(
+          'FCM', 'Initialized, token: ${_token?.substring(0, 16)}...');
     } catch (e) {
       BridgeLogger.error('FCM', 'Init failed: $e');
     }
@@ -178,7 +183,8 @@ class PushNotificationPlugin extends Plugin {
     // platforms) so callers always get a usable token.
     _token ??= 'local-device-token';
 
-    BridgeLogger.info('FCM', 'Registered, token: ${_token?.substring(0, 16)}...');
+    BridgeLogger.info(
+        'FCM', 'Registered, token: ${_token?.substring(0, 16)}...');
 
     eventEmitter?.call('push.registered', {
       'token': _token,
@@ -217,9 +223,9 @@ class PushNotificationPlugin extends Plugin {
         criticalAlert: criticalAlert,
       );
 
-      _permissionGranted = settings?.authorizationStatus ==
-              AuthorizationStatus.authorized ||
-          settings?.authorizationStatus == AuthorizationStatus.provisional;
+      _permissionGranted =
+          settings?.authorizationStatus == AuthorizationStatus.authorized ||
+              settings?.authorizationStatus == AuthorizationStatus.provisional;
 
       return {
         'granted': _permissionGranted,
@@ -236,8 +242,9 @@ class PushNotificationPlugin extends Plugin {
   Future<Map<String, dynamic>> _checkPermission() async {
     try {
       final settings = await _messaging?.getNotificationSettings();
-      final granted = settings?.authorizationStatus == AuthorizationStatus.authorized ||
-          settings?.authorizationStatus == AuthorizationStatus.provisional;
+      final granted =
+          settings?.authorizationStatus == AuthorizationStatus.authorized ||
+              settings?.authorizationStatus == AuthorizationStatus.provisional;
 
       return {
         'granted': granted,

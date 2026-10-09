@@ -76,8 +76,7 @@ class SplashScreenPlugin extends Plugin {
   }
 
   Map<String, dynamic> _showSplash(Map<String, dynamic> args) {
-    final fadeInDurationMs =
-        (args['fadeInDurationMs'] as num?)?.toInt() ?? 200;
+    final fadeInDurationMs = (args['fadeInDurationMs'] as num?)?.toInt() ?? 200;
 
     _isVisible = true;
     onVisibilityChanged?.call(true);

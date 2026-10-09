@@ -5,7 +5,8 @@ import 'dart:io';
 import 'package:sweetmelon/packages/core/lib/core.dart';
 import 'package:sweetmelon/packages/plugin_engine/lib/plugin_engine.dart';
 
-typedef TcpServerEventEmitter = Future<void> Function(String event, dynamic data);
+typedef TcpServerEventEmitter = Future<void> Function(
+    String event, dynamic data);
 
 class TcpServerPlugin extends Plugin {
   final TcpServerEventEmitter? eventEmitter;
@@ -80,7 +81,8 @@ class TcpServerPlugin extends Plugin {
   Future<Map<String, dynamic>> _start(Map<String, dynamic> args) async {
     final port = (args['port'] as num?)?.toInt() ?? 0;
     final host = args['host'] as String? ?? '0.0.0.0';
-    final id = args['id'] as String? ?? 'tcp_srv_${DateTime.now().millisecondsSinceEpoch}';
+    final id = args['id'] as String? ??
+        'tcp_srv_${DateTime.now().millisecondsSinceEpoch}';
     final maxClients = (args['maxClients'] as num?)?.toInt() ?? 100;
     final encoding = args['encoding'] as String? ?? 'utf8';
 
@@ -109,7 +111,8 @@ class TcpServerPlugin extends Plugin {
       instance.subscription = server.listen((clientSocket) {
         if (instance.clients.length >= maxClients) {
           clientSocket.close();
-          BridgeLogger.warn('TcpServer', '[$id] Max clients reached, rejecting');
+          BridgeLogger.warn(
+              'TcpServer', '[$id] Max clients reached, rejecting');
           return;
         }
 
@@ -193,7 +196,8 @@ class TcpServerPlugin extends Plugin {
       onDone: () {
         instance.clients.remove(clientId);
 
-        BridgeLogger.info('TcpServer', '[${instance.id}] Client disconnected: $clientId');
+        BridgeLogger.info(
+            'TcpServer', '[${instance.id}] Client disconnected: $clientId');
 
         eventEmitter?.call('tcpServer.clientDisconnected', {
           'serverId': instance.id,
@@ -274,12 +278,14 @@ class TcpServerPlugin extends Plugin {
     return {'sent': sentCount, 'totalClients': instance.clients.length};
   }
 
-  Future<Map<String, dynamic>> _disconnectClient(Map<String, dynamic> args) async {
+  Future<Map<String, dynamic>> _disconnectClient(
+      Map<String, dynamic> args) async {
     final serverId = args['serverId'] as String;
     final clientId = args['clientId'] as String;
 
     final instance = _servers[serverId];
-    if (instance == null) return {'disconnected': false, 'reason': 'server_not_found'};
+    if (instance == null)
+      return {'disconnected': false, 'reason': 'server_not_found'};
 
     final client = instance.clients.remove(clientId);
     if (client != null) {
@@ -290,7 +296,8 @@ class TcpServerPlugin extends Plugin {
     return {'disconnected': false, 'reason': 'client_not_found'};
   }
 
-  Future<Map<String, dynamic>> _disconnectAllClients(Map<String, dynamic> args) async {
+  Future<Map<String, dynamic>> _disconnectAllClients(
+      Map<String, dynamic> args) async {
     final serverId = args['serverId'] as String;
     final instance = _servers[serverId];
     if (instance == null) return {'disconnected': 0};
@@ -339,20 +346,25 @@ class TcpServerPlugin extends Plugin {
   }
 
   @override
-  Future<ValidationResult> validateArgs(String method, Map<String, dynamic> args) async {
+  Future<ValidationResult> validateArgs(
+      String method, Map<String, dynamic> args) async {
     switch (method) {
       case 'stop':
-        if (args['id'] is! String) return ValidationResult.invalid('id is required');
+        if (args['id'] is! String)
+          return ValidationResult.invalid('id is required');
         return ValidationResult.valid();
       case 'sendToClient':
       case 'disconnectClient':
-        if (args['serverId'] is! String) return ValidationResult.invalid('serverId is required');
-        if (args['clientId'] is! String) return ValidationResult.invalid('clientId is required');
+        if (args['serverId'] is! String)
+          return ValidationResult.invalid('serverId is required');
+        if (args['clientId'] is! String)
+          return ValidationResult.invalid('clientId is required');
         return ValidationResult.valid();
       case 'sendToAll':
       case 'getClients':
       case 'disconnectAllClients':
-        if (args['serverId'] is! String) return ValidationResult.invalid('serverId is required');
+        if (args['serverId'] is! String)
+          return ValidationResult.invalid('serverId is required');
         return ValidationResult.valid();
       default:
         return ValidationResult.valid();

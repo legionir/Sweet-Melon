@@ -4,7 +4,8 @@ import 'package:pedometer/pedometer.dart';
 import 'package:sweetmelon/packages/core/lib/core.dart';
 import 'package:sweetmelon/packages/plugin_engine/lib/plugin_engine.dart';
 
-typedef PedometerEventEmitter = Future<void> Function(String event, dynamic data);
+typedef PedometerEventEmitter = Future<void> Function(
+    String event, dynamic data);
 
 class PedometerPlugin extends Plugin {
   final PedometerEventEmitter? eventEmitter;
