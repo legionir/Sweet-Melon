@@ -260,22 +260,29 @@ class UdpServerPlugin extends Plugin {
         }
         return ValidationResult.valid();
       case 'sendTo':
-        if (args['serverId'] is! String)
+        if (args['serverId'] is! String) {
           return ValidationResult.invalid('serverId is required');
-        if (args['host'] is! String)
+        }
+        if (args['host'] is! String) {
           return ValidationResult.invalid('host is required');
-        if (args['port'] is! num)
+        }
+        if (args['port'] is! num) {
           return ValidationResult.invalid('port is required');
-        if (args['data'] is! String)
+        }
+        if (args['data'] is! String) {
           return ValidationResult.invalid('data is required');
+        }
         return ValidationResult.valid();
       case 'broadcast':
-        if (args['serverId'] is! String)
+        if (args['serverId'] is! String) {
           return ValidationResult.invalid('serverId is required');
-        if (args['port'] is! num)
+        }
+        if (args['port'] is! num) {
           return ValidationResult.invalid('port is required');
-        if (args['data'] is! String)
+        }
+        if (args['data'] is! String) {
           return ValidationResult.invalid('data is required');
+        }
         return ValidationResult.valid();
       default:
         return ValidationResult.valid();

@@ -437,25 +437,32 @@ class SocketPlugin extends Plugin {
       String method, Map<String, dynamic> args) async {
     switch (method) {
       case 'tcpConnect':
-        if (args['host'] is! String)
+        if (args['host'] is! String) {
           return ValidationResult.invalid('host is required');
-        if (args['port'] is! num)
+        }
+        if (args['port'] is! num) {
           return ValidationResult.invalid('port is required');
+        }
         return ValidationResult.valid();
       case 'tcpSend':
       case 'tcpClose':
-        if (args['id'] is! String)
+        if (args['id'] is! String) {
           return ValidationResult.invalid('id is required');
+        }
         return ValidationResult.valid();
       case 'udpSend':
-        if (args['id'] is! String)
+        if (args['id'] is! String) {
           return ValidationResult.invalid('id is required');
-        if (args['host'] is! String)
+        }
+        if (args['host'] is! String) {
           return ValidationResult.invalid('host is required');
-        if (args['port'] is! num)
+        }
+        if (args['port'] is! num) {
           return ValidationResult.invalid('port is required');
-        if (args['data'] is! String)
+        }
+        if (args['data'] is! String) {
           return ValidationResult.invalid('data is required');
+        }
         return ValidationResult.valid();
       default:
         return ValidationResult.valid();

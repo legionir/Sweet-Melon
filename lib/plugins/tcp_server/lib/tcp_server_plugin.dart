@@ -284,8 +284,9 @@ class TcpServerPlugin extends Plugin {
     final clientId = args['clientId'] as String;
 
     final instance = _servers[serverId];
-    if (instance == null)
+    if (instance == null) {
       return {'disconnected': false, 'reason': 'server_not_found'};
+    }
 
     final client = instance.clients.remove(clientId);
     if (client != null) {
@@ -350,21 +351,25 @@ class TcpServerPlugin extends Plugin {
       String method, Map<String, dynamic> args) async {
     switch (method) {
       case 'stop':
-        if (args['id'] is! String)
+        if (args['id'] is! String) {
           return ValidationResult.invalid('id is required');
+        }
         return ValidationResult.valid();
       case 'sendToClient':
       case 'disconnectClient':
-        if (args['serverId'] is! String)
+        if (args['serverId'] is! String) {
           return ValidationResult.invalid('serverId is required');
-        if (args['clientId'] is! String)
+        }
+        if (args['clientId'] is! String) {
           return ValidationResult.invalid('clientId is required');
+        }
         return ValidationResult.valid();
       case 'sendToAll':
       case 'getClients':
       case 'disconnectAllClients':
-        if (args['serverId'] is! String)
+        if (args['serverId'] is! String) {
           return ValidationResult.invalid('serverId is required');
+        }
         return ValidationResult.valid();
       default:
         return ValidationResult.valid();

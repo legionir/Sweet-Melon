@@ -411,20 +411,25 @@ class FtpClientPlugin extends Plugin {
       String method, Map<String, dynamic> args) async {
     switch (method) {
       case 'connect':
-        if (args['host'] is! String)
+        if (args['host'] is! String) {
           return ValidationResult.invalid('host is required');
+        }
         return ValidationResult.valid();
       case 'downloadFile':
-        if (args['remotePath'] is! String)
+        if (args['remotePath'] is! String) {
           return ValidationResult.invalid('remotePath is required');
-        if (args['localPath'] is! String)
+        }
+        if (args['localPath'] is! String) {
           return ValidationResult.invalid('localPath is required');
+        }
         return ValidationResult.valid();
       case 'uploadFile':
-        if (args['localPath'] is! String)
+        if (args['localPath'] is! String) {
           return ValidationResult.invalid('localPath is required');
-        if (args['remotePath'] is! String)
+        }
+        if (args['remotePath'] is! String) {
           return ValidationResult.invalid('remotePath is required');
+        }
         return ValidationResult.valid();
       default:
         return ValidationResult.valid();

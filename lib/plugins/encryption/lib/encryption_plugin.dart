@@ -206,20 +206,25 @@ class EncryptionPlugin extends Plugin {
       String method, Map<String, dynamic> args) async {
     switch (method) {
       case 'aesEncrypt':
-        if (args['data'] is! String)
+        if (args['data'] is! String) {
           return ValidationResult.invalid('data is required');
-        if (args['key'] is! String)
+        }
+        if (args['key'] is! String) {
           return ValidationResult.invalid('key (base64) is required');
+        }
         return ValidationResult.valid();
 
       case 'aesDecrypt':
-        if (args['data'] is! String)
+        if (args['data'] is! String) {
           return ValidationResult.invalid(
               'data (encrypted base64) is required');
-        if (args['key'] is! String)
+        }
+        if (args['key'] is! String) {
           return ValidationResult.invalid('key (base64) is required');
-        if (args['iv'] is! String)
+        }
+        if (args['iv'] is! String) {
           return ValidationResult.invalid('iv (base64) is required');
+        }
         return ValidationResult.valid();
 
       case 'hashSha256':
@@ -227,15 +232,18 @@ class EncryptionPlugin extends Plugin {
       case 'hashMd5':
       case 'base64Encode':
       case 'base64Decode':
-        if (args['data'] is! String)
+        if (args['data'] is! String) {
           return ValidationResult.invalid('data is required');
+        }
         return ValidationResult.valid();
 
       case 'hmacSha256':
-        if (args['data'] is! String)
+        if (args['data'] is! String) {
           return ValidationResult.invalid('data is required');
-        if (args['key'] is! String)
+        }
+        if (args['key'] is! String) {
           return ValidationResult.invalid('key is required');
+        }
         return ValidationResult.valid();
 
       default:

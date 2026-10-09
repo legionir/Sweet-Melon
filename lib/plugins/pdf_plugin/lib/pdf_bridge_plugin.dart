@@ -96,6 +96,7 @@ class PdfBridgePlugin extends Plugin {
         'doc_${DateTime.now().millisecondsSinceEpoch}.pdf';
 
     // html to pdf conversion via printing
+    // ignore: deprecated_member_use -- Printing.convertHtml has no replacement in printing 5.x
     final bytes = await Printing.convertHtml(
       html: html,
       format: PdfPageFormat.a4,
@@ -135,6 +136,7 @@ class PdfBridgePlugin extends Plugin {
       await Printing.layoutPdf(
         name: name,
         onLayout: (format) async {
+          // ignore: deprecated_member_use -- Printing.convertHtml has no replacement in printing 5.x
           return await Printing.convertHtml(
             html: html,
             format: format,

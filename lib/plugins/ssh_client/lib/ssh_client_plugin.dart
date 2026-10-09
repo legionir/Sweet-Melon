@@ -237,16 +237,20 @@ class SshClientPlugin extends Plugin {
       String method, Map<String, dynamic> args) async {
     switch (method) {
       case 'connect':
-        if (args['host'] is! String)
+        if (args['host'] is! String) {
           return ValidationResult.invalid('host is required');
-        if (args['username'] is! String)
+        }
+        if (args['username'] is! String) {
           return ValidationResult.invalid('username is required');
+        }
         return ValidationResult.valid();
       case 'execute':
-        if (args['id'] is! String)
+        if (args['id'] is! String) {
           return ValidationResult.invalid('id is required');
-        if (args['command'] is! String)
+        }
+        if (args['command'] is! String) {
           return ValidationResult.invalid('command is required');
+        }
         return ValidationResult.valid();
       default:
         return ValidationResult.valid();

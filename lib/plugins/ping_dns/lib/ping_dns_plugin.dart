@@ -226,12 +226,14 @@ class PingDnsPlugin extends Plugin {
       case 'dnsLookup':
       case 'traceroute':
       case 'isReachable':
-        if (args['host'] is! String)
+        if (args['host'] is! String) {
           return ValidationResult.invalid('host is required');
+        }
         return ValidationResult.valid();
       case 'reverseDns':
-        if (args['ip'] is! String)
+        if (args['ip'] is! String) {
           return ValidationResult.invalid('ip is required');
+        }
         return ValidationResult.valid();
       default:
         return ValidationResult.valid();

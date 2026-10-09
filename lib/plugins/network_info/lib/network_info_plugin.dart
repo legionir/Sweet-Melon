@@ -255,10 +255,12 @@ class NetworkInfoPlugin extends Plugin {
   Future<ValidationResult> validateArgs(
       String method, Map<String, dynamic> args) async {
     if (method == 'isPortOpen') {
-      if (args['host'] is! String)
+      if (args['host'] is! String) {
         return ValidationResult.invalid('host is required');
-      if (args['port'] is! num)
+      }
+      if (args['port'] is! num) {
         return ValidationResult.invalid('port is required');
+      }
     }
     return ValidationResult.valid();
   }
