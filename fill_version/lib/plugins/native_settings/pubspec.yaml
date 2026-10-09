@@ -1,0 +1,15 @@
+name: native_settings_plugin
+description: Open native system settings
+version: 1.0.0
+
+environment:
+  sdk: ^3.0.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  plugin_engine:
+    path: ../../packages/plugin_engine
+  core:
+    path: ../../packages/core
+  url_launcher: ^6.3.0

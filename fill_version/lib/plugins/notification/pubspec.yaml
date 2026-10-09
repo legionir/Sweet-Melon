@@ -1,0 +1,15 @@
+name: notification_plugin
+description: Local notification bridge plugin
+version: 1.0.0
+
+environment:
+  sdk: ^3.0.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  plugin_engine:
+    path: ../../packages/plugin_engine
+  core:
+    path: ../../packages/core
+  flutter_local_notifications: ^17.2.4

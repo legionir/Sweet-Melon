@@ -1,0 +1,15 @@
+name: file_picker_plugin
+description: File picker plugin
+version: 1.0.0
+
+environment:
+  sdk: ^3.0.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  plugin_engine:
+    path: ../../packages/plugin_engine
+  core:
+    path: ../../packages/core
+  file_picker: ^8.0.0+1

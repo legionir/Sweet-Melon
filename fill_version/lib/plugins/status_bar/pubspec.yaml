@@ -1,0 +1,12 @@
+name: status_bar_plugin
+description: Status bar and system UI plugin
+version: 1.0.0
+
+environment:
+  sdk: ^3.0.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  plugin_engine:
+    path: ../../packages/plugin_engine

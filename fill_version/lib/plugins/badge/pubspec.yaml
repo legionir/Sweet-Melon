@@ -1,0 +1,15 @@
+name: badge_plugin
+description: App icon badge plugin
+version: 1.0.0
+
+environment:
+  sdk: ^3.0.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  plugin_engine:
+    path: ../../packages/plugin_engine
+  core:
+    path: ../../packages/core
+  flutter_app_badger: ^1.5.0

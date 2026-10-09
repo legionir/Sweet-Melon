@@ -1,0 +1,31 @@
+# NFC Plugin
+
+Read and write NFC tags.
+
+## Plugin Name
+`nfc`
+
+## Methods
+
+| Method | Description |
+|--------|-------------|
+| `isAvailable` | Check NFC support |
+| `startSession` | Start NFC read session |
+| `stopSession` | Stop session |
+| `writeText` | Write text to NFC tag |
+| `writeUri` | Write URL to NFC tag |
+
+## Events
+- `nfc.tagDiscovered` — `{ id, type, records, isWritable }`
+- `nfc.error` — `{ message }`
+
+## Usage
+```javascript
+const tag = await NativeSDK.nfc.startSession({ readOnce: true });
+console.log('Tag ID:', tag.id);
+console.log('Content:', tag.records[0]?.payloadString);
+
+// Write
+await NativeSDK.nfc.writeText('Hello NFC');
+await NativeSDK.nfc.writeUri('https://example.com');
+```

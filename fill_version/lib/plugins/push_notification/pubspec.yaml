@@ -1,0 +1,15 @@
+name: push_notification_plugin
+description: Push notification plugin (FCM ready)
+version: 1.0.0
+
+environment:
+  sdk: ^3.0.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  plugin_engine:
+    path: ../../packages/plugin_engine
+  core:
+    path: ../../packages/core
+  # firebase_messaging: ^15.0.0  # اضافه شود وقتی Firebase تنظیم شد

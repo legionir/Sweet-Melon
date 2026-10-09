@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- existing keys ... -->
+
+    <key>NSCameraUsageDescription</key>
+    <string>This app needs camera access to take photos.</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>This app needs photo library access to pick images.</string>
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>This app needs location access.</string>
+    <key>NSLocationAlwaysUsageDescription</key>
+    <string>This app needs location access in background.</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>This app needs microphone access for video recording.</string>
+
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <key>NSAllowsArbitraryLoads</key>
+        <true/>
+        <key>NSAllowsArbitraryLoadsInWebContent</key>
+        <true/>
+        <key>NSAllowsLocalNetworking</key>
+        <true/>
+    </dict>
+
+    <key>io.flutter.embedded_views_preview</key>
+    <true/>
+</dict>
+</plist>

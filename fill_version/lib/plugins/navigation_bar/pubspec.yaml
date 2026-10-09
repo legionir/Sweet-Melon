@@ -1,0 +1,12 @@
+name: navigation_bar_plugin
+description: Android navigation bar plugin
+version: 1.0.0
+
+environment:
+  sdk: ^3.0.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  plugin_engine:
+    path: ../../packages/plugin_engine

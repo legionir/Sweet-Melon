@@ -1,0 +1,13 @@
+name: geolocation_plugin
+description: Geolocation plugin for Flutter Native Bridge
+version: 1.0.0
+
+environment:
+  sdk: ^3.0.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  geolocator: ^10.1.0
+  plugin_engine:
+    path: ../../packages/plugin_engine

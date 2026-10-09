@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Flutter Native Bridge</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>Native Bridge</h1>
+    <p>Flutter ↔ JS Bridge Demo</p>
+  </header>
+
+  <div class="progress" id="progress"></div>
+
+  <div class="card">
+    <div class="card-title">📷 Camera Plugin</div>
+    <div class="btn-grid">
+      <button onclick="testTakePhoto()">Take Photo</button>
+      <button onclick="testGallery()">Pick Gallery</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">💾 Storage Plugin</div>
+    <div class="btn-grid">
+      <button onclick="testSetStorage()">Set Value</button>
+      <button onclick="testGetStorage()">Get Value</button>
+      <button onclick="testListKeys()">List Keys</button>
+      <button onclick="testRemove()">Remove</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📍 Geolocation Plugin</div>
+    <div class="btn-grid">
+      <button onclick="testLocation()">Get Location</button>
+      <button onclick="testPermission()">Check Permission</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">⚡ Batch & Advanced</div>
+    <div class="btn-grid">
+      <button onclick="testBatch()">Batch Request</button>
+      <button onclick="testParallel()">Parallel Calls</button>
+      <button onclick="testTimeout()">Test Timeout</button>
+      <button onclick="clearLog()">Clear Log</button>
+    </div>
+  </div>
+
+  <div class="status-bar">
+    <div class="status-item">Requests: <span id="reqCount">0</span></div>
+    <div class="status-item">Errors: <span id="errCount">0</span></div>
+    <div class="status-item">Pending: <span id="pendCount">0</span></div>
+  </div>
+
+  <div class="card" style="margin-top: 16px">
+    <div class="card-title">📋 Console Log</div>
+    <div class="log-container" id="log"></div>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+</body>
+</html>

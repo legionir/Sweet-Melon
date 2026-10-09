@@ -1,0 +1,46 @@
+name: sweetmelon
+description: Flutter Native Bridge - JS to Native communication platform
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.0.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  webview_flutter: ^4.8.0
+  webview_flutter_android: ^3.16.0
+  webview_flutter_wkwebview: ^3.13.0
+
+  shared_preferences: ^2.2.2
+  path_provider: ^2.1.1
+  path: ^1.9.0
+  uuid: ^4.2.1
+  get_it: ^7.6.4
+  http: ^1.1.2
+  image_picker: ^1.0.4
+  geolocator: ^10.1.0
+  permission_handler: ^11.3.0
+  mime: ^1.0.5
+
+  connectivity_plus: ^6.0.5
+  device_info_plus: ^10.1.2
+  package_info_plus: ^8.0.2
+  url_launcher: ^6.3.0
+  app_links: ^6.3.2
+  share_plus: ^10.0.2
+  cross_file: ^0.3.4+2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/www/

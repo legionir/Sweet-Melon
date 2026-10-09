@@ -1,0 +1,13 @@
+name: secure_storage_plugin
+description: Encrypted secure storage plugin
+version: 1.0.0
+
+environment:
+  sdk: ^3.0.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  plugin_engine:
+    path: ../../packages/plugin_engine
+  flutter_secure_storage: ^9.2.2

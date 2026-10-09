@@ -1,0 +1,12 @@
+name: clipboard_plugin
+description: Clipboard bridge plugin
+version: 1.0.0
+
+environment:
+  sdk: ^3.0.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  plugin_engine:
+    path: ../../packages/plugin_engine

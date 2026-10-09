@@ -1,0 +1,14 @@
+name: safe_area_plugin
+description: Safe area insets plugin
+version: 1.0.0
+
+environment:
+  sdk: ^3.0.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  plugin_engine:
+    path: ../../packages/plugin_engine
+  qr_scanner:
+    path: ../qr_scanner
