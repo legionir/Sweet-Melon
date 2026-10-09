@@ -212,9 +212,8 @@ class LazyPluginLoader {
 
   /// Load کردن همه پلاگین‌هایی که autoInitialize دارن
   Future<void> loadAutoInitPlugins() async {
-    final autoPlugins = _definitions.values
-        .where((d) => d.autoInitialize)
-        .toList();
+    final autoPlugins =
+        _definitions.values.where((d) => d.autoInitialize).toList();
 
     BridgeLogger.info(
       'LazyLoader',
@@ -266,8 +265,7 @@ class LazyPluginLoader {
   }
 
   /// وضعیت همه پلاگین‌ها
-  Map<String, LazyPluginStatus> get allStatuses =>
-      Map.unmodifiable(_statuses);
+  Map<String, LazyPluginStatus> get allStatuses => Map.unmodifiable(_statuses);
 
   /// لیست پلاگین‌های unloaded
   List<String> get unloadedPlugins => _statuses.entries

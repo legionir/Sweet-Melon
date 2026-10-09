@@ -166,12 +166,14 @@ class GoogleMapsPlugin extends Plugin {
           'startAddress': leg['start_address'],
           'endAddress': leg['end_address'],
           'polyline': route['overview_polyline']?['points'],
-          'steps': (leg['steps'] as List).map((s) => {
-                'instruction': s['html_instructions'],
-                'distance': s['distance'],
-                'duration': s['duration'],
-                'travelMode': s['travel_mode'],
-              }).toList(),
+          'steps': (leg['steps'] as List)
+              .map((s) => {
+                    'instruction': s['html_instructions'],
+                    'distance': s['distance'],
+                    'duration': s['duration'],
+                    'travelMode': s['travel_mode'],
+                  })
+              .toList(),
         };
       }
 
@@ -203,17 +205,19 @@ class GoogleMapsPlugin extends Plugin {
       final data = jsonDecode(response.body) as Map<String, dynamic>;
 
       if (data['status'] == 'OK') {
-        final places = (data['results'] as List).map((p) => {
-              'name': p['name'],
-              'address': p['formatted_address'],
-              'placeId': p['place_id'],
-              'latitude': p['geometry']?['location']?['lat'],
-              'longitude': p['geometry']?['location']?['lng'],
-              'rating': p['rating'],
-              'totalRatings': p['user_ratings_total'],
-              'types': p['types'],
-              'openNow': p['opening_hours']?['open_now'],
-            }).toList();
+        final places = (data['results'] as List)
+            .map((p) => {
+                  'name': p['name'],
+                  'address': p['formatted_address'],
+                  'placeId': p['place_id'],
+                  'latitude': p['geometry']?['location']?['lat'],
+                  'longitude': p['geometry']?['location']?['lng'],
+                  'rating': p['rating'],
+                  'totalRatings': p['user_ratings_total'],
+                  'types': p['types'],
+                  'openNow': p['opening_hours']?['open_now'],
+                })
+            .toList();
 
         return {'found': true, 'places': places, 'count': places.length};
       }
@@ -274,8 +278,10 @@ class GoogleMapsPlugin extends Plugin {
     final dLng = _toRadians(lng2 - lng1);
 
     final a = sin(dLat / 2) * sin(dLat / 2) +
-        cos(_toRadians(lat1)) * cos(_toRadians(lat2)) *
-            sin(dLng / 2) * sin(dLng / 2);
+        cos(_toRadians(lat1)) *
+            cos(_toRadians(lat2)) *
+            sin(dLng / 2) *
+            sin(dLng / 2);
     final c = 2 * atan2(sqrt(a), sqrt(1 - a));
     final distance = earthRadius * c;
 

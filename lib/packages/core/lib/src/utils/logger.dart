@@ -73,23 +73,19 @@ class BridgeLogger {
 
   static void removeSink(LogSink sink) => _sinks.remove(sink);
 
-  static void debug(String tag, String message,
-      [Map<String, dynamic>? extra]) {
+  static void debug(String tag, String message, [Map<String, dynamic>? extra]) {
     _log(LogLevel.debug, tag, message, extra);
   }
 
-  static void info(String tag, String message,
-      [Map<String, dynamic>? extra]) {
+  static void info(String tag, String message, [Map<String, dynamic>? extra]) {
     _log(LogLevel.info, tag, message, extra);
   }
 
-  static void warn(String tag, String message,
-      [Map<String, dynamic>? extra]) {
+  static void warn(String tag, String message, [Map<String, dynamic>? extra]) {
     _log(LogLevel.warn, tag, message, extra);
   }
 
-  static void error(String tag, String message,
-      [Map<String, dynamic>? extra]) {
+  static void error(String tag, String message, [Map<String, dynamic>? extra]) {
     _log(LogLevel.error, tag, message, extra);
   }
 

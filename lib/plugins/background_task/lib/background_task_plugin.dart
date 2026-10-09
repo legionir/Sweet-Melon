@@ -84,8 +84,7 @@ class BackgroundTaskPlugin extends Plugin {
   String get version => '1.0.0';
 
   @override
-  String get description =>
-      'Background task scheduler and executor plugin';
+  String get description => 'Background task scheduler and executor plugin';
 
   @override
   List<String> get supportedMethods => [
@@ -387,10 +386,12 @@ class BackgroundTaskPlugin extends Plugin {
 
   Map<String, dynamic> _getAllTasks() {
     return {
-      'tasks': _taskStates.values.map((s) => {
-            ...s.toJson(),
-            'hasTimer': _timers.containsKey(s.id),
-          }).toList(),
+      'tasks': _taskStates.values
+          .map((s) => {
+                ...s.toJson(),
+                'hasTimer': _timers.containsKey(s.id),
+              })
+          .toList(),
       'count': _taskStates.length,
       'runningTimers': _timers.length,
     };

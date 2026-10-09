@@ -127,7 +127,12 @@ class DatabasePlugin extends Plugin {
     _databases[dbName] = db;
     BridgeLogger.info('Database', 'Opened: $dbName (v$dbVersion)');
 
-    return {'opened': true, 'alreadyOpen': false, 'name': dbName, 'path': dbPath};
+    return {
+      'opened': true,
+      'alreadyOpen': false,
+      'name': dbName,
+      'path': dbPath
+    };
   }
 
   Future<Map<String, dynamic>> _close(Map<String, dynamic> args) async {
@@ -192,7 +197,8 @@ class DatabasePlugin extends Plugin {
     final where = args['where'] as String?;
     final whereArgs = _parseParams(args['whereArgs']);
 
-    final count = await db.update(table, values, where: where, whereArgs: whereArgs);
+    final count =
+        await db.update(table, values, where: where, whereArgs: whereArgs);
     return {'updated': count};
   }
 
@@ -244,7 +250,8 @@ class DatabasePlugin extends Plugin {
 
   Future<Map<String, dynamic>> _batch(Map<String, dynamic> args) async {
     final db = await _getDb(args['name'] as String);
-    final statements = List<Map<String, dynamic>>.from(args['statements'] as List);
+    final statements =
+        List<Map<String, dynamic>>.from(args['statements'] as List);
 
     final batch = db.batch();
 
@@ -301,7 +308,8 @@ class DatabasePlugin extends Plugin {
     return {'exists': result.isNotEmpty, 'table': table};
   }
 
-  Future<Map<String, dynamic>> _deleteDatabase(Map<String, dynamic> args) async {
+  Future<Map<String, dynamic>> _deleteDatabase(
+      Map<String, dynamic> args) async {
     final dbName = args['name'] as String;
 
     // close first
@@ -328,9 +336,20 @@ class DatabasePlugin extends Plugin {
     Map<String, dynamic> args,
   ) async {
     final needsName = [
-      'open', 'close', 'execute', 'query', 'insert', 'update',
-      'delete', 'rawQuery', 'rawInsert', 'rawUpdate', 'rawDelete',
-      'batch', 'tableExists', 'deleteDatabase',
+      'open',
+      'close',
+      'execute',
+      'query',
+      'insert',
+      'update',
+      'delete',
+      'rawQuery',
+      'rawInsert',
+      'rawUpdate',
+      'rawDelete',
+      'batch',
+      'tableExists',
+      'deleteDatabase',
     ];
 
     if (needsName.contains(method)) {
@@ -367,7 +386,8 @@ class DatabasePlugin extends Plugin {
           return ValidationResult.invalid('table is required');
         }
         if (args['values'] is! Map) {
-          return ValidationResult.invalid('values is required and must be a map');
+          return ValidationResult.invalid(
+              'values is required and must be a map');
         }
         return ValidationResult.valid();
 

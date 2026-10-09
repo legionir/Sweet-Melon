@@ -151,8 +151,8 @@ class AppUpdatePlugin extends Plugin {
       final updateAvailable = latestVersion != null &&
           _isNewerVersion(latestVersion, currentVersion);
 
-      final mustUpdate = minVersion != null &&
-          _isNewerVersion(minVersion, currentVersion);
+      final mustUpdate =
+          minVersion != null && _isNewerVersion(minVersion, currentVersion);
 
       _lastCheckResult = {
         'checked': true,

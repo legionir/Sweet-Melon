@@ -82,7 +82,8 @@ class DatePickerPlugin extends Plugin {
       'day': result.day,
       'dateMs': result.millisecondsSinceEpoch,
       'dateIso': result.toIso8601String(),
-      'formatted': '${result.year}-${result.month.toString().padLeft(2, '0')}-${result.day.toString().padLeft(2, '0')}',
+      'formatted':
+          '${result.year}-${result.month.toString().padLeft(2, '0')}-${result.day.toString().padLeft(2, '0')}',
     };
   }
 
@@ -92,10 +93,10 @@ class DatePickerPlugin extends Plugin {
       return {'picked': false, 'reason': 'no_context'};
     }
 
-    final initialHour = (args['initialHour'] as num?)?.toInt() ??
-        TimeOfDay.now().hour;
-    final initialMinute = (args['initialMinute'] as num?)?.toInt() ??
-        TimeOfDay.now().minute;
+    final initialHour =
+        (args['initialHour'] as num?)?.toInt() ?? TimeOfDay.now().hour;
+    final initialMinute =
+        (args['initialMinute'] as num?)?.toInt() ?? TimeOfDay.now().minute;
     final use24h = args['use24h'] as bool? ?? true;
     final title = args['title'] as String?;
 
@@ -120,7 +121,8 @@ class DatePickerPlugin extends Plugin {
       'picked': true,
       'hour': result.hour,
       'minute': result.minute,
-      'formatted': '${result.hour.toString().padLeft(2, '0')}:${result.minute.toString().padLeft(2, '0')}',
+      'formatted':
+          '${result.hour.toString().padLeft(2, '0')}:${result.minute.toString().padLeft(2, '0')}',
     };
   }
 
@@ -150,7 +152,7 @@ class DatePickerPlugin extends Plugin {
       'dateTimeIso': date.toIso8601String(),
       'formatted':
           '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')} '
-          '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}',
+              '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}',
     };
   }
 

@@ -69,9 +69,7 @@ class SemanticVersion implements Comparable<SemanticVersion> {
   @override
   bool operator ==(Object other) {
     if (other is! SemanticVersion) return false;
-    return major == other.major &&
-        minor == other.minor &&
-        patch == other.patch;
+    return major == other.major && minor == other.minor && patch == other.patch;
   }
 
   @override

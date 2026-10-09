@@ -26,8 +26,7 @@ class AppContext {
   BuildContext? get context => _navigatorKey?.currentContext;
 
   /// دسترسی به ScaffoldMessenger
-  ScaffoldMessengerState? get scaffoldMessenger =>
-      _scaffoldKey?.currentState;
+  ScaffoldMessengerState? get scaffoldMessenger => _scaffoldKey?.currentState;
 
   /// آیا context در دسترس هست؟
   bool get hasContext => context != null;

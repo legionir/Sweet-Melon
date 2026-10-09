@@ -144,7 +144,8 @@ class FirebaseAuthPlugin extends Plugin {
         password: password,
       );
 
-      BridgeLogger.info('FirebaseAuth', 'Signed in: ${credential?.user?.email}');
+      BridgeLogger.info(
+          'FirebaseAuth', 'Signed in: ${credential?.user?.email}');
 
       return {
         'success': true,
@@ -349,14 +350,16 @@ class FirebaseAuthPlugin extends Plugin {
       'isAnonymous': user.isAnonymous,
       'creationTime': user.metadata.creationTime?.toIso8601String(),
       'lastSignInTime': user.metadata.lastSignInTime?.toIso8601String(),
-      'providerData': user.providerData.map((p) => {
-            'uid': p.uid,
-            'email': p.email,
-            'displayName': p.displayName,
-            'photoURL': p.photoURL,
-            'providerId': p.providerId,
-            'phoneNumber': p.phoneNumber,
-          }).toList(),
+      'providerData': user.providerData
+          .map((p) => {
+                'uid': p.uid,
+                'email': p.email,
+                'displayName': p.displayName,
+                'photoURL': p.photoURL,
+                'providerId': p.providerId,
+                'phoneNumber': p.phoneNumber,
+              })
+          .toList(),
     };
   }
 
@@ -407,7 +410,8 @@ class FirebaseAuthPlugin extends Plugin {
         if (args['email'] is! String || (args['email'] as String).isEmpty) {
           return ValidationResult.invalid('email is required');
         }
-        if (args['password'] is! String || (args['password'] as String).isEmpty) {
+        if (args['password'] is! String ||
+            (args['password'] as String).isEmpty) {
           return ValidationResult.invalid('password is required');
         }
         return ValidationResult.valid();

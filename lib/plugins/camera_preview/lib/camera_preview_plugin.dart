@@ -267,8 +267,7 @@ class CameraPreviewPlugin extends Plugin {
       final videoDir = Directory(p.join(dir.path, 'camera'));
       await videoDir.create(recursive: true);
 
-      final fileName =
-          'video_${DateTime.now().millisecondsSinceEpoch}.mp4';
+      final fileName = 'video_${DateTime.now().millisecondsSinceEpoch}.mp4';
       final targetPath = p.join(videoDir.path, fileName);
       final file = File(xFile.path);
       await file.copy(targetPath);
@@ -398,11 +397,14 @@ class CameraPreviewPlugin extends Plugin {
 
   Map<String, dynamic> _getAvailableCameras() {
     return {
-      'cameras': _cameras?.map((c) => {
-            'name': c.name,
-            'lensDirection': c.lensDirection.name,
-            'sensorOrientation': c.sensorOrientation,
-          }).toList() ?? [],
+      'cameras': _cameras
+              ?.map((c) => {
+                    'name': c.name,
+                    'lensDirection': c.lensDirection.name,
+                    'sensorOrientation': c.sensorOrientation,
+                  })
+              .toList() ??
+          [],
       'count': _cameras?.length ?? 0,
     };
   }

@@ -69,7 +69,8 @@ class BackButtonPlugin extends Plugin {
   }
 
   Future<void> _handleBackPress() async {
-    BridgeLogger.info('BackButton', 'Back pressed (intercept: $_interceptEnabled)');
+    BridgeLogger.info(
+        'BackButton', 'Back pressed (intercept: $_interceptEnabled)');
 
     if (_interceptEnabled && eventEmitter != null) {
       await eventEmitter!(

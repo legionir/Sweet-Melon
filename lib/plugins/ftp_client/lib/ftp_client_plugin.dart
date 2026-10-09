@@ -170,7 +170,8 @@ class FtpClientPlugin extends Plugin {
 
       await _readResponse(); // transfer complete
 
-      final lines = data.toString().split('\n').where((l) => l.trim().isNotEmpty);
+      final lines =
+          data.toString().split('\n').where((l) => l.trim().isNotEmpty);
       final files = lines.map((line) => _parseFtpLine(line)).toList();
 
       return {'files': files, 'count': files.length, 'path': path};
@@ -302,7 +303,8 @@ class FtpClientPlugin extends Plugin {
     return {'created': response.startsWith('257'), 'response': response};
   }
 
-  Future<Map<String, dynamic>> _removeDirectory(Map<String, dynamic> args) async {
+  Future<Map<String, dynamic>> _removeDirectory(
+      Map<String, dynamic> args) async {
     if (!_connected) return {'removed': false, 'reason': 'not_connected'};
     final path = args['path'] as String;
     await _sendCommand('RMD $path');
@@ -318,7 +320,8 @@ class FtpClientPlugin extends Plugin {
     return {'path': match?.group(1) ?? '/', 'response': response};
   }
 
-  Future<Map<String, dynamic>> _changeDirectory(Map<String, dynamic> args) async {
+  Future<Map<String, dynamic>> _changeDirectory(
+      Map<String, dynamic> args) async {
     if (!_connected) return {'changed': false, 'reason': 'not_connected'};
     final path = args['path'] as String;
     await _sendCommand('CWD $path');
@@ -358,7 +361,8 @@ class FtpClientPlugin extends Plugin {
         buffer.write(String.fromCharCodes(data));
         final content = buffer.toString();
 
-        if (content.contains('\r\n') && RegExp(r'^\d{3} ', multiLine: true).hasMatch(content)) {
+        if (content.contains('\r\n') &&
+            RegExp(r'^\d{3} ', multiLine: true).hasMatch(content)) {
           sub.cancel();
           _lastResponse = content.trim();
           completer.complete(_lastResponse);
@@ -379,7 +383,8 @@ class FtpClientPlugin extends Plugin {
   }
 
   int? _parsePasvPort(String response) {
-    final match = RegExp(r'\((\d+),(\d+),(\d+),(\d+),(\d+),(\d+)\)').firstMatch(response);
+    final match =
+        RegExp(r'\((\d+),(\d+),(\d+),(\d+),(\d+),(\d+)\)').firstMatch(response);
     if (match == null) return null;
     final p1 = int.parse(match.group(5)!);
     final p2 = int.parse(match.group(6)!);
@@ -402,18 +407,24 @@ class FtpClientPlugin extends Plugin {
   }
 
   @override
-  Future<ValidationResult> validateArgs(String method, Map<String, dynamic> args) async {
+  Future<ValidationResult> validateArgs(
+      String method, Map<String, dynamic> args) async {
     switch (method) {
       case 'connect':
-        if (args['host'] is! String) return ValidationResult.invalid('host is required');
+        if (args['host'] is! String)
+          return ValidationResult.invalid('host is required');
         return ValidationResult.valid();
       case 'downloadFile':
-        if (args['remotePath'] is! String) return ValidationResult.invalid('remotePath is required');
-        if (args['localPath'] is! String) return ValidationResult.invalid('localPath is required');
+        if (args['remotePath'] is! String)
+          return ValidationResult.invalid('remotePath is required');
+        if (args['localPath'] is! String)
+          return ValidationResult.invalid('localPath is required');
         return ValidationResult.valid();
       case 'uploadFile':
-        if (args['localPath'] is! String) return ValidationResult.invalid('localPath is required');
-        if (args['remotePath'] is! String) return ValidationResult.invalid('remotePath is required');
+        if (args['localPath'] is! String)
+          return ValidationResult.invalid('localPath is required');
+        if (args['remotePath'] is! String)
+          return ValidationResult.invalid('remotePath is required');
         return ValidationResult.valid();
       default:
         return ValidationResult.valid();

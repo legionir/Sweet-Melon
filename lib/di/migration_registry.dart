@@ -67,7 +67,8 @@ class MigrationRegistry {
       MigrationStep(
         fromVersion: const SemanticVersion(major: 1, minor: 0, patch: 0),
         toVersion: const SemanticVersion(major: 1, minor: 1, patch: 0),
-        description: 'Database v1.1: added batch support, renamed exec to execute',
+        description:
+            'Database v1.1: added batch support, renamed exec to execute',
         migrate: (args) async => const MigrationResult.ok(),
         methodRenames: {
           'exec': 'execute',

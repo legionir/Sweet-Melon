@@ -101,8 +101,7 @@ class FirebaseRemoteConfigPlugin extends Plugin {
   Future<Map<String, dynamic>> _initialize(Map<String, dynamic> args) async {
     final minimumFetchIntervalMs =
         (args['minimumFetchIntervalMs'] as num?)?.toInt() ?? 3600000;
-    final fetchTimeoutMs =
-        (args['fetchTimeoutMs'] as num?)?.toInt() ?? 60000;
+    final fetchTimeoutMs = (args['fetchTimeoutMs'] as num?)?.toInt() ?? 60000;
     final defaults = args['defaults'] as Map<String, dynamic>? ?? {};
 
     await _remoteConfig?.setConfigSettings(

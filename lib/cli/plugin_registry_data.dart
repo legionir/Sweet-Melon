@@ -6,8 +6,10 @@ class PluginRegistryData {
       id: 'permission',
       dartClassName: 'PermissionPlugin',
       jsNamespace: 'permission',
-      importPath: 'package:sweetmelon/plugins/permission/lib/permission_plugin.dart',
-      registrationCode: "PermissionPlugin(permissionManager: sl<PermissionManager>())",
+      importPath:
+          'package:sweetmelon/plugins/permission/lib/permission_plugin.dart',
+      registrationCode:
+          "PermissionPlugin(permissionManager: sl<PermissionManager>())",
       needsEmitter: false,
       dependencies: {'permission_handler': '^11.3.0'},
       androidPermissions: [],
@@ -18,7 +20,8 @@ class PluginRegistryData {
       id: 'app_lifecycle',
       dartClassName: 'AppLifecyclePlugin',
       jsNamespace: 'appLifecycle',
-      importPath: 'package:sweetmelon/plugins/app_lifecycle/lib/app_lifecycle_plugin.dart',
+      importPath:
+          'package:sweetmelon/plugins/app_lifecycle/lib/app_lifecycle_plugin.dart',
       registrationCode: "AppLifecyclePlugin(eventEmitter: emitter)",
       needsEmitter: true,
       dependencies: {},
@@ -30,7 +33,8 @@ class PluginRegistryData {
       id: 'device_info',
       dartClassName: 'DeviceInfoBridgePlugin',
       jsNamespace: 'deviceInfo',
-      importPath: 'package:sweetmelon/plugins/device_info/lib/device_info_plugin.dart',
+      importPath:
+          'package:sweetmelon/plugins/device_info/lib/device_info_plugin.dart',
       registrationCode: "DeviceInfoBridgePlugin()",
       needsEmitter: false,
       dependencies: {
@@ -45,7 +49,8 @@ class PluginRegistryData {
       id: 'connectivity',
       dartClassName: 'ConnectivityBridgePlugin',
       jsNamespace: 'connectivity',
-      importPath: 'package:sweetmelon/plugins/connectivity/lib/connectivity_plugin.dart',
+      importPath:
+          'package:sweetmelon/plugins/connectivity/lib/connectivity_plugin.dart',
       registrationCode: "ConnectivityBridgePlugin(eventEmitter: emitter)",
       needsEmitter: true,
       dependencies: {'connectivity_plus': '^6.0.5'},
@@ -69,7 +74,8 @@ class PluginRegistryData {
       id: 'file_system',
       dartClassName: 'FileSystemPlugin',
       jsNamespace: 'fileSystem',
-      importPath: 'package:sweetmelon/plugins/file_system/lib/file_system_plugin.dart',
+      importPath:
+          'package:sweetmelon/plugins/file_system/lib/file_system_plugin.dart',
       registrationCode: "FileSystemPlugin()",
       needsEmitter: false,
       dependencies: {
@@ -84,7 +90,8 @@ class PluginRegistryData {
       id: 'http_native',
       dartClassName: 'HttpNativePlugin',
       jsNamespace: 'http',
-      importPath: 'package:sweetmelon/plugins/http_native/lib/http_native_plugin.dart',
+      importPath:
+          'package:sweetmelon/plugins/http_native/lib/http_native_plugin.dart',
       registrationCode: "HttpNativePlugin()",
       needsEmitter: false,
       dependencies: {
@@ -99,7 +106,8 @@ class PluginRegistryData {
       id: 'intent_link',
       dartClassName: 'IntentLinkPlugin',
       jsNamespace: 'intent',
-      importPath: 'package:sweetmelon/plugins/intent_link/lib/intent_link_plugin.dart',
+      importPath:
+          'package:sweetmelon/plugins/intent_link/lib/intent_link_plugin.dart',
       registrationCode: "IntentLinkPlugin(eventEmitter: emitter)",
       needsEmitter: true,
       dependencies: {
@@ -114,7 +122,8 @@ class PluginRegistryData {
       id: 'clipboard',
       dartClassName: 'ClipboardPlugin',
       jsNamespace: 'clipboard',
-      importPath: 'package:sweetmelon/plugins/clipboard/lib/clipboard_plugin.dart',
+      importPath:
+          'package:sweetmelon/plugins/clipboard/lib/clipboard_plugin.dart',
       registrationCode: "ClipboardPlugin()",
       needsEmitter: false,
       dependencies: {},
@@ -158,7 +167,8 @@ class PluginRegistryData {
       id: 'geolocation',
       dartClassName: 'GeolocationPlugin',
       jsNamespace: 'geolocation',
-      importPath: 'package:sweetmelon/plugins/geolocation/lib/geolocation_plugin.dart',
+      importPath:
+          'package:sweetmelon/plugins/geolocation/lib/geolocation_plugin.dart',
       registrationCode: "GeolocationPlugin(eventEmitter: emitter)",
       needsEmitter: true,
       dependencies: {'geolocator': '^10.1.0'},
@@ -177,7 +187,8 @@ class PluginRegistryData {
       id: 'back_button',
       dartClassName: 'BackButtonPlugin',
       jsNamespace: 'backButton',
-      importPath: 'package:sweetmelon/plugins/back_button/lib/back_button_plugin.dart',
+      importPath:
+          'package:sweetmelon/plugins/back_button/lib/back_button_plugin.dart',
       registrationCode: "BackButtonPlugin(eventEmitter: emitter)",
       needsEmitter: true,
       dependencies: {},
@@ -189,7 +200,8 @@ class PluginRegistryData {
       id: 'secure_storage',
       dartClassName: 'SecureStoragePlugin',
       jsNamespace: 'secureStorage',
-      importPath: 'package:sweetmelon/plugins/secure_storage/lib/secure_storage_plugin.dart',
+      importPath:
+          'package:sweetmelon/plugins/secure_storage/lib/secure_storage_plugin.dart',
       registrationCode: "SecureStoragePlugin()",
       needsEmitter: false,
       dependencies: {'flutter_secure_storage': '^9.2.2'},
@@ -201,7 +213,8 @@ class PluginRegistryData {
       id: 'notification',
       dartClassName: 'NotificationPlugin',
       jsNamespace: 'notification',
-      importPath: 'package:sweetmelon/plugins/notification/lib/notification_plugin.dart',
+      importPath:
+          'package:sweetmelon/plugins/notification/lib/notification_plugin.dart',
       registrationCode: "NotificationPlugin(eventEmitter: emitter)",
       needsEmitter: true,
       dependencies: {'flutter_local_notifications': '^17.2.4'},
@@ -216,7 +229,8 @@ class PluginRegistryData {
       id: 'status_bar',
       dartClassName: 'StatusBarPlugin',
       jsNamespace: 'statusBar',
-      importPath: 'package:sweetmelon/plugins/status_bar/lib/status_bar_plugin.dart',
+      importPath:
+          'package:sweetmelon/plugins/status_bar/lib/status_bar_plugin.dart',
       registrationCode: "StatusBarPlugin()",
       needsEmitter: false,
       dependencies: {},
@@ -228,7 +242,8 @@ class PluginRegistryData {
       id: 'orientation',
       dartClassName: 'OrientationPlugin',
       jsNamespace: 'orientation',
-      importPath: 'package:sweetmelon/plugins/orientation/lib/orientation_plugin.dart',
+      importPath:
+          'package:sweetmelon/plugins/orientation/lib/orientation_plugin.dart',
       registrationCode: "OrientationPlugin()",
       needsEmitter: false,
       dependencies: {},
@@ -252,7 +267,8 @@ class PluginRegistryData {
       id: 'keyboard',
       dartClassName: 'KeyboardPlugin',
       jsNamespace: 'keyboard',
-      importPath: 'package:sweetmelon/plugins/keyboard/lib/keyboard_plugin.dart',
+      importPath:
+          'package:sweetmelon/plugins/keyboard/lib/keyboard_plugin.dart',
       registrationCode: "KeyboardPlugin(eventEmitter: emitter)",
       needsEmitter: true,
       dependencies: {},
@@ -266,7 +282,8 @@ class PluginRegistryData {
       id: 'biometrics',
       dartClassName: 'BiometricsPlugin',
       jsNamespace: 'biometrics',
-      importPath: 'package:sweetmelon/plugins/biometrics/lib/biometrics_plugin.dart',
+      importPath:
+          'package:sweetmelon/plugins/biometrics/lib/biometrics_plugin.dart',
       registrationCode: "BiometricsPlugin()",
       needsEmitter: false,
       dependencies: {'local_auth': '^2.3.0'},
@@ -283,7 +300,8 @@ class PluginRegistryData {
       id: 'qr_scanner',
       dartClassName: 'QrScannerPlugin',
       jsNamespace: 'qrScanner',
-      importPath: 'package:sweetmelon/plugins/qr_scanner/lib/qr_scanner_plugin.dart',
+      importPath:
+          'package:sweetmelon/plugins/qr_scanner/lib/qr_scanner_plugin.dart',
       registrationCode: "QrScannerPlugin(eventEmitter: emitter)",
       needsEmitter: true,
       dependencies: {'mobile_scanner': '^5.2.3'},
@@ -332,7 +350,8 @@ class PluginRegistryData {
       id: 'download_manager',
       dartClassName: 'DownloadManagerPlugin',
       jsNamespace: 'downloadManager',
-      importPath: 'package:sweetmelon/plugins/download_manager/lib/download_manager_plugin.dart',
+      importPath:
+          'package:sweetmelon/plugins/download_manager/lib/download_manager_plugin.dart',
       registrationCode: "DownloadManagerPlugin(eventEmitter: emitter)",
       needsEmitter: true,
       dependencies: {},
@@ -344,7 +363,8 @@ class PluginRegistryData {
       id: 'database',
       dartClassName: 'DatabasePlugin',
       jsNamespace: 'database',
-      importPath: 'package:sweetmelon/plugins/database/lib/database_plugin.dart',
+      importPath:
+          'package:sweetmelon/plugins/database/lib/database_plugin.dart',
       registrationCode: "DatabasePlugin()",
       needsEmitter: false,
       dependencies: {'sqflite': '^2.3.3+2'},
@@ -356,7 +376,8 @@ class PluginRegistryData {
       id: 'contacts',
       dartClassName: 'ContactsPlugin',
       jsNamespace: 'contacts',
-      importPath: 'package:sweetmelon/plugins/contacts/lib/contacts_plugin.dart',
+      importPath:
+          'package:sweetmelon/plugins/contacts/lib/contacts_plugin.dart',
       registrationCode: "ContactsPlugin()",
       needsEmitter: false,
       dependencies: {'flutter_contacts': '^1.1.9+2'},
@@ -373,7 +394,8 @@ class PluginRegistryData {
       id: 'phone_dialer',
       dartClassName: 'PhoneDialerPlugin',
       jsNamespace: 'phoneDialer',
-      importPath: 'package:sweetmelon/plugins/phone_dialer/lib/phone_dialer_plugin.dart',
+      importPath:
+          'package:sweetmelon/plugins/phone_dialer/lib/phone_dialer_plugin.dart',
       registrationCode: "PhoneDialerPlugin()",
       needsEmitter: false,
       dependencies: {},
@@ -389,7 +411,8 @@ class PluginRegistryData {
       id: 'bluetooth',
       dartClassName: 'BluetoothPlugin',
       jsNamespace: 'bluetooth',
-      importPath: 'package:sweetmelon/plugins/bluetooth/lib/bluetooth_plugin.dart',
+      importPath:
+          'package:sweetmelon/plugins/bluetooth/lib/bluetooth_plugin.dart',
       registrationCode: "BluetoothPlugin(eventEmitter: emitter)",
       needsEmitter: true,
       dependencies: {'flutter_blue_plus': '^1.32.12'},
@@ -422,7 +445,8 @@ class PluginRegistryData {
       id: 'speech_to_text',
       dartClassName: 'SpeechToTextPlugin',
       jsNamespace: 'speechToText',
-      importPath: 'package:sweetmelon/plugins/speech_to_text/lib/speech_to_text_plugin.dart',
+      importPath:
+          'package:sweetmelon/plugins/speech_to_text/lib/speech_to_text_plugin.dart',
       registrationCode: "SpeechToTextPlugin(eventEmitter: emitter)",
       needsEmitter: true,
       dependencies: {'speech_to_text': '^7.0.0'},
@@ -437,7 +461,8 @@ class PluginRegistryData {
       id: 'text_to_speech',
       dartClassName: 'TextToSpeechPlugin',
       jsNamespace: 'textToSpeech',
-      importPath: 'package:sweetmelon/plugins/text_to_speech/lib/text_to_speech_plugin.dart',
+      importPath:
+          'package:sweetmelon/plugins/text_to_speech/lib/text_to_speech_plugin.dart',
       registrationCode: "TextToSpeechPlugin(eventEmitter: emitter)",
       needsEmitter: true,
       dependencies: {'flutter_tts': '^4.0.2'},
@@ -449,7 +474,8 @@ class PluginRegistryData {
       id: 'video_player',
       dartClassName: 'VideoPlayerPlugin',
       jsNamespace: 'videoPlayer',
-      importPath: 'package:sweetmelon/plugins/video_player/lib/video_player_plugin.dart',
+      importPath:
+          'package:sweetmelon/plugins/video_player/lib/video_player_plugin.dart',
       registrationCode: "VideoPlayerPlugin(eventEmitter: emitter)",
       needsEmitter: true,
       dependencies: {'video_player': '^2.9.2'},
@@ -461,7 +487,8 @@ class PluginRegistryData {
       id: 'in_app_browser',
       dartClassName: 'InAppBrowserPlugin',
       jsNamespace: 'inAppBrowser',
-      importPath: 'package:sweetmelon/plugins/in_app_browser/lib/in_app_browser_plugin.dart',
+      importPath:
+          'package:sweetmelon/plugins/in_app_browser/lib/in_app_browser_plugin.dart',
       registrationCode: "InAppBrowserPlugin(eventEmitter: emitter)",
       needsEmitter: true,
       dependencies: {'flutter_inappwebview': '^6.1.5'},
@@ -473,7 +500,8 @@ class PluginRegistryData {
       id: 'pdf',
       dartClassName: 'PdfBridgePlugin',
       jsNamespace: 'pdf',
-      importPath: 'package:sweetmelon/plugins/pdf_plugin/lib/pdf_bridge_plugin.dart',
+      importPath:
+          'package:sweetmelon/plugins/pdf_plugin/lib/pdf_bridge_plugin.dart',
       registrationCode: "PdfBridgePlugin()",
       needsEmitter: false,
       dependencies: {
@@ -488,7 +516,8 @@ class PluginRegistryData {
       id: 'encryption',
       dartClassName: 'EncryptionPlugin',
       jsNamespace: 'encryption',
-      importPath: 'package:sweetmelon/plugins/encryption/lib/encryption_plugin.dart',
+      importPath:
+          'package:sweetmelon/plugins/encryption/lib/encryption_plugin.dart',
       registrationCode: "EncryptionPlugin()",
       needsEmitter: false,
       dependencies: {

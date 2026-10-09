@@ -8,7 +8,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:sweetmelon/packages/core/lib/core.dart';
 import 'package:sweetmelon/packages/plugin_engine/lib/plugin_engine.dart';
 
-typedef DownloadEventEmitter = Future<void> Function(String event, dynamic data);
+typedef DownloadEventEmitter = Future<void> Function(
+    String event, dynamic data);
 
 class DownloadManagerPlugin extends Plugin {
   final DownloadEventEmitter? eventEmitter;
@@ -127,9 +128,8 @@ class DownloadManagerPlugin extends Plugin {
         sink.add(chunk);
         receivedBytes += chunk.length;
 
-        final percent = totalBytes > 0
-            ? ((receivedBytes / totalBytes) * 100).round()
-            : -1;
+        final percent =
+            totalBytes > 0 ? ((receivedBytes / totalBytes) * 100).round() : -1;
 
         if (percent != lastProgressPercent) {
           lastProgressPercent = percent;
@@ -232,7 +232,8 @@ class DownloadManagerPlugin extends Plugin {
   }
 
   String _fileNameFromUri(Uri uri) {
-    final name = uri.pathSegments.isNotEmpty ? uri.pathSegments.last : 'download.bin';
+    final name =
+        uri.pathSegments.isNotEmpty ? uri.pathSegments.last : 'download.bin';
     return name.isEmpty ? 'download.bin' : name;
   }
 

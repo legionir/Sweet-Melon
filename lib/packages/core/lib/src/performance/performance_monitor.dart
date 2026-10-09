@@ -1,6 +1,5 @@
 import 'dart:async';
 
-
 class PerformanceMetric {
   final String name;
   final String category;
@@ -88,10 +87,9 @@ class PerformanceAudit {
     final successCount = _metrics.where((m) => m.success).length;
     final successRate = successCount / _metrics.length * 100;
 
-    final avgDuration = _metrics
-            .map((m) => m.durationMs)
-            .reduce((a, b) => a + b) /
-        _metrics.length;
+    final avgDuration =
+        _metrics.map((m) => m.durationMs).reduce((a, b) => a + b) /
+            _metrics.length;
 
     final p95Index = (sorted.length * 0.95).round().clamp(0, sorted.length - 1);
     final p99Index = (sorted.length * 0.99).round().clamp(0, sorted.length - 1);
@@ -109,7 +107,9 @@ class PerformanceAudit {
       return MapEntry(cat, {
         'count': metrics.length,
         'avgMs': avg.round(),
-        'successRate': (metrics.where((m) => m.success).length / metrics.length * 100).round(),
+        'successRate':
+            (metrics.where((m) => m.success).length / metrics.length * 100)
+                .round(),
       });
     });
 
@@ -145,22 +145,26 @@ class PerformanceAudit {
     final recs = <String>[];
 
     if (successRate < 95) {
-      recs.add('⚠️ Success rate is ${successRate.toStringAsFixed(1)}% — investigate failing operations');
+      recs.add(
+          '⚠️ Success rate is ${successRate.toStringAsFixed(1)}% — investigate failing operations');
     }
 
     if (avgDuration > 1000) {
-      recs.add('🐌 Average duration is ${avgDuration.round()}ms — consider caching or optimization');
+      recs.add(
+          '🐌 Average duration is ${avgDuration.round()}ms — consider caching or optimization');
     }
 
     if (p95Duration > 3000) {
-      recs.add('🔴 P95 duration is ${p95Duration.round()}ms — some operations are very slow');
+      recs.add(
+          '🔴 P95 duration is ${p95Duration.round()}ms — some operations are very slow');
     }
 
     for (final entry in categories.entries) {
       final avg = entry.value.map((m) => m.durationMs).reduce((a, b) => a + b) /
           entry.value.length;
       if (avg > 2000) {
-        recs.add('📌 ${entry.key} category has high avg duration (${avg.round()}ms)');
+        recs.add(
+            '📌 ${entry.key} category has high avg duration (${avg.round()}ms)');
       }
     }
 

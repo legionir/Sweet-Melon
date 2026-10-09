@@ -221,7 +221,8 @@ class OfflineQueue {
               'response': response.toJson(),
             });
           } else {
-            _handleItemFailure(item, response.error?.message ?? 'Unknown error');
+            _handleItemFailure(
+                item, response.error?.message ?? 'Unknown error');
           }
         } catch (e) {
           _handleItemFailure(item, e.toString());

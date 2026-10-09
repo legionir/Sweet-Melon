@@ -77,14 +77,16 @@ class CalendarPlugin extends Plugin {
       return {'calendars': <dynamic>[], 'error': result.errors.toString()};
     }
 
-    final calendars = result.data!.map((c) => {
-      'id': c.id,
-      'name': c.name,
-      'accountName': c.accountName,
-      'accountType': c.accountType,
-      'isReadOnly': c.isReadOnly,
-      'color': c.color,
-    }).toList();
+    final calendars = result.data!
+        .map((c) => {
+              'id': c.id,
+              'name': c.name,
+              'accountName': c.accountName,
+              'accountType': c.accountType,
+              'isReadOnly': c.isReadOnly,
+              'color': c.color,
+            })
+        .toList();
 
     return {'calendars': calendars, 'count': calendars.length};
   }
@@ -127,10 +129,12 @@ class CalendarPlugin extends Plugin {
     event.title = title;
     event.description = description;
     event.start = TZDateTime.fromMillisecondsSinceEpoch(
-      local, startMs,
+      local,
+      startMs,
     );
     event.end = TZDateTime.fromMillisecondsSinceEpoch(
-      local, endMs,
+      local,
+      endMs,
     );
     event.location = location;
     event.allDay = allDay;

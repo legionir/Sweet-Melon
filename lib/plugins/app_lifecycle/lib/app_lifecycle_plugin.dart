@@ -87,9 +87,8 @@ class AppLifecyclePlugin extends Plugin with WidgetsBindingObserver {
         return {
           'state': (_currentState ?? AppLifecycleState.resumed).name,
           'eventsEnabled': _eventsEnabled,
-          'supportedStates': AppLifecycleState.values
-              .map((e) => e.name)
-              .toList(),
+          'supportedStates':
+              AppLifecycleState.values.map((e) => e.name).toList(),
         };
 
       default:

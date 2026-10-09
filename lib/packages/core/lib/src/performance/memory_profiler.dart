@@ -77,8 +77,12 @@ class MemoryProfiler {
         registeredPlugins += data['registeredPlugins'] as int? ?? 0;
 
         data.forEach((key, value) {
-          if (!['activeCalls', 'cachedItems', 'activeStreams',
-              'registeredPlugins'].contains(key)) {
+          if (![
+            'activeCalls',
+            'cachedItems',
+            'activeStreams',
+            'registeredPlugins'
+          ].contains(key)) {
             extra[key] = value;
           }
         });
@@ -129,9 +133,8 @@ class MemoryProfiler {
     final last = _snapshots.last;
     final first = _snapshots.first;
 
-    final callsTrend = _snapshots.length > 1
-        ? last.activeCalls - first.activeCalls
-        : 0;
+    final callsTrend =
+        _snapshots.length > 1 ? last.activeCalls - first.activeCalls : 0;
 
     final avgCachedItems = _snapshots.isEmpty
         ? 0

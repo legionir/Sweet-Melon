@@ -74,7 +74,8 @@ class IntentLauncherPlugin extends Plugin {
 
     try {
       final uri = Uri.parse('intent://#Intent;action=$action;end');
-      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      final launched =
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
 
       return {
         'launched': launched,
@@ -105,7 +106,8 @@ class IntentLauncherPlugin extends Plugin {
     }
   }
 
-  Future<Map<String, dynamic>> _isAppInstalled(Map<String, dynamic> args) async {
+  Future<Map<String, dynamic>> _isAppInstalled(
+      Map<String, dynamic> args) async {
     final packageName = args['packageName'] as String;
 
     try {
@@ -118,7 +120,8 @@ class IntentLauncherPlugin extends Plugin {
   }
 
   @override
-  Future<ValidationResult> validateArgs(String method, Map<String, dynamic> args) async {
+  Future<ValidationResult> validateArgs(
+      String method, Map<String, dynamic> args) async {
     switch (method) {
       case 'launch':
         if (args['intent'] is! String) {

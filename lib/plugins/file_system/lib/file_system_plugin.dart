@@ -176,12 +176,15 @@ class FileSystemPlugin extends Plugin {
     }
 
     final recursive = args['recursive'] as bool? ?? false;
-    final baseRoot = await _resolveBaseDir(args['baseDir'] as String? ?? 'documents');
+    final baseRoot =
+        await _resolveBaseDir(args['baseDir'] as String? ?? 'documents');
 
-    final entities = await dir.list(
-      recursive: recursive,
-      followLinks: false,
-    ).toList();
+    final entities = await dir
+        .list(
+          recursive: recursive,
+          followLinks: false,
+        )
+        .toList();
 
     final items = <Map<String, dynamic>>[];
 

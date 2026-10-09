@@ -58,7 +58,8 @@ class FileCompressorPlugin extends Plugin {
     final originalSize = await inputFile.length();
 
     final tempDir = await getTemporaryDirectory();
-    final ext = format == 'webp' ? '.webp' : (format == 'png' ? '.png' : '.jpg');
+    final ext =
+        format == 'webp' ? '.webp' : (format == 'png' ? '.png' : '.jpg');
     final outputPath = p.join(
       tempDir.path,
       'compressed_${DateTime.now().millisecondsSinceEpoch}$ext',
@@ -126,7 +127,8 @@ class FileCompressorPlugin extends Plugin {
         return ValidationResult.invalid('path is required');
       }
       final quality = args['quality'];
-      if (quality != null && (quality is! num || quality < 1 || quality > 100)) {
+      if (quality != null &&
+          (quality is! num || quality < 1 || quality > 100)) {
         return ValidationResult.invalid('quality must be 1-100');
       }
     }

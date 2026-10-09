@@ -207,14 +207,16 @@ class LiveUpdaterPlugin extends Plugin {
     _setStatus(BundleStatus.checking);
 
     try {
-      final response = await http.get(
-        Uri.parse('$_serverUrl/api/updates/check'),
-        headers: _buildHeaders({
-          'X-Current-Version': _currentVersion,
-          'X-Channel': _channel ?? 'production',
-          'X-Platform': Platform.operatingSystem,
-        }),
-      ).timeout(const Duration(seconds: 15));
+      final response = await http
+          .get(
+            Uri.parse('$_serverUrl/api/updates/check'),
+            headers: _buildHeaders({
+              'X-Current-Version': _currentVersion,
+              'X-Channel': _channel ?? 'production',
+              'X-Platform': Platform.operatingSystem,
+            }),
+          )
+          .timeout(const Duration(seconds: 15));
 
       if (response.statusCode != 200) {
         _setStatus(BundleStatus.idle);
@@ -238,7 +240,8 @@ class LiveUpdaterPlugin extends Plugin {
         };
       }
 
-      _availableUpdate = BundleInfo.fromJson(data['bundle'] as Map<String, dynamic>);
+      _availableUpdate =
+          BundleInfo.fromJson(data['bundle'] as Map<String, dynamic>);
       _setStatus(BundleStatus.idle);
 
       _emitEvent('update.available', {
@@ -298,9 +301,8 @@ class LiveUpdaterPlugin extends Plugin {
         sink.add(chunk);
         receivedBytes += chunk.length;
 
-        final percent = totalBytes > 0
-            ? ((receivedBytes / totalBytes) * 100).round()
-            : -1;
+        final percent =
+            totalBytes > 0 ? ((receivedBytes / totalBytes) * 100).round() : -1;
 
         _emitEvent('update.downloadProgress', {
           'version': bundle.version,
@@ -468,7 +470,6 @@ class LiveUpdaterPlugin extends Plugin {
   Future<Map<String, dynamic>> _checkAndApply(
     Map<String, dynamic> args,
   ) async {
-
     // Check
     final checkResult = await _checkForUpdate();
     if (checkResult['available'] != true) {
@@ -774,7 +775,8 @@ class LiveUpdaterPlugin extends Plugin {
   ) async {
     switch (method) {
       case 'configure':
-        if (args['serverUrl'] is! String || (args['serverUrl'] as String).isEmpty) {
+        if (args['serverUrl'] is! String ||
+            (args['serverUrl'] as String).isEmpty) {
           return ValidationResult.invalid('serverUrl is required');
         }
         return ValidationResult.valid();

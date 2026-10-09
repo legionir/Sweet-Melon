@@ -99,8 +99,7 @@ class _WebViewHostState extends State<WebViewHost> with WidgetsBindingObserver {
         await _loadFromAssetServer();
       } else if (widget.initialHtml != null) {
         await _controller.loadHtmlString(widget.initialHtml!);
-      } else if (widget.initialUrl != null &&
-          widget.initialUrl!.isNotEmpty) {
+      } else if (widget.initialUrl != null && widget.initialUrl!.isNotEmpty) {
         await _controller.loadRequest(Uri.parse(widget.initialUrl!));
       }
     } catch (e) {

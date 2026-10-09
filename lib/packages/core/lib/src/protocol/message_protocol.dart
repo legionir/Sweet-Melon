@@ -50,8 +50,7 @@ class PluginRequest extends BaseMessage {
 
   factory PluginRequest.fromJson(Map<String, dynamic> json) {
     return PluginRequest(
-      requestId: json['requestId'] as String? ??
-          const Uuid().v4(),
+      requestId: json['requestId'] as String? ?? const Uuid().v4(),
       timestamp: DateTime.tryParse(
             json['timestamp'] as String? ?? '',
           ) ??

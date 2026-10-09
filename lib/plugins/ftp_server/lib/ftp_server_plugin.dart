@@ -6,7 +6,8 @@ import 'package:path/path.dart' as p;
 import 'package:sweetmelon/packages/core/lib/core.dart';
 import 'package:sweetmelon/packages/plugin_engine/lib/plugin_engine.dart';
 
-typedef FtpServerEventEmitter = Future<void> Function(String event, dynamic data);
+typedef FtpServerEventEmitter = Future<void> Function(
+    String event, dynamic data);
 
 class FtpServerPlugin extends Plugin {
   final FtpServerEventEmitter? eventEmitter;
@@ -220,12 +221,18 @@ class FtpServerPlugin extends Plugin {
         break;
 
       case 'PWD':
-        if (!session.authenticated) { session.socket.write('530 Not logged in\r\n'); break; }
+        if (!session.authenticated) {
+          session.socket.write('530 Not logged in\r\n');
+          break;
+        }
         session.socket.write('257 "${session.currentDir}"\r\n');
         break;
 
       case 'CWD':
-        if (!session.authenticated) { session.socket.write('530 Not logged in\r\n'); break; }
+        if (!session.authenticated) {
+          session.socket.write('530 Not logged in\r\n');
+          break;
+        }
         final newDir = session.resolveDir(arg);
         if (await Directory(p.join(_rootDir!, newDir)).exists()) {
           session.currentDir = newDir;
@@ -236,7 +243,10 @@ class FtpServerPlugin extends Plugin {
         break;
 
       case 'LIST':
-        if (!session.authenticated) { session.socket.write('530 Not logged in\r\n'); break; }
+        if (!session.authenticated) {
+          session.socket.write('530 Not logged in\r\n');
+          break;
+        }
         await _handleList(session, arg);
         break;
 
@@ -257,7 +267,10 @@ class FtpServerPlugin extends Plugin {
         break;
 
       case 'SIZE':
-        if (!session.authenticated) { session.socket.write('530 Not logged in\r\n'); break; }
+        if (!session.authenticated) {
+          session.socket.write('530 Not logged in\r\n');
+          break;
+        }
         final filePath = p.join(_rootDir!, session.resolveDir(arg));
         final file = File(filePath);
         if (await file.exists()) {
@@ -269,17 +282,26 @@ class FtpServerPlugin extends Plugin {
         break;
 
       case 'RETR':
-        if (!session.authenticated) { session.socket.write('530 Not logged in\r\n'); break; }
+        if (!session.authenticated) {
+          session.socket.write('530 Not logged in\r\n');
+          break;
+        }
         await _handleRetr(session, arg);
         break;
 
       case 'STOR':
-        if (!session.authenticated) { session.socket.write('530 Not logged in\r\n'); break; }
+        if (!session.authenticated) {
+          session.socket.write('530 Not logged in\r\n');
+          break;
+        }
         await _handleStor(session, arg);
         break;
 
       case 'DELE':
-        if (!session.authenticated) { session.socket.write('530 Not logged in\r\n'); break; }
+        if (!session.authenticated) {
+          session.socket.write('530 Not logged in\r\n');
+          break;
+        }
         final delPath = p.join(_rootDir!, session.resolveDir(arg));
         final delFile = File(delPath);
         if (await delFile.exists()) {
@@ -292,14 +314,20 @@ class FtpServerPlugin extends Plugin {
         break;
 
       case 'MKD':
-        if (!session.authenticated) { session.socket.write('530 Not logged in\r\n'); break; }
+        if (!session.authenticated) {
+          session.socket.write('530 Not logged in\r\n');
+          break;
+        }
         final mkdPath = p.join(_rootDir!, session.resolveDir(arg));
         await Directory(mkdPath).create(recursive: true);
         session.socket.write('257 "$arg" created\r\n');
         break;
 
       case 'RMD':
-        if (!session.authenticated) { session.socket.write('530 Not logged in\r\n'); break; }
+        if (!session.authenticated) {
+          session.socket.write('530 Not logged in\r\n');
+          break;
+        }
         final rmdPath = p.join(_rootDir!, session.resolveDir(arg));
         final rmdDir = Directory(rmdPath);
         if (await rmdDir.exists()) {
@@ -487,7 +515,8 @@ class FtpServerPlugin extends Plugin {
     };
   }
 
-  Future<Map<String, dynamic>> _disconnectClient(Map<String, dynamic> args) async {
+  Future<Map<String, dynamic>> _disconnectClient(
+      Map<String, dynamic> args) async {
     final sessionId = args['sessionId'] as String;
     final session = _sessions.remove(sessionId);
 
@@ -519,12 +548,26 @@ class FtpServerPlugin extends Plugin {
   }
 
   String _formatFtpDate(DateTime dt) {
-    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
+    ];
     return '${months[dt.month - 1]} ${dt.day.toString().padLeft(2)} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
   }
 
   @override
-  Future<ValidationResult> validateArgs(String method, Map<String, dynamic> args) async {
+  Future<ValidationResult> validateArgs(
+      String method, Map<String, dynamic> args) async {
     switch (method) {
       case 'start':
         if (args['rootDir'] is! String || (args['rootDir'] as String).isEmpty) {

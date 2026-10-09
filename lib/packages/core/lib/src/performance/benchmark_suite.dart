@@ -40,8 +40,7 @@ class BenchmarkResult {
       };
 
   @override
-  String toString() =>
-      '[$name] avg=${avgMs.toStringAsFixed(2)}ms '
+  String toString() => '[$name] avg=${avgMs.toStringAsFixed(2)}ms '
       'p50=${p50Ms.toStringAsFixed(2)}ms '
       'p95=${p95Ms.toStringAsFixed(2)}ms '
       'p99=${p99Ms.toStringAsFixed(2)}ms '
@@ -163,7 +162,11 @@ class BenchmarkSuite {
 
     for (final entry in results.entries) {
       final ratio = entry.value.avgMs / baseline.avgMs;
-      final symbol = ratio < 1 ? '🟢' : ratio < 1.5 ? '🟡' : '🔴';
+      final symbol = ratio < 1
+          ? '🟢'
+          : ratio < 1.5
+              ? '🟡'
+              : '🔴';
       BridgeLogger.info(
         'Benchmark',
         '$symbol ${entry.key}: ${entry.value.avgMs.toStringAsFixed(2)}ms '

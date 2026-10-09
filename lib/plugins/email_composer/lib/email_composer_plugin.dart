@@ -85,7 +85,8 @@ class EmailComposerPlugin extends Plugin {
   }
 
   @override
-  Future<ValidationResult> validateArgs(String method, Map<String, dynamic> args) async {
+  Future<ValidationResult> validateArgs(
+      String method, Map<String, dynamic> args) async {
     if (method == 'compose') {
       final to = args['to'];
       if (to == null) {

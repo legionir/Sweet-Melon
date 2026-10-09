@@ -129,7 +129,8 @@ class AudioPlugin extends Plugin {
     }
   }
 
-  Future<Map<String, dynamic>> _startRecording(Map<String, dynamic> args) async {
+  Future<Map<String, dynamic>> _startRecording(
+      Map<String, dynamic> args) async {
     if (_isRecording) {
       return {'started': false, 'reason': 'already_recording'};
     }
@@ -307,14 +308,16 @@ class AudioPlugin extends Plugin {
       case 'seek':
         final pos = args['positionMs'];
         if (pos is! num) {
-          return ValidationResult.invalid('positionMs is required and must be a number');
+          return ValidationResult.invalid(
+              'positionMs is required and must be a number');
         }
         return ValidationResult.valid();
 
       case 'setVolume':
         final vol = args['volume'];
         if (vol is! num) {
-          return ValidationResult.invalid('volume is required and must be a number (0.0 - 1.0)');
+          return ValidationResult.invalid(
+              'volume is required and must be a number (0.0 - 1.0)');
         }
         return ValidationResult.valid();
 

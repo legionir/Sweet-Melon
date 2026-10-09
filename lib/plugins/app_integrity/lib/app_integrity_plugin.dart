@@ -14,7 +14,8 @@ class AppIntegrityPlugin extends Plugin {
   String get version => '1.0.0';
 
   @override
-  String get description => 'App integrity and attestation (Play Integrity API ready)';
+  String get description =>
+      'App integrity and attestation (Play Integrity API ready)';
 
   @override
   List<String> get supportedMethods => [

@@ -85,8 +85,8 @@ class MigrationManager {
     _migrations[pluginName]!.add(step);
 
     // Sort by version
-    _migrations[pluginName]!.sort((a, b) =>
-        a.fromVersion.compareTo(b.fromVersion));
+    _migrations[pluginName]!
+        .sort((a, b) => a.fromVersion.compareTo(b.fromVersion));
 
     BridgeLogger.debug(
       'Migration',
@@ -222,14 +222,16 @@ class MigrationManager {
 
     return {
       'plugin': pluginName,
-      'migrations': migrations.map((m) => {
-            'from': m.fromVersion.toString(),
-            'to': m.toVersion.toString(),
-            'description': m.description,
-            'methodRenames': m.methodRenames,
-            'removedMethods': m.removedMethods?.toList(),
-            'addedMethods': m.addedMethods?.toList(),
-          }).toList(),
+      'migrations': migrations
+          .map((m) => {
+                'from': m.fromVersion.toString(),
+                'to': m.toVersion.toString(),
+                'description': m.description,
+                'methodRenames': m.methodRenames,
+                'removedMethods': m.removedMethods?.toList(),
+                'addedMethods': m.addedMethods?.toList(),
+              })
+          .toList(),
       'activeAliases': aliases,
       'deprecatedMethods': deprecated.toList(),
     };

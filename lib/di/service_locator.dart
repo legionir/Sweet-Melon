@@ -125,9 +125,8 @@ class ServiceLocator {
       sl.registerLazySingleton<PermissionManager>(() {
         final manager = PermissionManager(cacheTtl: const Duration(minutes: 3));
         manager.setProvider(const NativePermissionProvider(
-          fallbackStatus: kReleaseMode
-              ? PermissionStatus.denied
-              : PermissionStatus.granted,
+          fallbackStatus:
+              kReleaseMode ? PermissionStatus.denied : PermissionStatus.granted,
         ));
         return manager;
       });
@@ -409,17 +408,46 @@ class ServiceLocator {
         version: '1.0.0',
         factory: () => ScreenshotPlugin(),
       ),
-      LazyPluginDefinition(id: 'wifiManager', version: '1.0.0', factory: () => WifiManagerPlugin(eventEmitter: emitter)),
-      LazyPluginDefinition(id: 'rootDetection', version: '1.0.0', factory: () => RootDetectionPlugin()),
-      LazyPluginDefinition(id: 'appIntegrity', version: '1.0.0', factory: () => AppIntegrityPlugin()),
-      LazyPluginDefinition(id: 'alarm', version: '1.0.0', factory: () => AlarmPlugin(eventEmitter: emitter)),
-      LazyPluginDefinition(id: 'pedometer', version: '1.0.0', factory: () => PedometerPlugin(eventEmitter: emitter)),
-      LazyPluginDefinition(id: 'shakeDetection', version: '1.0.0', factory: () => ShakeDetectionPlugin(eventEmitter: emitter)),
-      LazyPluginDefinition(id: 'volumeButtons', version: '1.0.0', factory: () => VolumeButtonsPlugin(eventEmitter: emitter)),
-      LazyPluginDefinition(id: 'simInfo', version: '1.0.0', factory: () => SimInfoPlugin()),
-      LazyPluginDefinition(id: 'kioskMode', version: '1.0.0', factory: () => KioskModePlugin()),
-      LazyPluginDefinition(id: 'intentLauncher', version: '1.0.0', factory: () => IntentLauncherPlugin()),
-      LazyPluginDefinition(id: 'emailComposer', version: '1.0.0', factory: () => EmailComposerPlugin()),
+      LazyPluginDefinition(
+          id: 'wifiManager',
+          version: '1.0.0',
+          factory: () => WifiManagerPlugin(eventEmitter: emitter)),
+      LazyPluginDefinition(
+          id: 'rootDetection',
+          version: '1.0.0',
+          factory: () => RootDetectionPlugin()),
+      LazyPluginDefinition(
+          id: 'appIntegrity',
+          version: '1.0.0',
+          factory: () => AppIntegrityPlugin()),
+      LazyPluginDefinition(
+          id: 'alarm',
+          version: '1.0.0',
+          factory: () => AlarmPlugin(eventEmitter: emitter)),
+      LazyPluginDefinition(
+          id: 'pedometer',
+          version: '1.0.0',
+          factory: () => PedometerPlugin(eventEmitter: emitter)),
+      LazyPluginDefinition(
+          id: 'shakeDetection',
+          version: '1.0.0',
+          factory: () => ShakeDetectionPlugin(eventEmitter: emitter)),
+      LazyPluginDefinition(
+          id: 'volumeButtons',
+          version: '1.0.0',
+          factory: () => VolumeButtonsPlugin(eventEmitter: emitter)),
+      LazyPluginDefinition(
+          id: 'simInfo', version: '1.0.0', factory: () => SimInfoPlugin()),
+      LazyPluginDefinition(
+          id: 'kioskMode', version: '1.0.0', factory: () => KioskModePlugin()),
+      LazyPluginDefinition(
+          id: 'intentLauncher',
+          version: '1.0.0',
+          factory: () => IntentLauncherPlugin()),
+      LazyPluginDefinition(
+          id: 'emailComposer',
+          version: '1.0.0',
+          factory: () => EmailComposerPlugin()),
     ]);
 
     BridgeLogger.info(

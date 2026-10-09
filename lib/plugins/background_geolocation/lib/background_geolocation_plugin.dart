@@ -67,9 +67,8 @@ class BackgroundGeolocationPlugin extends Plugin {
           'tracking': _tracking,
           'updateCount': _updateCount,
           'historyCount': _history.length,
-          'lastPosition': _lastPosition != null
-              ? _positionToMap(_lastPosition!)
-              : null,
+          'lastPosition':
+              _lastPosition != null ? _positionToMap(_lastPosition!) : null,
         };
       default:
         throw UnsupportedError('Method "$method" not supported');
@@ -89,9 +88,7 @@ class BackgroundGeolocationPlugin extends Plugin {
     final settings = LocationSettings(
       accuracy: accuracy,
       distanceFilter: distanceFilter,
-      timeLimit: intervalMs != null
-          ? Duration(milliseconds: intervalMs)
-          : null,
+      timeLimit: intervalMs != null ? Duration(milliseconds: intervalMs) : null,
     );
 
     _positionSub = Geolocator.getPositionStream(
@@ -208,13 +205,20 @@ class BackgroundGeolocationPlugin extends Plugin {
 
   LocationAccuracy _parseAccuracy(String accuracy) {
     switch (accuracy) {
-      case 'lowest': return LocationAccuracy.lowest;
-      case 'low': return LocationAccuracy.low;
-      case 'medium': return LocationAccuracy.medium;
-      case 'high': return LocationAccuracy.high;
-      case 'best': return LocationAccuracy.best;
-      case 'bestForNavigation': return LocationAccuracy.bestForNavigation;
-      default: return LocationAccuracy.high;
+      case 'lowest':
+        return LocationAccuracy.lowest;
+      case 'low':
+        return LocationAccuracy.low;
+      case 'medium':
+        return LocationAccuracy.medium;
+      case 'high':
+        return LocationAccuracy.high;
+      case 'best':
+        return LocationAccuracy.best;
+      case 'bestForNavigation':
+        return LocationAccuracy.bestForNavigation;
+      default:
+        return LocationAccuracy.high;
     }
   }
 

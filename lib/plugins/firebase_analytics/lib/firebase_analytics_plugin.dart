@@ -155,12 +155,14 @@ class FirebaseAnalyticsPlugin extends Plugin {
   }
 
   Future<Map<String, dynamic>> _logLogin(Map<String, dynamic> args) async {
-    await _analytics?.logLogin(loginMethod: args['method'] as String? ?? 'email');
+    await _analytics?.logLogin(
+        loginMethod: args['method'] as String? ?? 'email');
     return {'logged': true};
   }
 
   Future<Map<String, dynamic>> _logSignUp(Map<String, dynamic> args) async {
-    await _analytics?.logSignUp(signUpMethod: args['method'] as String? ?? 'email');
+    await _analytics?.logSignUp(
+        signUpMethod: args['method'] as String? ?? 'email');
     return {'logged': true};
   }
 
@@ -243,7 +245,8 @@ class FirebaseAnalyticsPlugin extends Plugin {
   Future<Map<String, dynamic>> _logLevelStart(
     Map<String, dynamic> args,
   ) async {
-    await _analytics?.logLevelStart(levelName: args['levelName'] as String? ?? '');
+    await _analytics?.logLevelStart(
+        levelName: args['levelName'] as String? ?? '');
     return {'logged': true};
   }
 

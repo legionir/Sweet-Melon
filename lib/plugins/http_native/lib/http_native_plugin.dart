@@ -85,9 +85,8 @@ class HttpNativePlugin extends Plugin {
         );
       }
 
-      final streamed = await client
-          .send(request)
-          .timeout(Duration(milliseconds: timeoutMs));
+      final streamed =
+          await client.send(request).timeout(Duration(milliseconds: timeoutMs));
 
       final response = await http.Response.fromStream(streamed);
 
@@ -213,7 +212,8 @@ class HttpNativePlugin extends Plugin {
     required dynamic body,
     required String bodyType,
   }) {
-    if (bodyType == 'json' || (bodyType == 'auto' && (body is Map || body is List))) {
+    if (bodyType == 'json' ||
+        (bodyType == 'auto' && (body is Map || body is List))) {
       request.headers.putIfAbsent('content-type', () => 'application/json');
       request.body = jsonEncode(body);
       return;
@@ -278,7 +278,8 @@ class HttpNativePlugin extends Plugin {
   }
 
   String _fileNameFromUri(Uri uri) {
-    final name = uri.pathSegments.isNotEmpty ? uri.pathSegments.last : 'download.bin';
+    final name =
+        uri.pathSegments.isNotEmpty ? uri.pathSegments.last : 'download.bin';
     return name.isEmpty ? 'download.bin' : name;
   }
 

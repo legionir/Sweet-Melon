@@ -56,7 +56,8 @@ class AntiTampering {
   ///
   /// [lookupKey] کلید ثبت‌شده در manifest است (برای lookup hash);
   /// [filePath] مسیر resolve‌شده برای خواندن فایل.
-  Future<FileVerification> verifyFile(String filePath, {String? lookupKey}) async {
+  Future<FileVerification> verifyFile(String filePath,
+      {String? lookupKey}) async {
     if (!_enabled) {
       return const FileVerification(
         path: '',

@@ -38,8 +38,7 @@ mixin VersioningSupport {
       currentVersion,
     );
 
-    if (resolvedMethod != request.method ||
-        transformedArgs != request.args) {
+    if (resolvedMethod != request.method || transformedArgs != request.args) {
       BridgeLogger.info(
         'Versioning',
         'Migrated ${request.plugin}: '

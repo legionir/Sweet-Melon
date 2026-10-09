@@ -239,19 +239,32 @@ class _ActionSheetWidget extends StatelessWidget {
 
   IconData _parseIcon(String name) {
     switch (name) {
-      case 'delete': return Icons.delete_outline;
-      case 'edit': return Icons.edit_outlined;
-      case 'share': return Icons.share_outlined;
-      case 'copy': return Icons.copy_outlined;
-      case 'camera': return Icons.camera_alt_outlined;
-      case 'photo': return Icons.photo_outlined;
-      case 'file': return Icons.attach_file;
-      case 'download': return Icons.download_outlined;
-      case 'upload': return Icons.upload_outlined;
-      case 'settings': return Icons.settings_outlined;
-      case 'info': return Icons.info_outline;
-      case 'warning': return Icons.warning_amber_outlined;
-      default: return Icons.circle_outlined;
+      case 'delete':
+        return Icons.delete_outline;
+      case 'edit':
+        return Icons.edit_outlined;
+      case 'share':
+        return Icons.share_outlined;
+      case 'copy':
+        return Icons.copy_outlined;
+      case 'camera':
+        return Icons.camera_alt_outlined;
+      case 'photo':
+        return Icons.photo_outlined;
+      case 'file':
+        return Icons.attach_file;
+      case 'download':
+        return Icons.download_outlined;
+      case 'upload':
+        return Icons.upload_outlined;
+      case 'settings':
+        return Icons.settings_outlined;
+      case 'info':
+        return Icons.info_outline;
+      case 'warning':
+        return Icons.warning_amber_outlined;
+      default:
+        return Icons.circle_outlined;
     }
   }
 }

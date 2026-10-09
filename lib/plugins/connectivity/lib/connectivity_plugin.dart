@@ -135,9 +135,7 @@ class ConnectivityBridgePlugin extends Plugin {
   }
 
   Map<String, dynamic> _buildPayload(List<cp.ConnectivityResult> results) {
-    final normalized = results.isEmpty
-        ? [cp.ConnectivityResult.none]
-        : results;
+    final normalized = results.isEmpty ? [cp.ConnectivityResult.none] : results;
 
     final online = normalized.any((e) => e != cp.ConnectivityResult.none);
 

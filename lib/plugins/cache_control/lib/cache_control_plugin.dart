@@ -14,8 +14,7 @@ class CacheControlPlugin extends Plugin {
   String get version => '1.0.0';
 
   @override
-  String get description =>
-      'WebView cache control, clear, and preload plugin';
+  String get description => 'WebView cache control, clear, and preload plugin';
 
   @override
   List<String> get supportedMethods => [

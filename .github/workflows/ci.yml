@@ -162,8 +162,8 @@ jobs:
             echo "=== debug tail ==="
             tail -c 3000 debug-build.txt 2>/dev/null
             echo "=== release tail ==="
-            tail -c 3000 release-build.txt 2>/dev/null
-          } > android-diag.txt
+            tail -c 3000 release-build.txt 2>/dev/null || true
+          } > android-diag.txt || true
           bash .github/scripts/pr_diagnostic.sh "Android build" android-diag.txt
 
   android-e2e:
@@ -311,8 +311,8 @@ jobs:
           {
             grep -n -iE "error:|error |BUILD FAILED|fatal|could not|failed to|phase script|CompileSwift|Ld /" ios-build.txt 2>/dev/null | head -120
             echo "=== ios-build tail ==="
-            tail -c 5000 ios-build.txt 2>/dev/null
-          } > ios-diag.txt
+            tail -c 5000 ios-build.txt 2>/dev/null || true
+          } > ios-diag.txt || true
           bash .github/scripts/pr_diagnostic.sh "iOS build" ios-diag.txt pod-install.txt
 
       - name: Upload iOS build log

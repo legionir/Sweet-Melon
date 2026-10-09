@@ -17,11 +17,9 @@ class MessageBridge {
   MessageHandler? _messageHandler;
   BatchHandler? _batchHandler;
 
-  final _messageStreamController =
-      StreamController<BridgeMessage>.broadcast();
+  final _messageStreamController = StreamController<BridgeMessage>.broadcast();
 
-  Stream<BridgeMessage> get messageStream =>
-      _messageStreamController.stream;
+  Stream<BridgeMessage> get messageStream => _messageStreamController.stream;
 
   bool _isReady = false;
   final List<String> _pendingJsMessages = [];
@@ -49,7 +47,8 @@ class MessageBridge {
 
   void onBridgeReady() {
     _isReady = true;
-    BridgeLogger.info('Bridge', 'JS Bridge is ready, flushing ${_pendingJsMessages.length} pending messages');
+    BridgeLogger.info('Bridge',
+        'JS Bridge is ready, flushing ${_pendingJsMessages.length} pending messages');
 
     final messages = List<String>.from(_pendingJsMessages);
     _pendingJsMessages.clear();

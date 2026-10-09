@@ -7,7 +7,8 @@ import 'package:path/path.dart' as p;
 import 'package:sweetmelon/packages/core/lib/core.dart';
 import 'package:sweetmelon/packages/plugin_engine/lib/plugin_engine.dart';
 
-typedef HttpServerEventEmitter = Future<void> Function(String event, dynamic data);
+typedef HttpServerEventEmitter = Future<void> Function(
+    String event, dynamic data);
 
 class HttpServerPlugin extends Plugin {
   final HttpServerEventEmitter? eventEmitter;
@@ -75,7 +76,8 @@ class HttpServerPlugin extends Plugin {
   }
 
   Future<Map<String, dynamic>> _start(Map<String, dynamic> args) async {
-    final id = args['id'] as String? ?? 'server_${DateTime.now().millisecondsSinceEpoch}';
+    final id = args['id'] as String? ??
+        'server_${DateTime.now().millisecondsSinceEpoch}';
     final port = (args['port'] as num?)?.toInt() ?? 0;
     final host = args['host'] as String? ?? '0.0.0.0';
     final enableCors = args['cors'] as bool? ?? true;
@@ -152,7 +154,8 @@ class HttpServerPlugin extends Plugin {
     if (managed.enableCors) {
       request.response.headers
         ..set('Access-Control-Allow-Origin', '*')
-        ..set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH')
+        ..set('Access-Control-Allow-Methods',
+            'GET, POST, PUT, DELETE, OPTIONS, PATCH')
         ..set('Access-Control-Allow-Headers', '*');
 
       if (method == 'OPTIONS') {
@@ -233,7 +236,9 @@ class HttpServerPlugin extends Plugin {
       final params = <String, String>{};
       final routeSegments = route.path.split('/');
       final pathSegments = request.uri.path.split('/');
-      for (int i = 0; i < routeSegments.length && i < pathSegments.length; i++) {
+      for (int i = 0;
+          i < routeSegments.length && i < pathSegments.length;
+          i++) {
         if (routeSegments[i].startsWith(':')) {
           params[routeSegments[i].substring(1)] = pathSegments[i];
         }
@@ -341,7 +346,8 @@ class HttpServerPlugin extends Plugin {
       responseBody: responseBody,
     ));
 
-    BridgeLogger.info('HttpServer', '[$serverId] Route added: $routeMethod $routePath');
+    BridgeLogger.info(
+        'HttpServer', '[$serverId] Route added: $routeMethod $routePath');
 
     return {
       'added': true,
@@ -363,7 +369,8 @@ class HttpServerPlugin extends Plugin {
     return {'removed': false, 'reason': 'server_not_found'};
   }
 
-  Future<Map<String, dynamic>> _serveDirectory(Map<String, dynamic> args) async {
+  Future<Map<String, dynamic>> _serveDirectory(
+      Map<String, dynamic> args) async {
     final serverId = args['serverId'] as String;
     final directory = args['directory'] as String;
 
@@ -413,13 +420,15 @@ class HttpServerPlugin extends Plugin {
 
   Map<String, dynamic> _getServers() {
     return {
-      'servers': _servers.values.map((s) => {
-        'id': s.id,
-        'port': s.server.port,
-        'requestCount': s.requestCount,
-        'hasStaticDir': s.staticDir != null,
-        'routeCount': _routes[s.id]?.length ?? 0,
-      }).toList(),
+      'servers': _servers.values
+          .map((s) => {
+                'id': s.id,
+                'port': s.server.port,
+                'requestCount': s.requestCount,
+                'hasStaticDir': s.staticDir != null,
+                'routeCount': _routes[s.id]?.length ?? 0,
+              })
+          .toList(),
       'count': _servers.length,
     };
   }
@@ -437,7 +446,8 @@ class HttpServerPlugin extends Plugin {
   }
 
   @override
-  Future<ValidationResult> validateArgs(String method, Map<String, dynamic> args) async {
+  Future<ValidationResult> validateArgs(
+      String method, Map<String, dynamic> args) async {
     switch (method) {
       case 'stop':
       case 'getRequests':

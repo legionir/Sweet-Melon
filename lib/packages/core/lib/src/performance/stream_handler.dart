@@ -100,9 +100,7 @@ class StreamHandler {
 
   Map<String, dynamic> get stats => {
         'activeSessions': _activeSessions.length,
-        'sessions': _activeSessions.values
-            .map((s) => s.toJson())
-            .toList(),
+        'sessions': _activeSessions.values.map((s) => s.toJson()).toList(),
       };
 
   /// JS code برای inject در WebView
@@ -217,8 +215,7 @@ class StreamSession {
     required this.dataType,
   });
 
-  double get progress =>
-      totalChunks > 0 ? sentChunks / totalChunks : 0;
+  double get progress => totalChunks > 0 ? sentChunks / totalChunks : 0;
 
   Map<String, dynamic> toJson() => {
         'id': id,

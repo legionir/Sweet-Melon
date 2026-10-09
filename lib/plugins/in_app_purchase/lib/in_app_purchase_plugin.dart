@@ -4,7 +4,8 @@ import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:sweetmelon/packages/core/lib/core.dart';
 import 'package:sweetmelon/packages/plugin_engine/lib/plugin_engine.dart';
 
-typedef PurchaseEventEmitter = Future<void> Function(String event, dynamic data);
+typedef PurchaseEventEmitter = Future<void> Function(
+    String event, dynamic data);
 
 class InAppPurchasePlugin extends Plugin {
   final PurchaseEventEmitter? eventEmitter;
@@ -131,15 +132,17 @@ class InAppPurchasePlugin extends Plugin {
         );
       }
 
-      final products = response.productDetails.map((p) => {
-            'id': p.id,
-            'title': p.title,
-            'description': p.description,
-            'price': p.price,
-            'rawPrice': p.rawPrice,
-            'currencyCode': p.currencyCode,
-            'currencySymbol': p.currencySymbol,
-          }).toList();
+      final products = response.productDetails
+          .map((p) => {
+                'id': p.id,
+                'title': p.title,
+                'description': p.description,
+                'price': p.price,
+                'rawPrice': p.rawPrice,
+                'currencyCode': p.currencyCode,
+                'currencySymbol': p.currencySymbol,
+              })
+          .toList();
 
       return {
         'products': products,

@@ -49,7 +49,8 @@ class FileOpenerPlugin extends Plugin {
       return {'opened': false, 'reason': 'file_not_found', 'path': path};
     }
 
-    final resolvedMime = mimeType ?? lookupMimeType(path) ?? 'application/octet-stream';
+    final resolvedMime =
+        mimeType ?? lookupMimeType(path) ?? 'application/octet-stream';
 
     try {
       // Android: استفاده از intent

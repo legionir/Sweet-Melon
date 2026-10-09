@@ -105,7 +105,8 @@ class SecurityAuditor {
           check: 'Root Detection',
           risk: SecurityRisk.high,
           message: 'Device appears to be rooted',
-          recommendation: 'Consider restricting app functionality on rooted devices',
+          recommendation:
+              'Consider restricting app functionality on rooted devices',
         );
       }
     }
@@ -169,7 +170,8 @@ class SecurityAuditor {
         check: 'Cleartext Traffic',
         risk: SecurityRisk.medium,
         message: 'Cleartext traffic allowed in release mode',
-        recommendation: 'Disable usesCleartextTraffic in production or restrict to localhost only',
+        recommendation:
+            'Disable usesCleartextTraffic in production or restrict to localhost only',
       );
     }
 
@@ -303,7 +305,8 @@ class SecurityAuditor {
         check: 'Backup Configuration',
         risk: SecurityRisk.medium,
         message: 'allowBackup=true without backup rules',
-        recommendation: 'Add fullBackupContent or dataExtractionRules to control what gets backed up',
+        recommendation:
+            'Add fullBackupContent or dataExtractionRules to control what gets backed up',
       );
     }
 
@@ -358,11 +361,11 @@ class SecurityAuditReport {
   }) : auditedAt = DateTime.now();
 
   int get passCount => results.where((r) => r.risk == SecurityRisk.pass).length;
-  int get issueCount => results.where((r) => r.risk != SecurityRisk.pass).length;
+  int get issueCount =>
+      results.where((r) => r.risk != SecurityRisk.pass).length;
   int get criticalCount =>
       results.where((r) => r.risk == SecurityRisk.critical).length;
-  int get highCount =>
-      results.where((r) => r.risk == SecurityRisk.high).length;
+  int get highCount => results.where((r) => r.risk == SecurityRisk.high).length;
   int get mediumCount =>
       results.where((r) => r.risk == SecurityRisk.medium).length;
 
@@ -402,7 +405,8 @@ class SecurityAuditReport {
     if (issues.isNotEmpty) {
       buf.writeln('Issues:');
       for (final issue in issues) {
-        buf.writeln('  [${issue.risk.name.toUpperCase()}] ${issue.check}: ${issue.message}');
+        buf.writeln(
+            '  [${issue.risk.name.toUpperCase()}] ${issue.check}: ${issue.message}');
         if (issue.recommendation != null) {
           buf.writeln('    → ${issue.recommendation}');
         }

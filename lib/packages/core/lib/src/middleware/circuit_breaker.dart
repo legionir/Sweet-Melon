@@ -3,9 +3,9 @@ import 'dart:async';
 import '../utils/logger.dart';
 
 enum CircuitState {
-  closed,    // عادی — درخواست‌ها رد می‌شن
-  open,      // خطا زیاد — همه درخواست‌ها block
-  halfOpen,  // یه درخواست تست — اگه ok شد، بسته بشه
+  closed, // عادی — درخواست‌ها رد می‌شن
+  open, // خطا زیاد — همه درخواست‌ها block
+  halfOpen, // یه درخواست تست — اگه ok شد، بسته بشه
 }
 
 class CircuitBreakerConfig {
@@ -66,9 +66,8 @@ class CircuitBreaker {
 
   Future<T> execute<T>(Future<T> Function() action) async {
     if (!isAllowed) {
-      final retryAfter = _lastFailureTime!
-          .add(config.resetTimeout)
-          .difference(DateTime.now());
+      final retryAfter =
+          _lastFailureTime!.add(config.resetTimeout).difference(DateTime.now());
 
       throw CircuitBreakerOpenException(
         name: name,

@@ -176,8 +176,8 @@ class ErrorRecovery {
     final clampedMs = delayMs.clamp(0, config.maxDelay.inMilliseconds);
 
     // Add jitter (±20%)
-    final jitter = (clampedMs * 0.2 * (DateTime.now().millisecond % 10 / 10))
-        .round();
+    final jitter =
+        (clampedMs * 0.2 * (DateTime.now().millisecond % 10 / 10)).round();
 
     return Duration(milliseconds: clampedMs.round() + jitter);
   }

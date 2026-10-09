@@ -172,16 +172,19 @@ class AlarmPlugin extends Plugin {
 
   Map<String, dynamic> _getAllAlarms() {
     return {
-      'alarms': _alarmData.values.map((d) => {
-        ...d,
-        'active': _alarms.containsKey(d['alarmId']),
-      }).toList(),
+      'alarms': _alarmData.values
+          .map((d) => {
+                ...d,
+                'active': _alarms.containsKey(d['alarmId']),
+              })
+          .toList(),
       'count': _alarmData.length,
     };
   }
 
   @override
-  Future<ValidationResult> validateArgs(String method, Map<String, dynamic> args) async {
+  Future<ValidationResult> validateArgs(
+      String method, Map<String, dynamic> args) async {
     switch (method) {
       case 'set':
         if (args['delayMs'] == null && args['atMs'] == null) {

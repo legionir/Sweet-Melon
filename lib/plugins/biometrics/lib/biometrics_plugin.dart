@@ -15,7 +15,8 @@ class BiometricsPlugin extends Plugin {
   String get version => '1.0.0';
 
   @override
-  String get description => 'Biometric authentication plugin (fingerprint / face)';
+  String get description =>
+      'Biometric authentication plugin (fingerprint / face)';
 
   @override
   List<String> get supportedMethods => [
@@ -108,7 +109,8 @@ class BiometricsPlugin extends Plugin {
         errorMessage = 'Permanently locked out';
       }
 
-      BridgeLogger.error('Biometrics', 'Auth error: $errorCode — $errorMessage');
+      BridgeLogger.error(
+          'Biometrics', 'Auth error: $errorCode — $errorMessage');
 
       return {
         'authenticated': false,

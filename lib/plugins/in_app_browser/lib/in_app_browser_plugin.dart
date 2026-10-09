@@ -73,7 +73,8 @@ class InAppBrowserPlugin extends Plugin {
   }
 
   @override
-  Future<ValidationResult> validateArgs(String method, Map<String, dynamic> args) async {
+  Future<ValidationResult> validateArgs(
+      String method, Map<String, dynamic> args) async {
     if (method == 'open') {
       final url = args['url'];
       if (url is! String || url.isEmpty) {
@@ -166,7 +167,7 @@ class _InAppBrowserPageState extends State<_InAppBrowserPage> {
               onReceivedError: (controller, request, error) {
                 widget.eventEmitter?.call('inAppBrowser.error', {
                   'url': request.url.toString(),
-                  'code': error.type.name,
+                  'code': error.type.name(),
                   'message': error.description,
                 });
               },

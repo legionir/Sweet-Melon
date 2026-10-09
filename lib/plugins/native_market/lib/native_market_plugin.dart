@@ -1,4 +1,3 @@
-
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:sweetmelon/packages/plugin_engine/lib/plugin_engine.dart';
@@ -52,9 +51,8 @@ class NativeMarketPlugin extends Plugin {
   }
 
   Future<Map<String, dynamic>> _openStore(Map<String, dynamic> args) async {
-    final packageName = args['packageName'] as String? ??
-        _packageInfo?.packageName ??
-        '';
+    final packageName =
+        args['packageName'] as String? ?? _packageInfo?.packageName ?? '';
 
     if (packageName.isEmpty) {
       return {'opened': false, 'reason': 'no_package_name'};
@@ -111,13 +109,11 @@ class NativeMarketPlugin extends Plugin {
   }
 
   Map<String, dynamic> _getStoreUrl(Map<String, dynamic> args) {
-    final packageName = args['packageName'] as String? ??
-        _packageInfo?.packageName ??
-        '';
+    final packageName =
+        args['packageName'] as String? ?? _packageInfo?.packageName ?? '';
 
     return {
-      'playStore':
-          'https://play.google.com/store/apps/details?id=$packageName',
+      'playStore': 'https://play.google.com/store/apps/details?id=$packageName',
       'market': 'market://details?id=$packageName',
       'packageName': packageName,
     };

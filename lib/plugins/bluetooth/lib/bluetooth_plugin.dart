@@ -135,7 +135,11 @@ class BluetoothPlugin extends Plugin {
 
     _scanning = false;
 
-    return {'scanning': true, 'alreadyScanning': false, 'timeoutSeconds': timeoutSec};
+    return {
+      'scanning': true,
+      'alreadyScanning': false,
+      'timeoutSeconds': timeoutSec
+    };
   }
 
   Future<Map<String, dynamic>> _stopScan() async {
@@ -193,7 +197,8 @@ class BluetoothPlugin extends Plugin {
     return {'disconnected': true, 'deviceId': deviceId};
   }
 
-  Future<Map<String, dynamic>> _discoverServices(Map<String, dynamic> args) async {
+  Future<Map<String, dynamic>> _discoverServices(
+      Map<String, dynamic> args) async {
     final deviceId = args['deviceId'] as String;
     final device = _connectedDevices[deviceId];
 
@@ -225,7 +230,8 @@ class BluetoothPlugin extends Plugin {
     };
   }
 
-  Future<Map<String, dynamic>> _readCharacteristic(Map<String, dynamic> args) async {
+  Future<Map<String, dynamic>> _readCharacteristic(
+      Map<String, dynamic> args) async {
     final deviceId = args['deviceId'] as String;
     final serviceUuid = args['serviceUuid'] as String;
     final characteristicUuid = args['characteristicUuid'] as String;
@@ -256,7 +262,8 @@ class BluetoothPlugin extends Plugin {
     };
   }
 
-  Future<Map<String, dynamic>> _writeCharacteristic(Map<String, dynamic> args) async {
+  Future<Map<String, dynamic>> _writeCharacteristic(
+      Map<String, dynamic> args) async {
     final deviceId = args['deviceId'] as String;
     final serviceUuid = args['serviceUuid'] as String;
     final characteristicUuid = args['characteristicUuid'] as String;
@@ -290,7 +297,9 @@ class BluetoothPlugin extends Plugin {
       'devices': _connectedDevices.entries.map((e) {
         return {
           'deviceId': e.key,
-          'name': e.value.platformName.isNotEmpty ? e.value.platformName : 'Unknown',
+          'name': e.value.platformName.isNotEmpty
+              ? e.value.platformName
+              : 'Unknown',
         };
       }).toList(),
       'count': _connectedDevices.length,
@@ -298,7 +307,8 @@ class BluetoothPlugin extends Plugin {
   }
 
   @override
-  Future<ValidationResult> validateArgs(String method, Map<String, dynamic> args) async {
+  Future<ValidationResult> validateArgs(
+      String method, Map<String, dynamic> args) async {
     switch (method) {
       case 'connect':
       case 'disconnect':
