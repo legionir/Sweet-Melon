@@ -53,7 +53,10 @@ class AntiTampering {
   }
 
   /// اعتبارسنجی یک فایل
-  Future<FileVerification> verifyFile(String filePath) async {
+  ///
+  /// [lookupKey] کلید ثبت‌شده در manifest است (برای lookup hash);
+  /// [filePath] مسیر resolve‌شده برای خواندن فایل.
+  Future<FileVerification> verifyFile(String filePath, {String? lookupKey}) async {
     if (!_enabled) {
       return const FileVerification(
         path: '',
@@ -62,7 +65,7 @@ class AntiTampering {
       );
     }
 
-    final expectedHash = _expectedHashes[filePath];
+    final expectedHash = _expectedHashes[lookupKey ?? filePath];
     if (expectedHash == null) {
       return FileVerification(
         path: filePath,
@@ -130,7 +133,7 @@ class AntiTampering {
 
     for (final entry in _expectedHashes.entries) {
       final fullPath = '$baseDir/${entry.key}';
-      final result = await verifyFile(fullPath);
+      final result = await verifyFile(fullPath, lookupKey: entry.key);
       results.add(result);
 
       if (result.valid) {

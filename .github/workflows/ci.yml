@@ -9,6 +9,7 @@ on:
 permissions:
   contents: read
   checks: write
+  pull-requests: write
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -42,6 +43,13 @@ jobs:
           python3 .github/scripts/annotate_output.py analyze.txt
           exit $rc
 
+      - name: Diagnostic (analyze)
+        if: failure()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash .github/scripts/pr_diagnostic.sh "Analyze" analyze.txt
+
       - name: Unit, security and regression tests with coverage
         shell: bash
         run: |
@@ -51,14 +59,40 @@ jobs:
           python3 .github/scripts/annotate_output.py unit.txt
           exit $rc
 
+      - name: Diagnostic (tests)
+        if: failure()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash .github/scripts/pr_diagnostic.sh "Unit tests" unit.txt
+
       - name: Coverage gate
-        run: python3 .github/scripts/coverage_gate.py coverage/lcov.info ${{ vars.COVERAGE_MIN || '55' }} '(^|/)(gen|generated)/|\.g\.dart$'
+        shell: bash
+        run: |
+          python3 .github/scripts/coverage_gate.py coverage/lcov.info ${{ vars.COVERAGE_MIN || '55' }} '(^|/)(gen|generated)/|\.g\.dart$' > coverage-gate.txt 2>&1
+          rc=$?
+          cat coverage-gate.txt
+          exit $rc
+
+      - name: Diagnostic (coverage)
+        if: failure()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash .github/scripts/pr_diagnostic.sh "Coverage gate" coverage-gate.txt unit.txt
 
       - name: Format check (dart format, fails on any unformatted file)
         shell: bash
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: bash .github/scripts/format_report.sh
+
+      - name: Format diagnostics (PR comment)
+        if: always()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash .github/scripts/format_diagnostic.sh
 
       - name: Upload coverage
         uses: actions/upload-artifact@v4
@@ -117,6 +151,13 @@ jobs:
           python3 .github/scripts/annotate_output.py release-build.txt
           exit $rc
 
+      - name: Diagnostic (android build)
+        if: failure()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash .github/scripts/pr_diagnostic.sh "Android build" debug-build.txt release-build.txt
+
   android-e2e:
     name: Android end-to-end (emulator)
     runs-on: ubuntu-latest
@@ -167,6 +208,13 @@ jobs:
           python3 .github/scripts/annotate_output.py e2e-prebuild.txt 40
           exit $rc
 
+      - name: Diagnostic (e2e prebuild)
+        if: failure()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash .github/scripts/pr_diagnostic.sh "Android e2e prebuild" e2e-prebuild.txt
+
       - name: Run integration tests on an emulator
         uses: reactivecircus/android-emulator-runner@v2
         timeout-minutes: 40
@@ -181,6 +229,8 @@ jobs:
       - name: Collect E2E diagnostics
         if: always()
         shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           for f in e2e.txt e2e.rc e2e-proc.log; do
             if [ -f "$f" ]; then echo "== $f"; tail -80 "$f"; fi
@@ -188,6 +238,7 @@ jobs:
           [ -f e2e-proc.log ] && python3 .github/scripts/annotate_output.py e2e-proc.log 30 || true
           [ -f e2e.rc ] && echo "::notice::e2e exit code file: $(cat e2e.rc)" || echo "::error::e2e.rc was not written"
           [ -f e2e.txt ] && python3 .github/scripts/annotate_output.py e2e.txt 60 || true
+          bash .github/scripts/pr_diagnostic.sh "Android e2e" e2e.txt e2e-proc.log e2e-prebuild.txt || true
 
   ios-build:
     name: iOS build (macOS, no codesign)
@@ -242,3 +293,20 @@ jobs:
             tail -n 80 ios-build.txt | sed 's/^/::notice::/'
           fi
           exit $rc
+
+      - name: Diagnostic (iOS build)
+        if: failure()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash .github/scripts/pr_diagnostic.sh "iOS build" ios-build.txt pod-install.txt
+
+      - name: Upload iOS build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-build-log
+          path: |
+            ios-build.txt
+            pod-install.txt
+          if-no-files-found: warn

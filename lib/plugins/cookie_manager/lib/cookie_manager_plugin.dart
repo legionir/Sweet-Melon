@@ -5,7 +5,20 @@ import 'package:sweetmelon/packages/core/lib/core.dart';
 import 'package:sweetmelon/packages/plugin_engine/lib/plugin_engine.dart';
 
 class CookieManagerPlugin extends Plugin {
-  final WebViewCookieManager _cookieManager = WebViewCookieManager();
+  WebViewCookieManager? _cookieManager;
+  bool _cookieManagerUnavailable = false;
+
+  /// Lazily created: constructing [WebViewCookieManager] requires a
+  /// WebViewPlatform implementation, which unit tests don't provide.
+  WebViewCookieManager? get _cookies {
+    if (_cookieManagerUnavailable) return null;
+    try {
+      return _cookieManager ??= WebViewCookieManager();
+    } catch (_) {
+      _cookieManagerUnavailable = true;
+      return null;
+    }
+  }
 
   @override
   String get name => 'cookieManager';
@@ -49,8 +62,16 @@ class CookieManagerPlugin extends Plugin {
     final value = args['value'] as String;
     final path = args['path'] as String? ?? '/';
 
+    final cookies = _cookies;
+    if (cookies == null) {
+      return {
+        'set': false,
+        'error': 'cookie manager unavailable on this platform',
+      };
+    }
+
     try {
-      await _cookieManager.setCookie(
+      await cookies.setCookie(
         WebViewCookie(
           name: name,
           value: value,
@@ -79,8 +100,13 @@ class CookieManagerPlugin extends Plugin {
   }
 
   Future<Map<String, dynamic>> _clearCookies() async {
+    final cookies = _cookies;
+    if (cookies == null) {
+      return {'cleared': false, 'error': 'cookie manager unavailable'};
+    }
+
     try {
-      final cleared = await _cookieManager.clearCookies();
+      final cleared = await cookies.clearCookies();
 
       BridgeLogger.info('CookieManager', 'Cookies cleared: $cleared');
 
@@ -92,8 +118,13 @@ class CookieManagerPlugin extends Plugin {
   }
 
   Future<Map<String, dynamic>> _clearSession() async {
+    final cookies = _cookies;
+    if (cookies == null) {
+      return {'cleared': false, 'error': 'cookie manager unavailable'};
+    }
+
     try {
-      final cleared = await _cookieManager.clearCookies();
+      final cleared = await cookies.clearCookies();
 
       BridgeLogger.info('CookieManager', 'Session cleared');
 

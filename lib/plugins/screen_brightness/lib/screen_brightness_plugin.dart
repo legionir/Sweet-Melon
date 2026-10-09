@@ -44,7 +44,7 @@ class ScreenBrightnessPlugin extends Plugin {
 
   Future<Map<String, dynamic>> _getBrightness() async {
     try {
-      final brightness = await ScreenBrightness().current;
+      final brightness = await ScreenBrightness().application;
       return {'brightness': brightness};
     } catch (e) {
       return {'brightness': -1, 'error': e.toString()};
@@ -55,7 +55,7 @@ class ScreenBrightnessPlugin extends Plugin {
     final value = (args['brightness'] as num).toDouble().clamp(0.0, 1.0);
 
     try {
-      await ScreenBrightness().setScreenBrightness(value);
+      await ScreenBrightness().setApplicationScreenBrightness(value);
       BridgeLogger.info('ScreenBrightness', 'Set to: $value');
       return {'brightness': value, 'set': true};
     } catch (e) {
@@ -65,7 +65,7 @@ class ScreenBrightnessPlugin extends Plugin {
 
   Future<Map<String, dynamic>> _resetBrightness() async {
     try {
-      await ScreenBrightness().resetScreenBrightness();
+      await ScreenBrightness().resetApplicationScreenBrightness();
       return {'reset': true};
     } catch (e) {
       return {'reset': false, 'error': e.toString()};

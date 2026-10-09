@@ -45,7 +45,13 @@ class AppUpdatePlugin extends Plugin {
 
   @override
   Future<void> onInitialize() async {
-    _packageInfo = await PackageInfo.fromPlatform();
+    try {
+      _packageInfo = await PackageInfo.fromPlatform();
+    } catch (e) {
+      // PackageInfo is unavailable in unit tests / unsupported platforms.
+      BridgeLogger.warn('AppUpdate', 'PackageInfo unavailable: $e');
+      _packageInfo = null;
+    }
   }
 
   @override

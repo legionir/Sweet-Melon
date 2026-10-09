@@ -78,7 +78,7 @@ class PerformanceAudit {
         p99DurationMs: 0,
         slowestOperations: [],
         categoryBreakdown: {},
-        recommendations: [],
+        recommendations: ['ℹ️ No metrics recorded yet — collect more data'],
       );
     }
 

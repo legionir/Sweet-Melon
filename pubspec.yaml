@@ -43,7 +43,7 @@ dependencies:
   # Media
   local_auth: ^2.3.0
   mobile_scanner: ^7.0.0
-  record: ^5.1.2
+  record: ^6.0.0
   audioplayers: ^6.1.0
   sms_autofill: ^2.4.0
   sqflite: ^2.3.3+2

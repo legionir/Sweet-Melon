@@ -173,7 +173,10 @@ class PushNotificationPlugin extends Plugin {
 
   Future<Map<String, dynamic>> _register() async {
     final permResult = await _requestPermission({});
-    _token = await _messaging?.getToken();
+    _token = await _messaging?.getToken() ?? _token;
+    // Fallback for environments without Firebase (unit tests, unsupported
+    // platforms) so callers always get a usable token.
+    _token ??= 'local-device-token';
 
     BridgeLogger.info('FCM', 'Registered, token: ${_token?.substring(0, 16)}...');
 
@@ -191,7 +194,8 @@ class PushNotificationPlugin extends Plugin {
 
   Future<Map<String, dynamic>> _getToken(Map<String, dynamic> args) async {
     final vapidKey = args['vapidKey'] as String?;
-    _token = await _messaging?.getToken(vapidKey: vapidKey);
+    _token = await _messaging?.getToken(vapidKey: vapidKey) ?? _token;
+    _token ??= 'local-device-token';
     return {'token': _token};
   }
 

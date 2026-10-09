@@ -127,10 +127,12 @@ class SpeechToTextPlugin extends Plugin {
         }
       },
       localeId: localeId,
-      listenFor: Duration(seconds: listenFor),
-      pauseFor: Duration(seconds: pauseFor),
-      partialResults: partialResults,
-      listenMode: stt.ListenMode.confirmation,
+      listenOptions: stt.SpeechListenOptions(
+        listenFor: Duration(seconds: listenFor),
+        pauseFor: Duration(seconds: pauseFor),
+        partialResults: partialResults,
+        listenMode: stt.ListenMode.confirmation,
+      ),
     );
 
     _listening = true;

@@ -163,11 +163,11 @@ class _InAppBrowserPageState extends State<_InAppBrowserPage> {
                   _close('url_match', url: url.toString());
                 }
               },
-              onLoadError: (controller, url, code, message) {
+              onReceivedError: (controller, request, error) {
                 widget.eventEmitter?.call('inAppBrowser.error', {
-                  'url': url?.toString(),
-                  'code': code,
-                  'message': message,
+                  'url': request.url.toString(),
+                  'code': error.errorCode,
+                  'message': error.description,
                 });
               },
               shouldOverrideUrlLoading: (controller, action) async {

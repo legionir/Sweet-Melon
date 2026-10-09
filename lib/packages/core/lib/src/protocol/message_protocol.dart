@@ -59,10 +59,12 @@ class PluginRequest extends BaseMessage {
       plugin: json['plugin'] as String,
       version: json['version'] as String? ?? '1.0.0',
       method: json['method'] as String,
-      args: (json['args'] as Map<String, dynamic>?) ?? {},
+      args: json['args'] == null
+          ? <String, dynamic>{}
+          : Map<String, dynamic>.from(json['args'] as Map),
       metadata: json['metadata'] != null
           ? RequestMetadata.fromJson(
-              json['metadata'] as Map<String, dynamic>,
+              Map<String, dynamic>.from(json['metadata'] as Map),
             )
           : RequestMetadata.defaults(),
     );

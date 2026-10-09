@@ -67,9 +67,10 @@ class AccessibilityPlugin extends Plugin {
     try {
       await SemanticsService.announce(
         message,
-        assertiveness == 'assertive'
-            ? TextDirection.ltr
-            : TextDirection.ltr,
+        TextDirection.ltr,
+        assertiveness: assertiveness == 'assertive'
+            ? Assertiveness.assertive
+            : Assertiveness.polite,
       );
 
       BridgeLogger.info('Accessibility', 'Announced: $message');

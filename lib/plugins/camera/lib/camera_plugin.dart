@@ -136,6 +136,8 @@ class CameraPlugin extends Plugin {
     switch (method) {
       case 'takePhoto':
         return _validateTakePhoto(args);
+      case 'pickFromGallery':
+        return _validatePickFromGallery(args);
       case 'recordVideo':
         return _validateRecordVideo(args);
       default:
@@ -155,6 +157,27 @@ class CameraPlugin extends Plugin {
         );
       }
     }
+    for (final key in ['maxWidth', 'maxHeight']) {
+      final dim = args[key];
+      if (dim != null) {
+        if (dim is! num) {
+          return ValidationResult.invalid('$key must be a number');
+        }
+        if (dim < 1 || dim > 10000) {
+          return ValidationResult.invalid(
+            '$key must be between 1 and 10000',
+          );
+        }
+      }
+    }
+    return ValidationResult.valid();
+  }
+
+  ValidationResult _validatePickFromGallery(Map<String, dynamic> args) {
+    final multiple = args['multiple'];
+    if (multiple != null && multiple is! bool) {
+      return ValidationResult.invalid('multiple must be a boolean');
+    }
     return ValidationResult.valid();
   }
 
@@ -166,9 +189,9 @@ class CameraPlugin extends Plugin {
           'maxDurationSeconds must be an integer',
         );
       }
-      if (maxDuration <= 0) {
+      if (maxDuration <= 0 || maxDuration > 3600) {
         return ValidationResult.invalid(
-          'maxDurationSeconds must be positive',
+          'maxDurationSeconds must be between 1 and 3600',
         );
       }
     }

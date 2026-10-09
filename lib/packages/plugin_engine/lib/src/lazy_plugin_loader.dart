@@ -165,7 +165,6 @@ class LazyPluginLoader {
       );
 
       completer.complete(plugin);
-      return plugin;
     } catch (e, stackTrace) {
       stopwatch.stop();
 
@@ -181,10 +180,13 @@ class LazyPluginLoader {
       );
 
       completer.completeError(e, stackTrace);
-      rethrow;
     } finally {
       _loadingCompleters.remove(pluginId);
     }
+
+    // One shared future carries the result (or the error) to every caller,
+    // including concurrent loads that joined while this load was in flight.
+    return completer.future;
   }
 
   /// Unload کردن پلاگین

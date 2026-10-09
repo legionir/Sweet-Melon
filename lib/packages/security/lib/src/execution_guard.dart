@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:sweetmelon/packages/core/lib/core.dart';
+import 'package:sweetmelon/packages/core/lib/core.dart' hide TimeoutException;
 
 class ExecutionGuard {
   final int defaultTimeoutMs;
