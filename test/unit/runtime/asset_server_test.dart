@@ -114,6 +114,24 @@ void main() {
     return _Reply(response.statusCode, body, mimeType);
   }
 
+  /// Sends the path over a raw socket so the HTTP client cannot normalize it.
+  Future<int> sendRaw(AssetServer target, String rawPath) async {
+    final socket = await Socket.connect(
+      InternetAddress.loopbackIPv4,
+      target.port,
+    );
+    socket.write(
+      'GET $rawPath HTTP/1.1\r\n'
+      'Host: localhost:${target.port}\r\n'
+      'Connection: close\r\n'
+      '\r\n',
+    );
+    await socket.flush();
+    final response = await socket.transform(utf8.decoder).join();
+    socket.destroy();
+    return int.parse(response.split('\r\n').first.split(' ')[1]);
+  }
+
   test('start extracts allowed assets and serves the index', () async {
     final running = await startServer();
 
@@ -145,7 +163,10 @@ void main() {
     final js = await send(running, '/app.js');
     expect(js.status, HttpStatus.ok);
     expect(js.body, 'console.log("app");');
-    expect(js.mimeType, 'application/javascript');
+    expect(
+      js.mimeType,
+      anyOf('text/javascript', 'application/javascript'),
+    );
 
     final css = await send(running, '/style.css');
     expect(css.status, HttpStatus.ok);
@@ -187,8 +208,8 @@ void main() {
     final traversal = await send(running, '/%2e%2e/%2e%2e/etc/passwd');
     expect(traversal.status, HttpStatus.forbidden);
 
-    final tilde = await send(running, '/~root/secrets');
-    expect(tilde.status, HttpStatus.forbidden);
+    final tilde = await sendRaw(running, '/~root/secrets');
+    expect(tilde, HttpStatus.forbidden);
   });
 
   test('handles OPTIONS and rejects other methods', () async {

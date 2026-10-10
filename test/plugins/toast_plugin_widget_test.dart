@@ -53,8 +53,11 @@ void main() {
     final text = tester.widget<Text>(find.text('hello-toast'));
     expect(text.style?.color, const Color(0x80112233));
 
-    // Let the snack bar hide timer expire so no timer is left pending.
-    await tester.pump(const Duration(seconds: 5));
+    // Let the snack bar hide timer expire so no timer is left pending. The
+    // hide timer is only scheduled once the entrance animation completes, so
+    // pump once past the entrance, then past the hide deadline.
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pump(const Duration(seconds: 3));
     await tester.pumpAndSettle();
   });
 
@@ -70,8 +73,11 @@ void main() {
     expect(snackBar.duration, const Duration(seconds: 2));
     expect(snackBar.backgroundColor, const Color(0xFF323232));
 
-    // Let the snack bar hide timer expire so no timer is left pending.
-    await tester.pump(const Duration(seconds: 5));
+    // Let the snack bar hide timer expire so no timer is left pending. The
+    // hide timer is only scheduled once the entrance animation completes, so
+    // pump once past the entrance, then past the hide deadline.
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pump(const Duration(seconds: 3));
     await tester.pumpAndSettle();
   });
 
@@ -94,8 +100,11 @@ void main() {
     final text = tester.widget<Text>(find.text('invalid-colors'));
     expect(text.style?.color, Colors.white);
 
-    // Let the snack bar hide timer expire so no timer is left pending.
-    await tester.pump(const Duration(seconds: 5));
+    // Let the snack bar hide timer expire so no timer is left pending. The
+    // hide timer is only scheduled once the entrance animation completes, so
+    // pump once past the entrance, then past the hide deadline.
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pump(const Duration(seconds: 3));
     await tester.pumpAndSettle();
   });
 
