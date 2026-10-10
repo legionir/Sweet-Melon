@@ -21,11 +21,14 @@ Live camera preview with full control.
 | Param | Type | Default |
 |-------|------|---------|
 | `fileName` | `string` | auto |
-| `saveToGallery` | `bool` | `false` |
 
 ### `startRecording` / `stopRecording`
 ### `switchCamera` — Toggle front/back
 ### `setFlashMode`
+| Param | Type | Required |
+|-------|------|----------|
+| `mode` | `string` | ✅ |
+
 **Modes:** `off`, `auto`, `always`, `torch`
 
 ### `setZoomLevel`
@@ -40,7 +43,7 @@ Live camera preview with full control.
 | `x` | `number` (0-1) |
 | `y` | `number` (0-1) |
 
-### `setExposureMode` — `auto` or `locked`
+### `setExposureMode` — `mode` required (values: auto, locked)
 ### `getAvailableCameras` / `getState`
 
 ### `getInfo`

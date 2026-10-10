@@ -7,19 +7,19 @@ Scan, connect, read/write BLE characteristics.
 
 ## Methods
 
-| Method | Description |
-|--------|-------------|
-| `isAvailable` | Check BLE support |
-| `isOn` | Check if Bluetooth is enabled |
-| `startScan` | Start BLE scan |
-| `stopScan` | Stop scanning |
-| `connect` | Connect to device by ID |
-| `disconnect` | Disconnect from device |
-| `discoverServices` | List services & characteristics |
-| `readCharacteristic` | Read value |
-| `writeCharacteristic` | Write value (base64) |
-| `getConnectedDevices` | List connected devices |
-| `getInfo` | Returns plugin info: `{ name, version, scanning, connectedDevices }` |
+| Method | Args | Description |
+|--------|------|-------------|
+| `isAvailable` | — | Check BLE support |
+| `isOn` | — | Check if Bluetooth is enabled |
+| `startScan` | `timeoutSeconds` (default 10) | Start BLE scan |
+| `stopScan` | — | Stop scanning |
+| `connect` | `deviceId` ✅, `timeoutSeconds` (default 15), `autoConnect` (default false) | Connect to device |
+| `disconnect` | `deviceId` ✅ | Disconnect from device |
+| `discoverServices` | `deviceId` ✅ | List services & characteristics |
+| `readCharacteristic` | `deviceId` ✅, `serviceUuid` ✅, `characteristicUuid` ✅ | Read value |
+| `writeCharacteristic` | `deviceId` ✅, `serviceUuid` ✅, `characteristicUuid` ✅, `value` ✅ (base64), `withResponse` (default true) | Write value |
+| `getConnectedDevices` | — | List connected devices |
+| `getInfo` | — | Returns plugin info: `{ name, version, scanning, connectedDevices }` |
 
 ## Events
 - `bluetooth.deviceFound` — `{ deviceId, name, rssi }`

@@ -19,13 +19,21 @@ Display local notifications with channels and actions.
 | `importance` | `string` | `"high"` |
 | `priority` | `string` | `"high"` |
 | `ongoing` | `bool` | `false` |
+| `autoCancel` | `bool` (dismiss on tap) | `true` |
 | `silent` | `bool` | `false` |
+| `channelDescription` | `string` | — |
 
-### `cancel` — cancel by id
+### `cancel` — cancel by `id` (required)
 ### `cancelAll` — cancel all notifications
 ### `getActive` — list active notifications
 ### `getPending` — list pending notifications
 ### `createChannel` — create Android notification channel
+| Param | Type | Default |
+|-------|------|---------|
+| `channelId` | `string` | ✅ required |
+| `channelName` | `string` | ✅ required |
+| `description` | `string` | — |
+| `importance` | `string` | `"high"` |
 
 ### `getInfo`
 

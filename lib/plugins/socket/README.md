@@ -33,6 +33,11 @@ Raw TCP client/server and UDP sockets with broadcast support.
 
 **Returns:** `{ connected, id, host, port, localPort }`.
 
+### `tcpClose` / `udpClose`
+| Param | Type |
+|-------|------|
+| `id` | `string` ✅ |
+
 ### `tcpSend`
 | Param | Type | Default |
 |-------|------|---------|

@@ -73,7 +73,8 @@ Route paths support exact match, trailing wildcards (`/api/*`) and `:param` segm
 ### `getRequests`
 | Param | Type |
 |-------|------|
-| `serverId` | `string` ✅ |
+| `serverId` | `string` ✅ — the key the handler reads |
+| `id` | accepted by validation as an alias |
 
 **Returns:** `{ found, requestCount }`.
 

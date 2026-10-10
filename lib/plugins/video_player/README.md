@@ -9,7 +9,7 @@ Play video from URL or local file (headless — audio only, no visual widget in 
 
 | Method | Args |
 |--------|------|
-| `create` | `url or path, autoPlay?, looping?, volume?` |
+| `create` | `url` or `path` (one required), `playerId?` (auto), `autoPlay?`, `looping?`, `volume?` (0-1) |
 | `play` | `playerId` |
 | `pause` | `playerId` |
 | `seekTo` | `playerId, positionMs` |

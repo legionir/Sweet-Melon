@@ -7,14 +7,14 @@ Read and write NFC tags.
 
 ## Methods
 
-| Method | Description |
-|--------|-------------|
-| `isAvailable` | Check NFC support |
-| `startSession` | Start NFC read session |
-| `stopSession` | Stop session |
-| `writeText` | Write text to NFC tag |
-| `writeUri` | Write URL to NFC tag |
-| `getInfo` | Returns plugin info: `{ name, version, sessionActive }` |
+| Method | Args | Description |
+|--------|------|-------------|
+| `isAvailable` | — | Check NFC support |
+| `startSession` | `readOnce` (bool, default true) | Start NFC read session |
+| `stopSession` | — | Stop session |
+| `writeText` | `text` ✅ | Write text to NFC tag |
+| `writeUri` | `uri` ✅ | Write URL to NFC tag |
+| `getInfo` | — | Returns plugin info: `{ name, version, sessionActive }` |
 
 ## Events
 - `nfc.tagDiscovered` — `{ id, type, records, isWritable }`

@@ -19,7 +19,7 @@ Command server with authentication and whitelisting.
 | `getCommandLog` | Get command history |
 | `getInfo` | Returns plugin info: `{ name, version, running, port, clients, allowAllCommands }` |
 
-### configure
+### `configure`
 | Param | Type | Default |
 |-------|------|---------|
 | `username` | `string` | `"admin"` |
@@ -27,10 +27,21 @@ Command server with authentication and whitelisting.
 | `allowAllCommands` | `bool` | `false` |
 | `allowedCommands` | `string[]` | — |
 
-### start
+### `start`
 | Param | Type | Default |
 |-------|------|---------|
 | `port` | `number` | `2222` |
+| `host` | `string` | `"0.0.0.0"` |
+
+### `addAllowedCommand` / `addBlockedCommand`
+| Param | Type |
+|-------|------|
+| `command` | `string` ✅ |
+
+### `disconnectClient` / `getCommandLog`
+| Param | Type |
+|-------|------|
+| `sessionId` | `string` ✅ |
 
 ## Events
 | Event | Data |

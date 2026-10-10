@@ -19,7 +19,8 @@ Schedule timer-based alarms with events.
 | `intervalMs` | `number` | — (if repeating) |
 | `payload` | `any` | — |
 
-### `cancel` / `cancelAll` / `getAlarm` / `getAllAlarms`
+### `cancel` / `getAlarm` — `alarmId` required
+### `cancelAll` / `getAllAlarms`
 
 ### `getInfo`
 

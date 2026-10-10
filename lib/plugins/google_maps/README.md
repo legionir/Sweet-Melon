@@ -57,7 +57,22 @@ Sets the Google Maps/Places API key used by `getDirections`, `searchPlaces` and 
 | `placeId` | `string` | ✅ |
 
 ### `calculateDistance` — Haversine formula (no API call)
+| Param | Type | Required |
+|-------|------|----------|
+| `lat1` | `number` | ✅ |
+| `lng1` | `number` | ✅ |
+| `lat2` | `number` | ✅ |
+| `lng2` | `number` | ✅ |
+
 ### `getStaticMapUrl` — Generate static map image URL
+| Param | Type | Default |
+|-------|------|---------|
+| `latitude` | `number` | ✅ required |
+| `longitude` | `number` | ✅ required |
+| `zoom` | `number` | `14` |
+| `width` | `number` | `600` |
+| `height` | `number` | `400` |
+| `mapType` | `string` | `"roadmap"` |
 
 ### `getInfo`
 

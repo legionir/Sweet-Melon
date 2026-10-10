@@ -34,7 +34,8 @@ Track events and user behavior with Firebase Analytics.
 | `logLevelStart` | `levelName` |
 | `logLevelEnd` | `levelName`, `success` |
 
-### `setAnalyticsCollectionEnabled` / `resetAnalyticsData` / `getAppInstanceId`
+### `setAnalyticsCollectionEnabled` — `enabled` (bool ✅)
+### `resetAnalyticsData` / `getAppInstanceId`
 
 ### `getInfo`
 

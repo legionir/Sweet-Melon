@@ -28,7 +28,10 @@ Check a single permission status.
 ### `request`
 Request a single permission.
 
-**Args:** Same as `check`.
+**Args:**
+| Param | Type | Required | Description |
+|-------|------|----------|-------------|
+| `permission` | `string` | ✅ | Permission name |
 
 **Returns:** Same as `check`.
 
@@ -51,7 +54,14 @@ Check multiple permissions at once.
 ```
 
 ### `requestMany`
-Request multiple permissions. Args and returns same as `checkMany`.
+Request multiple permissions.
+
+**Args:**
+| Param | Type | Required | Description |
+|-------|------|----------|-------------|
+| `permissions` | `string[]` | ✅ | Permission names |
+
+**Returns:** Same as `checkMany`.
 
 ### `openSettings`
 Open app settings page.

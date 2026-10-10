@@ -24,7 +24,7 @@ Open another app's store page.
 |-------|------|----------|
 | `packageName` | `string` | ✅ |
 
-### `getStoreUrl`
+### `getStoreUrl` — optional `packageName` (defaults to this app)
 Get Play Store URL without opening.
 
 ### `getInfo`

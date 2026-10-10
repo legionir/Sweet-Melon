@@ -55,6 +55,9 @@ Same as the verb methods below, with the HTTP verb passed explicitly:
 | `baseDir` | `string` | — | `temporary` |
 | `path` | `string` | — | `downloads/` |
 | `overwrite` | `bool` | — | `true` |
+| `headers` | `object` | — | — |
+| `query` | `object` | — | — |
+| `timeoutMs` | `number` | — | `30000` |
 
 ## Usage
 ```javascript

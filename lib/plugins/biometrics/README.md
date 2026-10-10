@@ -18,6 +18,8 @@ Fingerprint and face recognition authentication.
 |-------|------|---------|
 | `reason` | `string` | `"Please authenticate"` |
 | `biometricOnly` | `bool` | `false` |
+| `stickyAuth` | `bool` | `true` |
+| `sensitiveTransaction` | `bool` | `true` |
 
 **Returns:**
 ```json

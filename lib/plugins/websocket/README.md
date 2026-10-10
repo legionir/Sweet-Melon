@@ -43,7 +43,8 @@ Real-time bidirectional communication over WebSocket.
 | `id` | `string` | ✅ |
 | `data` | `object` | ✅ |
 
-### `getState` / `getConnections` / `disconnectAll`
+### `getState` — `id` (string ✅)
+### `getConnections` / `disconnectAll`
 
 ### `getInfo`
 

@@ -42,15 +42,45 @@ Full SQLite database with CRUD, raw queries, and batch operations.
 | `table` | table name |
 | `values` | `{ column: value }` |
 
-### `update`, `delete` — similar with `where`/`whereArgs`
+### `update`
+| Param | Type |
+|-------|------|
+| `name` | database name |
+| `table` | table name |
+| `values` | `{ column: value }` |
+| `where` | SQL where clause |
+| `whereArgs` | `any[]` |
+
+### `delete`
+| Param | Type |
+|-------|------|
+| `name` | database name |
+| `table` | table name |
+| `where` | SQL where clause |
+| `whereArgs` | `any[]` |
 
 ### `rawQuery`, `rawInsert`, `rawUpdate`, `rawDelete`
 Direct SQL execution.
+| Param | Type |
+|-------|------|
+| `name` | database name |
+| `sql` | SQL statement |
+| `params` | `any[]` |
 
 ### `batch`
 Execute multiple operations atomically.
+| Param | Type |
+|-------|------|
+| `name` | database name |
+| `statements` | `object[]` — each `{ type: "execute" \| "insert" \| "update" \| "delete" \| "rawQuery" \| "rawInsert" \| "rawUpdate" \| "rawDelete", sql?, table?, values?, where?, whereArgs? }` |
 
-### `tableExists`, `deleteDatabase`, `close`
+### `tableExists`
+| Param | Type |
+|-------|------|
+| `name` | database name |
+| `table` | table name |
+
+### `deleteDatabase`, `close` — `name` (database name)
 
 ### `getInfo`
 

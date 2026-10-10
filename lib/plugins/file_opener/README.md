@@ -15,9 +15,15 @@ Open files with appropriate system apps.
 
 ### `canOpen`
 Check if file can be opened.
+| Param | Type | Required |
+|-------|------|----------|
+| `path` | `string` | ✅ |
 
 ### `getMimeType`
 Get MIME type from file path.
+| Param | Type | Required |
+|-------|------|----------|
+| `path` | `string` | ✅ |
 
 ### `getInfo`
 

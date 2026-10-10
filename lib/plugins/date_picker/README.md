@@ -26,6 +26,7 @@ Native date and time picker dialogs.
 | `initialHour` | `number` | current |
 | `initialMinute` | `number` | current |
 | `use24h` | `bool` | `true` |
+| `title` | `string` | — |
 
 **Returns:**
 ```json
@@ -34,6 +35,15 @@ Native date and time picker dialogs.
 
 ### `pickDateTime`
 Combination of pickDate then pickTime.
+| Param | Type | Default |
+|-------|------|---------|
+| `initialDateMs` | `number` | today |
+| `firstDateMs` | `number` | 100 years ago |
+| `lastDateMs` | `number` | 100 years ahead |
+| `title` | `string` | — |
+| `initialHour` | `number` | current |
+| `initialMinute` | `number` | current |
+| `use24h` | `bool` | `true` |
 
 ### `pickDateRange`
 | Param | Type |

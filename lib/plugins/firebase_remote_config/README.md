@@ -23,7 +23,8 @@ Control app behavior without releasing new versions.
 | `key` | `string` | ✅ |
 
 ### `getAll` — Get all config values
-### `setDefaults` / `getLastFetchStatus`
+### `setDefaults` — `defaults` (object ✅)
+### `getLastFetchStatus`
 ### `getLastFetchTime` — returns `{ timestamp, ms }`
 ### `setConfigSettings`
 | Param | Type | Default |

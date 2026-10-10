@@ -7,14 +7,14 @@ Intercept Android back button for SPA navigation.
 
 ## Methods
 
-| Method | Description |
-|--------|-------------|
-| `enableIntercept` | Start intercepting back button |
-| `disableIntercept` | Stop intercepting |
-| `getState` | Get current intercept state |
-| `exitApp` | Close the app |
-| `setExitOnBack` | Exit app when back is pressed (no intercept) |
-| `minimizeApp` | Minimize to background |
+| Method | Args | Description |
+|--------|------|-------------|
+| `enableIntercept` | — | Start intercepting back button |
+| `disableIntercept` | — | Stop intercepting |
+| `getState` | — | Get current intercept state |
+| `exitApp` | — | Close the app |
+| `setExitOnBack` | `enabled` (bool, default false) | Exit app when back is pressed |
+| `minimizeApp` | — | Minimize to background |
 
 ## Events
 

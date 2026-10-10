@@ -26,6 +26,8 @@ Register device and get FCM token.
 | `alert` | `bool` | `true` |
 | `badge` | `bool` | `true` |
 | `sound` | `bool` | `true` |
+| `provisional` | `bool` (iOS) | `false` |
+| `criticalAlert` | `bool` (iOS) | `false` |
 
 ### `checkPermission`
 Re-reads the current notification settings.

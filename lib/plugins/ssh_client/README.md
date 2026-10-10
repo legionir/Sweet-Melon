@@ -30,6 +30,11 @@ SSH client for remote server management: command execution and SFTP file transfe
 
 Provide `password` or `privateKey`. **Returns:** `{ connected, id, host, port }` — on failure `{ connected: false, error }`.
 
+### `disconnect`
+| Param | Type |
+|-------|------|
+| `id` | `string` ✅ |
+
 ### `execute`
 | Param | Type |
 |-------|------|

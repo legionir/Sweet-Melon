@@ -15,12 +15,13 @@ Crash reporting and diagnostics.
 | `fatal` | `bool` | — | `false` |
 | `keys` | `object` | — | — |
 
-### `log` — Add log message to crash report
-### `setUserId`
-### `setCustomKey` / `setCustomKeys`
+### `log` — Add log message to crash report; `message` required
+### `setUserId` — `id` (string ✅)
+### `setCustomKey` — `key` + `value` (both required)
+### `setCustomKeys` — `keys` (object ✅)
 ### `sendUnsentReports` / `deleteUnsentReports`
 ### `checkForUnsentReports`
-### `setCrashlyticsCollectionEnabled`
+### `setCrashlyticsCollectionEnabled` — `enabled` (bool ✅)
 ### `crash` — force a native crash (debug builds only; returns `{ crashed: false, reason: "only_in_debug" }` in release)
 
 ### `getInfo`

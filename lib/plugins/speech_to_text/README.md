@@ -17,7 +17,7 @@ Voice recognition / dictation.
 | `getLocales` | Get supported languages |
 | `getInfo` | Returns plugin info: `{ name, version, available, listening }` |
 
-### startListening Args
+### `startListening`
 | Param | Type | Default |
 |-------|------|---------|
 | `locale` | `string` | device default |

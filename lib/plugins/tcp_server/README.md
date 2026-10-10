@@ -20,7 +20,7 @@ Accept incoming TCP connections and exchange data.
 | `getServers` | List running servers |
 | `getInfo` | Returns plugin info: `{ name, version, activeServers }` |
 
-### start
+### `start`
 | Param | Type | Default |
 |-------|------|---------|
 | `port` | `number` | `0` (random) |
@@ -28,6 +28,37 @@ Accept incoming TCP connections and exchange data.
 | `id` | `string` | auto |
 | `maxClients` | `number` | `100` |
 | `encoding` | `string` | `"utf8"` |
+
+### `stop`
+| Param | Type |
+|-------|------|
+| `id` | `string` ✅ (server id) |
+
+### `sendToClient`
+| Param | Type | Default |
+|-------|------|---------|
+| `serverId` | `string` | ✅ |
+| `clientId` | `string` | ✅ |
+| `data` | `any` | ✅ |
+| `encoding` | `string` | `"utf8"` |
+
+### `sendToAll`
+| Param | Type |
+|-------|------|
+| `serverId` | `string` ✅ |
+| `data` | `any` ✅ |
+| `exclude` | `string` (client id to skip) |
+
+### `disconnectClient`
+| Param | Type |
+|-------|------|
+| `serverId` | `string` ✅ |
+| `clientId` | `string` ✅ |
+
+### `disconnectAllClients` / `getClients`
+| Param | Type |
+|-------|------|
+| `serverId` | `string` ✅ |
 
 ## Events
 | Event | Data |

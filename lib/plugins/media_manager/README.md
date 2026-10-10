@@ -12,7 +12,6 @@ Save media files to device gallery.
 |-------|------|----------|---------|
 | `path` | `string` | ✅ | — |
 | `quality` | `number` 0-100 | — | `100` |
-| `album` | `string` | — | — |
 
 ### `saveVideoToGallery`
 | Param | Type | Required |
@@ -33,8 +32,7 @@ Save media files to device gallery.
 // Take photo and save to gallery
 const photo = await NativeSDK.camera.takePhoto({ quality: 90 });
 const { saved } = await NativeSDK.mediaManager.saveImageToGallery(photo.path, {
-  quality: 90,
-  album: 'MyApp'
+  quality: 90
 });
 if (saved) await NativeSDK.toast.show('Photo saved!');
 
