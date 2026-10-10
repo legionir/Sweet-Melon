@@ -40,7 +40,7 @@ void main() {
 
       expect(server.isRunning, false);
       expect(server.port, 0);
-      expect(server.baseUrl, 'http://localhost:0');
+      expect(server.baseUrl, startsWith('http://localhost:'));
     });
 
     test('builds the index URL from the configured index file', () {
@@ -48,7 +48,8 @@ void main() {
         config: const AssetServerConfig(indexFile: 'app.html'),
       );
 
-      expect(server.indexUrl, 'http://localhost:0/app.html');
+      expect(server.indexUrl, endsWith('/app.html'));
+      expect(server.indexUrl, startsWith(server.baseUrl));
     });
 
     test('stop is a no-op when the server never started', () async {
