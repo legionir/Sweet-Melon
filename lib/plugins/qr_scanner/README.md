@@ -27,6 +27,10 @@ Content types: `url`, `phone`, `email`, `sms`, `wifi`, `geo`, `vcard`, `text`
 
 Supported formats: QR, EAN-13, EAN-8, Code128, Code39, UPC-A, UPC-E, ITF, PDF417, Aztec, DataMatrix
 
+### `getInfo`
+
+**Returns:** `{ name, version, supportedFormats }`
+
 ## Events
 ### `qrScanner.scanned`
 

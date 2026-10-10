@@ -15,9 +15,11 @@ Command server with authentication and whitelisting.
 | `addAllowedCommand` | Whitelist a command |
 | `addBlockedCommand` | Block a command |
 | `getClients` | List sessions |
+| `disconnectClient` | Disconnect one session (`sessionId`) |
 | `getCommandLog` | Get command history |
+| `getInfo` | Returns plugin info: `{ name, version, running, port, clients, allowAllCommands }` |
 
-### configure
+### `configure`
 | Param | Type | Default |
 |-------|------|---------|
 | `username` | `string` | `"admin"` |
@@ -25,10 +27,21 @@ Command server with authentication and whitelisting.
 | `allowAllCommands` | `bool` | `false` |
 | `allowedCommands` | `string[]` | — |
 
-### start
+### `start`
 | Param | Type | Default |
 |-------|------|---------|
 | `port` | `number` | `2222` |
+| `host` | `string` | `"0.0.0.0"` |
+
+### `addAllowedCommand` / `addBlockedCommand`
+| Param | Type |
+|-------|------|
+| `command` | `string` ✅ |
+
+### `disconnectClient` / `getCommandLog`
+| Param | Type |
+|-------|------|
+| `sessionId` | `string` ✅ |
 
 ## Events
 | Event | Data |
@@ -37,6 +50,7 @@ Command server with authentication and whitelisting.
 | `sshServer.clientConnected` | `{ sessionId, remoteAddress }` |
 | `sshServer.command` | `{ sessionId, command }` |
 | `sshServer.commandResult` | `{ sessionId, command, exitCode }` |
+| `sshServer.clientDisconnected` | `{ sessionId }` |
 
 ## Security
 - Commands `rm -rf`, `format`, `mkfs`, `dd` are blocked by default

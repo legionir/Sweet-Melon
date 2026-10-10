@@ -46,12 +46,21 @@ class SslPinning {
   }
 
   /// ساخت HttpClient با SSL pinning
-  HttpClient createPinnedClient() {
-    final client = HttpClient();
-
+  ///
+  /// وقتی pinning فعال است، پین «مرجع نهایی اعتماد» برای میزبان‌های pin‌شده
+  /// است. کلاینت با یک [SecurityContext] ایزوله (بدون ریشه‌های اعتماد پیش‌فرض)
+  /// ساخته می‌شود تا هر گواهی‌ای —حتی گواهی معتبری که یک مرجع صدور آن را
+  /// تأیید می‌کند— ناگزیر از مسیر [badCertificateCallback] و بررسی پین عبور
+  /// کند. بدون این کار، گواهی‌های مورداعتماد هرگز به callback نمی‌رسیدند و
+  /// پین به‌طور کامل دور زده می‌شد (نقص امنیتی). [context] فقط در حالت
+  /// غیرفعال/بدون پین کاربرد دارد؛ در حالت فعال عمداً نادیده گرفته می‌شود تا
+  /// اعتمادِ از پیش تعریف‌شده نتواند پین را دور بزند.
+  HttpClient createPinnedClient({SecurityContext? context}) {
     if (!_enabled || _pins.isEmpty) {
-      return client;
+      return context == null ? HttpClient() : HttpClient(context: context);
     }
+
+    final client = HttpClient(context: SecurityContext());
 
     client.badCertificateCallback = (cert, host, port) {
       return _validateCertificate(cert, host);

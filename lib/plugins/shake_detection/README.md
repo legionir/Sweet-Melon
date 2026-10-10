@@ -13,7 +13,17 @@ Detect device shake gesture.
 | `threshold` | `number` | `15.0` |
 | `cooldownMs` | `number` | `1000` |
 
-### `stopListening` / `configure` / `getShakeCount` / `resetCount` / `isListening`
+### `configure`
+| Param | Type |
+|-------|------|
+| `threshold` | `number` |
+| `cooldownMs` | `number` |
+
+### `stopListening` / `getShakeCount` / `resetCount` / `isListening`
+
+### `getInfo`
+
+**Returns:** `{ name, version, listening, threshold, cooldownMs, shakeCount }`
 
 ## Events
 | Event | Data |

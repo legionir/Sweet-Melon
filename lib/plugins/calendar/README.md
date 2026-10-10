@@ -44,6 +44,10 @@ Read and write device calendar events.
 
 ### `hasPermission` / `requestPermission`
 
+### `getInfo`
+
+**Returns:** `{ name, version }`
+
 ## Usage
 ```javascript
 // Get calendars

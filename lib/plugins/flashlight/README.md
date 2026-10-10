@@ -14,6 +14,7 @@ Control device camera flashlight/torch.
 | `toggle` | current state |
 | `isAvailable` | `{ available: bool }` |
 | `isEnabled` | `{ enabled: bool }` |
+| `getInfo` | `{ name, version, enabled }` |
 
 ## Usage
 ```javascript

@@ -31,6 +31,17 @@ Native in-app purchases and subscriptions.
 
 ### `restorePurchases`
 
+### `completePurchase`
+Purchases are auto-completed via the purchase stream; this method exists for API compatibility.
+**Returns:** `{ completed: true, note: "Auto-completed via stream" }`
+
+### `getPurchaseHistory`
+**Returns:** `{ note: "Use purchase events for history" }` — history is delivered through `purchase.*` events.
+
+### `getInfo`
+
+**Returns:** `{ name, version, available }`
+
 ## Events
 | Event | Data |
 |-------|------|

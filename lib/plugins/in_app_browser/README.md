@@ -20,6 +20,10 @@ Open external web pages inside the app (for OAuth, payment, etc).
 { "closed": true, "reason": "user_closed", "lastUrl": "..." }
 ```
 
+### `getInfo`
+
+**Returns:** `{ name, version }`
+
 ## Events
 - `inAppBrowser.loadStop` — `{ url }`
 - `inAppBrowser.error` — `{ url, code, message }`

@@ -42,6 +42,10 @@ Native dialog windows for alerts, confirmations, and prompts.
 
 **Returns:** `{ cancelled: false, value: "user input" }`
 
+### `getInfo`
+
+**Returns:** `{ name, version }`
+
 ## Usage
 ```javascript
 // Alert

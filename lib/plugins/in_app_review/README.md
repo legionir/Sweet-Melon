@@ -7,11 +7,12 @@ Prompt users for app store ratings without leaving the app.
 
 ## Methods
 
-| Method | Returns |
-|--------|---------|
-| `isAvailable` | `{ available: bool }` |
-| `requestReview` | `{ requested: bool }` |
-| `openStoreListing` | `{ opened: bool }` |
+| Method | Args | Returns |
+|--------|------|---------|
+| `isAvailable` | — | `{ available: bool }` |
+| `requestReview` | — | `{ requested: bool }` |
+| `openStoreListing` | `appStoreId` (string, iOS, optional) | `{ opened: bool }` |
+| `getInfo` | — | `{ name, version }` |
 
 ## Important Notes
 - Google limits how often the review dialog can be shown

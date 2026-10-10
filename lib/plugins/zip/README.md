@@ -12,7 +12,6 @@ Create and extract ZIP archives.
 |-------|------|----------|
 | `paths` | `string[]` | ✅ |
 | `outputPath` | `string` | — (auto) |
-| `password` | `string` | — |
 
 **Returns:**
 ```json
@@ -36,6 +35,10 @@ Create and extract ZIP archives.
 | Param | Type | Required |
 |-------|------|----------|
 | `path` | `string` | ✅ |
+
+### `getInfo`
+
+**Returns:** `{ name, version }`
 
 ## Usage
 ```javascript

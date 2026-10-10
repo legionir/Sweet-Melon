@@ -14,17 +14,24 @@ Complete Firebase Authentication integration.
 | `password` | `string` | ✅ |
 
 ### `signUpWithEmail`
+| Param | Type | Required |
+|-------|------|----------|
+| `email` | `string` | ✅ |
+| `password` | `string` | ✅ |
+| `displayName` | `string` | — |
 Same as signInWithEmail + optional `displayName`.
 
 ### `signInWithGoogle`
+### `signInWithCustomToken` — `token` required; returns `{ success, user }`
 ### `signInAnonymously`
 ### `signOut`
 ### `sendPasswordResetEmail` — `email` required
 ### `updatePassword` — `newPassword` required
+### `updateEmail` — `newEmail` required; sends verification to the new address and returns `{ success, pendingVerification }`
 ### `updateProfile` — `displayName`, `photoURL`
 ### `deleteAccount`
 ### `sendEmailVerification`
-### `getIdToken` — `forceRefresh?: bool`
+### `getIdToken` — `forceRefresh` (bool, default false)
 ### `getCurrentUser` / `isSignedIn`
 ### `reloadUser`
 
@@ -39,6 +46,10 @@ Same as signInWithEmail + optional `displayName`.
   "photoURL": null
 }
 ```
+
+### `getInfo`
+
+**Returns:** `{ name, version, initialized, signedIn, userId }`
 
 ## Events
 | Event | Data |

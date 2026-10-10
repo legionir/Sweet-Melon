@@ -41,6 +41,11 @@ Generic OAuth2 authentication for any provider.
 | `tokenUrl` | `string` | ✅ |
 | `refreshToken` | `string` | ✅ |
 | `clientId` | `string` | ✅ |
+| `clientSecret` | `string` | — |
+
+### `getInfo`
+
+**Returns:** `{ name, version }`
 
 ## Usage
 ```javascript

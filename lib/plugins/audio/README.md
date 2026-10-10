@@ -19,7 +19,7 @@ Encoders: `aacLc`, `aacEld`, `aacHe`, `opus`, `wav`, `flac`
 
 | Method | Args | Returns |
 |--------|------|---------|
-| `play` | `path or url` | `{ playing: true }` |
+| `play` | `path` or `url` (one required), `volume` (0-1, default 1.0) | `{ playing: true }` |
 | `pause` | — | `{ paused }` |
 | `resume` | — | `{ resumed }` |
 | `stop` | — | `{ stopped }` |
@@ -27,6 +27,8 @@ Encoders: `aacLc`, `aacEld`, `aacHe`, `opus`, `wav`, `flac`
 | `setVolume` | `volume (0-1)` | `{ volume }` |
 | `getDuration` | — | `{ durationMs }` |
 | `getPosition` | — | `{ positionMs }` |
+| `isPlaying` | — | `{ playing: bool }` |
+| `getInfo` | — | `{ name, version, recording, playing, currentRecordingPath }` |
 
 ## Events
 - `audio.playerState` — `{ state, isPlaying }`

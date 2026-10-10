@@ -12,6 +12,7 @@ Read SIM card information.
 | `getSimInfo` | full SIM information |
 | `getCarrierName` | `{ carrier: "MTN" }` |
 | `getSimCount` | `{ count: 2 }` |
+| `getInfo` | `{ name, version, platform }` |
 
 **getSimInfo Returns:**
 ```json

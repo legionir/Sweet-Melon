@@ -15,6 +15,7 @@ Control Android status bar appearance.
 | `hide` | — |
 | `setFullscreen` | Immersive sticky fullscreen |
 | `exitFullscreen` | Exit fullscreen |
+| `getInfo` | — (returns `{ name, version, supportedStyles }`) |
 
 ## Usage
 ```javascript

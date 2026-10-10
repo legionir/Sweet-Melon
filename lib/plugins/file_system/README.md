@@ -34,8 +34,18 @@ Sandboxed file system access with path traversal protection.
 | `baseDir` | `string` | — | `documents` |
 | `encoding` | `string` | — | `utf8` |
 
-### `deleteFile`, `fileExists`, `stat`
-All require `path` and optional `baseDir`.
+### `deleteFile`, `fileExists`
+| Param | Type | Required | Default |
+|-------|------|----------|---------|
+| `path` | `string` | ✅ | — |
+| `baseDir` | `string` | — | `documents` |
+
+### `stat`
+| Param | Type | Required | Default |
+|-------|------|----------|---------|
+| `path` | `string` | ✅ | — |
+| `baseDir` | `string` | — | `documents` |
+| `type` | `string` | — | `"file"` (`"directory"` supported) |
 
 ### `listFiles`
 | Param | Type | Required | Default |
@@ -45,7 +55,15 @@ All require `path` and optional `baseDir`.
 | `recursive` | `bool` | — | `false` |
 
 ### `createDirectory`, `deleteDirectory`
-Require `path`, optional `baseDir` and `recursive`.
+| Param | Type | Required | Default |
+|-------|------|----------|---------|
+| `path` | `string` | ✅ | — |
+| `baseDir` | `string` | — | `documents` |
+| `recursive` | `bool` | — | `false` |
+
+### `getInfo`
+
+**Returns:** `{ name, version, supportedBaseDirs, encodings }`
 
 ## Usage
 ```javascript

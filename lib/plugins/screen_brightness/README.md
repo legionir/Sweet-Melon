@@ -14,6 +14,7 @@ Control device screen brightness.
 | `reset` | — | `{ reset: true }` |
 | `getSystem` | — | `{ brightness: 0.5 }` |
 | `setAutoReset` | `enabled: bool` | `{ autoReset }` |
+| `getInfo` | — | `{ name, version }` |
 
 ## Usage
 ```javascript

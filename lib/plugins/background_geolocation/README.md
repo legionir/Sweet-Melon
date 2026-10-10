@@ -26,6 +26,10 @@ Track device location even when app is in background.
 ### `clearHistory`
 ### `isTracking`
 
+### `getInfo`
+
+**Returns:** `{ name, version, tracking, updateCount, historyCount, lastPosition }`
+
 ## Events
 | Event | Data |
 |-------|------|

@@ -15,6 +15,7 @@ Simple key-value storage using SharedPreferences.
 | `remove` | `key: string` | `true` |
 | `keys` | — | `{ keys: string[] }` |
 | `clear` | — | count of removed keys |
+| `getInfo` | — | `{ name, version, prefix, keysCount }` |
 
 ## Usage
 ```javascript

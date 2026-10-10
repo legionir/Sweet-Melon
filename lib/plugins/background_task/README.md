@@ -30,9 +30,15 @@ Schedule and run background tasks with custom actions.
 | `taskId` | `string` | ✅ | — |
 | `intervalMs` | `number` | ✅ (min 1000) | — |
 | `action` | `string` | — | `execute` |
+| `params` | `object` | — | — |
 | `immediate` | `bool` | — | `true` |
 
-### `stop` / `stopAll` / `unregister` / `getTaskState` / `getAllTasks`
+### `stop` / `unregister` / `getTaskState` — `taskId` required
+### `stopAll` / `getAllTasks`
+
+### `getInfo`
+
+**Returns:** `{ name, version, registeredTasks, runningTimers }`
 
 ## Events
 | Event | Data |

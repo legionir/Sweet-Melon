@@ -17,6 +17,9 @@ Open URLs, apps, and receive deep links.
 
 ### `canOpenUrl`
 Check if URL can be opened.
+| Param | Type | Required |
+|-------|------|----------|
+| `url` | `string` | ✅ |
 
 ### `getInitialLink` / `getLatestLink`
 Get deep link that opened the app.

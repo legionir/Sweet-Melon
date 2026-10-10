@@ -29,6 +29,10 @@ Accuracy: `lowest`, `low`, `medium`, `high`, `best`, `bestForNavigation`
 
 ### `watchPosition`
 Start continuous position updates.
+| Param | Type | Default |
+|-------|------|---------|
+| `accuracy` | `string` | `high` |
+| `distanceFilter` | `number` (meters) | `10` |
 
 ### `clearWatch`
 Stop watching.

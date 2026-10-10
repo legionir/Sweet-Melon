@@ -34,15 +34,17 @@ Apply downloaded bundle. Requires reload.
 
 ### `checkAndApply`
 One-step: check + download + apply.
-| Param | Type | Default |
-|-------|------|---------|
-| `silent` | `bool` | `false` |
 
 ### `rollback`
 Revert to previous version.
 
 ### `getCurrentVersion` / `getAvailableUpdate` / `getStatus`
-### `getUpdateHistory` / `setChannel` / `reset`
+### `getUpdateHistory` / `reset`
+### `setChannel` — `channel` (string ✅, e.g. beta)
+
+### `getInfo`
+
+**Returns:** `{ name, version, currentVersion, status, configured, channel }`
 
 ## Events
 | Event | Data |
@@ -116,7 +118,7 @@ NativeSDK.waitForReady().then(async () => {
     serverUrl: 'https://updates.myapp.com'
   });
   
-  const result = await NativeSDK.liveUpdater.checkAndApply({ silent: true });
+  const result = await NativeSDK.liveUpdater.checkAndApply();
   if (result.updated) {
     await NativeSDK.toast.show('App updated to v' + result.newVersion);
     setTimeout(() => location.reload(), 2000);

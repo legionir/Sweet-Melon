@@ -14,8 +14,6 @@ Manage WebView cookies and sessions.
 | `name` | `string` | ✅ | — |
 | `value` | `string` | ✅ | — |
 | `path` | `string` | — | `"/"` |
-| `secure` | `bool` | — | `false` |
-| `httpOnly` | `bool` | — | `false` |
 
 ### `clearCookies`
 Clear all WebView cookies.
@@ -23,15 +21,17 @@ Clear all WebView cookies.
 ### `clearSession`
 Clear session cookies.
 
+### `getInfo`
+
+**Returns:** `{ name, version }`
+
 ## Usage
 ```javascript
 // Set auth cookie for API domain
 await NativeSDK.cookieManager.setCookie({
   domain: 'api.myapp.com',
   name: 'auth_token',
-  value: 'Bearer eyJhbGc...',
-  secure: true,
-  httpOnly: true
+  value: 'Bearer eyJhbGc...'
 });
 
 // On logout

@@ -18,6 +18,8 @@ Fingerprint and face recognition authentication.
 |-------|------|---------|
 | `reason` | `string` | `"Please authenticate"` |
 | `biometricOnly` | `bool` | `false` |
+| `stickyAuth` | `bool` | `true` |
+| `sensitiveTransaction` | `bool` | `true` |
 
 **Returns:**
 ```json
@@ -27,6 +29,10 @@ Or on failure:
 ```json
 { "authenticated": false, "errorCode": "not_enrolled", "errorMessage": "..." }
 ```
+
+### `getInfo`
+
+**Returns:** `{ name, version, platform }`
 
 ## Usage
 ```javascript

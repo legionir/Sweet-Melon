@@ -110,8 +110,8 @@ void main() {
     });
 
     test('rewrites method, args and version for migrated requests', () {
-      final host = VersionedHost(MigrationManager()
-        ..registerMigration('store', renameStep()));
+      final host = VersionedHost(
+          MigrationManager()..registerMigration('store', renameStep()));
       final request = PluginRequest.create(
         plugin: 'store',
         method: 'fetch',

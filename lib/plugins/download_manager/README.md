@@ -16,10 +16,15 @@ Download files with real-time progress events.
 | `path` | `string` | — | `downloads/` |
 | `taskId` | `string` | — | auto |
 | `overwrite` | `bool` | — | `true` |
+| `headers` | `object` | — | — |
 
-### `cancel` — cancel by taskId
+### `cancel` — cancel by `taskId` (required)
 ### `cancelAll`
 ### `getActive`
+
+### `getInfo`
+
+**Returns:** `{ name, version, activeDownloads }`
 
 ## Events
 - `download.progress` — `{ taskId, percent, receivedBytes, totalBytes }`

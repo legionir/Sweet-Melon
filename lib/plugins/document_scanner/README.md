@@ -24,6 +24,10 @@ Scan documents with automatic edge detection and crop.
 }
 ```
 
+### `getInfo`
+
+**Returns:** `{ name, version }`
+
 ## Usage
 ```javascript
 // Scan single document

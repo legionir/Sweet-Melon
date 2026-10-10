@@ -15,10 +15,12 @@ Accept incoming TCP connections and exchange data.
 | `sendToClient` | Send data to specific client |
 | `sendToAll` | Broadcast to all clients |
 | `disconnectClient` | Disconnect a client |
+| `disconnectAllClients` | Disconnect every client of a server (`serverId`); returns `{ disconnected: <count> }` |
 | `getClients` | List connected clients |
 | `getServers` | List running servers |
+| `getInfo` | Returns plugin info: `{ name, version, activeServers }` |
 
-### start
+### `start`
 | Param | Type | Default |
 |-------|------|---------|
 | `port` | `number` | `0` (random) |
@@ -27,6 +29,37 @@ Accept incoming TCP connections and exchange data.
 | `maxClients` | `number` | `100` |
 | `encoding` | `string` | `"utf8"` |
 
+### `stop`
+| Param | Type |
+|-------|------|
+| `id` | `string` ✅ (server id) |
+
+### `sendToClient`
+| Param | Type | Default |
+|-------|------|---------|
+| `serverId` | `string` | ✅ |
+| `clientId` | `string` | ✅ |
+| `data` | `any` | ✅ |
+| `encoding` | `string` | `"utf8"` |
+
+### `sendToAll`
+| Param | Type |
+|-------|------|
+| `serverId` | `string` ✅ |
+| `data` | `any` ✅ |
+| `exclude` | `string` (client id to skip) |
+
+### `disconnectClient`
+| Param | Type |
+|-------|------|
+| `serverId` | `string` ✅ |
+| `clientId` | `string` ✅ |
+
+### `disconnectAllClients` / `getClients`
+| Param | Type |
+|-------|------|
+| `serverId` | `string` ✅ |
+
 ## Events
 | Event | Data |
 |-------|------|
@@ -34,6 +67,7 @@ Accept incoming TCP connections and exchange data.
 | `tcpServer.clientConnected` | `{ serverId, clientId, remoteAddress }` |
 | `tcpServer.data` | `{ serverId, clientId, data, bytes }` |
 | `tcpServer.clientDisconnected` | `{ serverId, clientId }` |
+| `tcpServer.clientError` | `{ serverId, clientId, error }` |
 
 ## Usage
 ```javascript

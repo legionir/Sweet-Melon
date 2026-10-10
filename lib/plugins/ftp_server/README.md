@@ -13,20 +13,28 @@ Share files over local network via FTP.
 | `stop` | Stop server |
 | `configure` | Set credentials |
 | `getClients` | List connected clients |
+| `disconnectClient` | Disconnect one client (`sessionId`) |
 | `getStats` | Server statistics |
+| `getInfo` | Returns plugin info: `{ name, version, running, port, rootDir, clients }` |
 
-### configure
+### `configure`
 | Param | Type | Default |
 |-------|------|---------|
 | `username` | `string` | `"anonymous"` |
 | `password` | `string` | `""` |
 | `allowAnonymous` | `bool` | `true` |
 
-### start
+### `start`
 | Param | Type | Default |
 |-------|------|---------|
 | `rootDir` | `string` | ✅ required |
 | `port` | `number` | `2121` |
+| `host` | `string` | `"0.0.0.0"` |
+
+### `disconnectClient`
+| Param | Type |
+|-------|------|
+| `sessionId` | `string` ✅ |
 
 ## Events
 | Event | Data |

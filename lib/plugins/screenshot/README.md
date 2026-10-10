@@ -11,7 +11,6 @@ Capture screenshots of the current view.
 | Param | Type | Default |
 |-------|------|---------|
 | `format` | `string` | `"png"` |
-| `quality` | `number` 0-100 | `100` |
 | `fileName` | `string` | auto |
 | `baseDir` | `string` | `"temporary"` |
 
@@ -28,6 +27,10 @@ Capture screenshots of the current view.
   "height": 2400
 }
 ```
+
+### `getInfo`
+
+**Returns:** `{ name, version }`
 
 ## Usage
 ```javascript

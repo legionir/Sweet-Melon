@@ -28,6 +28,10 @@ Native bottom sheet with action options.
 { "selected": true, "index": 2, "value": "Delete", "option": {...} }
 ```
 
+### `getInfo`
+
+**Returns:** `{ name, version }`
+
 ## Usage
 ```javascript
 // File actions

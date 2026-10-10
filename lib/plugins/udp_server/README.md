@@ -11,18 +11,48 @@ Receive UDP datagrams and respond.
 |--------|-------------|
 | `start` | Bind UDP socket |
 | `stop` | Close socket |
+| `stopAll` | Close every socket; returns `{ stopped: <count> }` |
 | `sendTo` | Send to specific address |
 | `broadcast` | Send broadcast |
 | `getServers` | List active sockets |
 | `getStats` | Get statistics |
+| `getInfo` | Returns plugin info: `{ name, version, activeServers }` |
 
-### start
+### `start`
 | Param | Type | Default |
 |-------|------|---------|
 | `port` | `number` | `0` |
 | `host` | `string` | `"0.0.0.0"` |
+| `id` | `string` | auto |
 | `broadcast` | `bool` | `true` |
 | `encoding` | `string` | `"utf8"` |
+
+### `stop`
+| Param | Type |
+|-------|------|
+| `id` | `string` ✅ (socket id; `serverId` accepted too) |
+
+### `sendTo`
+| Param | Type | Default |
+|-------|------|---------|
+| `serverId` | `string` | ✅ |
+| `data` | `string` | ✅ |
+| `host` | `string` | ✅ |
+| `port` | `number` | ✅ |
+| `encoding` | `string` | `"utf8"` |
+
+### `broadcast`
+| Param | Type |
+|-------|------|
+| `serverId` | `string` ✅ |
+| `data` | `string` ✅ |
+| `port` | `number` ✅ |
+
+### `getStats`
+| Param | Type |
+|-------|------|
+| `serverId` | `string` |
+| `id` | `string` (alias for the socket id) |
 
 ## Events
 | Event | Data |

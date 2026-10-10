@@ -32,6 +32,13 @@ Generate PDF from text or HTML, print and share.
 
 ### `share`
 Share PDF file via native share sheet.
+| Param | Type | Required |
+|-------|------|----------|
+| `path` | `string` | ✅ |
+
+### `getInfo`
+
+**Returns:** `{ name, version }`
 
 ## Usage
 ```javascript

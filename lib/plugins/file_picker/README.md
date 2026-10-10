@@ -13,11 +13,11 @@ Pick files, images, videos from device storage.
 | `multiple` | `bool` | `false` |
 | `type` | `string` | `"any"` |
 | `allowedExtensions` | `string[]` | — |
+| `withData` | `bool` (also return file bytes) | `false` |
 
 **type:** `any`, `image`, `video`, `audio`, `media`
 
-### `pickImages` / `pickVideos` / `pickMedia`
-Shortcuts for `pickFiles` with type preset.
+### `pickImages` / `pickVideos` / `pickMedia` — shortcuts for pickFiles with type preset; same params: `multiple`, `type`, `allowedExtensions`, `withData`
 
 ### `pickDirectory`
 Pick a directory path.
@@ -32,6 +32,10 @@ Pick a directory path.
   "count": 1
 }
 ```
+
+### `getInfo`
+
+**Returns:** `{ name, version }`
 
 ## Usage
 ```javascript

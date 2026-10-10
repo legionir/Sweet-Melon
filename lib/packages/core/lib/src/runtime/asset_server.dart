@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/services.dart';
@@ -118,12 +117,16 @@ class AssetServer {
     await wwwDir.create(recursive: true);
 
     // خواندن manifest برای پیدا کردن همه assets
-    final manifestContent = await rootBundle.loadString('AssetManifest.json');
-    final manifest = jsonDecode(manifestContent) as Map<String, dynamic>;
+    //
+    // از نسخه‌های جدید Flutter فایل AssetManifest.json دیگر در bundle وجود
+    // ندارد و جای خود را به AssetManifest.bin داده است؛ بنابراین به‌جای
+    // خواندن مستقیم JSON، از API رسمی AssetManifest استفاده می‌کنیم که هر دو
+    // قالب را پشتیبانی می‌کند.
+    final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
 
     int fileCount = 0;
 
-    for (final assetKey in manifest.keys) {
+    for (final assetKey in manifest.listAssets()) {
       // فقط فایل‌هایی که در assets/www/ هستند
       if (!assetKey.startsWith(AssetServerConfig.wwwRoot)) continue;
 

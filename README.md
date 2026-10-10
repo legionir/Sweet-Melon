@@ -1,373 +1,482 @@
 # 🍈 Sweetmelon — Flutter Native Bridge
 
-**A powerful bridge between JavaScript (HTML/CSS/JS projects) and Android Native APIs, built with Flutter.**
+**Run any web app — Angular, React, Vue, or plain HTML/CSS/JS — inside a native Flutter shell with full access to 104 native plugins through a unified JavaScript SDK.**
 
-> Run Angular, React, Vue or any HTML project inside a Flutter WebView and access **35 native plugins** through a unified JavaScript SDK.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](License)
+[![Flutter](https://img.shields.io/badge/Flutter-3.x-blue.svg)](https://flutter.dev)
+[![Dart](https://img.shields.io/badge/Dart-%5E3.0-0175C2.svg)](https://dart.dev)
+[![Plugins](https://img.shields.io/badge/plugins-104-success.svg)](#-plugin-catalog)
+[![Methods](https://img.shields.io/badge/native_methods-714-success.svg)](#-plugin-catalog)
+[![Tests](https://img.shields.io/badge/tests-500%2B-brightgreen.svg)](#-testing)
+
+Sweetmelon bridges the gap between web technology and native device capabilities. Your frontend stays 100% web (deployed as static assets inside the app), while a JSON message bridge gives it controlled, permission-gated access to cameras, sensors, Bluetooth, file systems, push notifications, Firebase, local servers, and much more.
+
+---
+
+## ✨ Highlights
+
+- 🔌 **104 plugins** exposing **714 native methods** and **74 event streams** behind one JS API — `window.NativeSDK`
+- 🌐 **Framework-agnostic** — works with Angular, React, Vue, Svelte, or vanilla JS; ships with a TypeScript definition file (`native-sdk.d.ts`)
+- 🧱 **Modular core** — bridge protocol, plugin engine, security, performance, and devtools are separate internal packages
+- 🔐 **Security first** — JS↔native permission manager, rate limiter, execution guard, SSL pinning, isolated `SecurityContext`, and sandboxed asset serving
+- ⚡ **Lazy plugin loading** — plugins are loaded on first use with preload/unload control and a `_loader` diagnostics plugin
+- 🔄 **Live updates** — ship updated `www` bundles over the air without a store release (`liveUpdater`), with rollback and release channels
+- 📡 **Device-as-a-server** — run HTTP, WebSocket, TCP, UDP, FTP, and SSH servers on the device for LAN/P2P scenarios
+- 🧪 **Heavily tested** — 500+ unit/widget tests with a CI coverage gate
 
 ---
 
 ## 🏗 Architecture
 
 ```
-┌─────────────────────────────────────────────────┐
-│                   JS / HTML App                  │
-│  (Angular, React, Vue, or vanilla HTML/JS/CSS)  │
-├─────────────────────────────────────────────────┤
-│               window.NativeSDK                   │
-│          (native-sdk.js — JS wrapper)            │
-├─────────────────────────────────────────────────┤
-│              window.Native.call()                │
-│        (Bridge SDK injected by Flutter)          │
-├─────────────────────────────────────────────────┤
-│              Message Bridge (Dart)               │
-│     JSON message protocol over JS channels       │
-├─────────────────────────────────────────────────┤
-│              Plugin Manager (Dart)               │
-│  Permission • Rate Limit • Cache • Execution     │
-├─────────────────────────────────────────────────┤
-│              Plugin Registry (Dart)              │
-│         35 Plugins registered at startup         │
-├─────────────────────────────────────────────────┤
-│            Android / iOS Native APIs             │
-└─────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────┐
+│                    JS / HTML App                     │
+│   (Angular, React, Vue, or vanilla HTML/JS/CSS)      │
+├──────────────────────────────────────────────────────┤
+│                  window.NativeSDK                    │
+│             (native-sdk.js — JS wrapper)             │
+├──────────────────────────────────────────────────────┤
+│                 window.Native.call()                 │
+│           (Bridge SDK injected by Flutter)           │
+├──────────────────────────────────────────────────────┤
+│                 Message Bridge (Dart)                │
+│        JSON message protocol over JS channels        │
+├──────────────────────────────────────────────────────┤
+│                 Plugin Manager (Dart)                │
+│   Permissions • Rate limiting • Caching • Guards     │
+├──────────────────────────────────────────────────────┤
+│      Plugin Registry + Lazy Loader (Dart)            │
+│          104 plugins, loaded on demand               │
+├──────────────────────────────────────────────────────┤
+│              Android / iOS Native APIs               │
+└──────────────────────────────────────────────────────┘
 ```
+
+### Call flow
+
+1. JS calls `NativeSDK.<plugin>.<method>(...)`, which wraps `window.Native.call({ plugin, method, args })`.
+2. The Dart **bridge** deserializes the JSON message and hands it to the **plugin manager**.
+3. The manager runs the **permission check**, **rate limiter**, **execution guard**, and optional **cache** middleware.
+4. The **lazy loader** ensures the plugin instance is initialized, then dispatches to `plugin.onCall(method, args)`.
+5. Results (or typed errors) travel back as JSON; native-initiated traffic flows to JS as events via the registered event emitter.
 
 ---
 
-## 📦 Project Structure
+## 🚀 Getting Started
 
-```
-sweetmelon/
-├── android/                          # Android native config
-├── ios/                              # iOS native config
-├── assets/
-│   └── www/                          # ← Your HTML project goes here
-│       ├── index.html                # Entry point (fixed path)
-│       ├── css/styles.css            # Styles
-│       └── js/
-│           ├── native-sdk.js         # NativeSDK wrapper
-│           ├── native-sdk.d.ts       # TypeScript definitions
-│           └── app.js                # Test suite
-├── lib/
-│   ├── main.dart                     # App entry
-│   ├── app.dart                      # MaterialApp
-│   ├── di/service_locator.dart       # Dependency injection
-│   ├── screens/home_screen.dart      # Main screen with WebView
-│   ├── packages/
-│   │   ├── core/                     # Bridge, protocol, WebView host, logger
-│   │   ├── plugin_engine/            # Plugin interface, registry, manager
-│   │   ├── security/                 # Permissions, rate limiter, execution guard
-│   │   ├── performance/              # Cache manager
-│   │   └── devtools/                 # Bridge inspector
-│   └── plugins/
-│       ├── permission/               # Permission management
-│       ├── app_lifecycle/            # App state events
-│       ├── device_info/              # Device & app info
-│       ├── connectivity/             # Network status
-│       ├── storage/                  # Key-value storage
-│       ├── file_system/              # File read/write
-│       ├── http_native/              # HTTP client
-│       ├── intent_link/              # URL launcher & deep links
-│       ├── clipboard/                # Clipboard access
-│       ├── share/                    # Native share sheet
-│       ├── camera/                   # Camera & gallery
-│       ├── geolocation/              # GPS location
-│       ├── back_button/              # Android back button
-│       ├── secure_storage/           # Encrypted storage
-│       ├── notification/             # Local notifications
-│       ├── status_bar/               # Status bar control
-│       ├── orientation/              # Screen orientation
-│       ├── haptic/                   # Vibration feedback
-│       ├── keyboard/                 # Keyboard state
-│       ├── biometrics/               # Fingerprint / Face ID
-│       ├── qr_scanner/               # QR & barcode scanner
-│       ├── audio/                    # Audio recorder & player
-│       ├── sms_otp/                  # SMS OTP auto-read
-│       ├── download_manager/         # Download with progress
-│       ├── database/                 # SQLite database
-│       ├── contacts/                 # Contacts access
-│       ├── phone_dialer/             # Phone, SMS, Email
-│       ├── bluetooth/                # Bluetooth BLE
-│       ├── nfc/                      # NFC read/write
-│       ├── speech_to_text/           # Voice recognition
-│       ├── text_to_speech/           # Text-to-speech
-│       ├── video_player/             # Video playback
-│       ├── in_app_browser/           # In-app web browser
-│       ├── pdf_plugin/               # PDF generate & print
-│       └── encryption/               # AES, SHA, HMAC
-└── docs/
-    └── angular-integration.md        # Angular guide
-```
+### Prerequisites
 
----
+- Flutter 3.x with Dart ≥ 3.0
+- Android SDK (primary platform) and/or Xcode for iOS
 
-## 🚀 Quick Start
-
-### 1. Place your HTML project
-
-Put your built HTML/CSS/JS project in:
-```
-assets/www/index.html     ← entry point (fixed)
-assets/www/css/            ← styles
-assets/www/js/             ← scripts
-assets/www/images/         ← images
-```
-
-### 2. Include NativeSDK
-
-Add to your `index.html`:
-```html
-<script src="js/native-sdk.js"></script>
-```
-
-### 3. Use in JavaScript
-
-```javascript
-// Wait for bridge to be ready
-await NativeSDK.waitForReady();
-
-// Call any plugin
-const info = await NativeSDK.deviceInfo.getAll();
-console.log(info.device.model);
-
-// Listen to events
-NativeSDK.on('connectivity.change', (data) => {
-  console.log('Online:', data.online);
-});
-```
-
-### 4. Run
+### Run it
 
 ```bash
+git clone https://github.com/legionir/Sweet-Melon.git
+cd Sweet-Melon
+flutter pub get
+
+# Put your web project into assets/www/ (entry point must be index.html)
 flutter run
 ```
 
----
+Your web app loads from the bundled `assets/www` directory — no dev server required in production builds. During web development you can point the app at a dev URL instead (see `docs/guide/`).
 
-## 🔌 All 35 Plugins
+### Project structure
 
-| # | Plugin | JS Name | Description |
-|---|--------|---------|-------------|
-| 1 | Permission | `permission` | Check & request native permissions |
-| 2 | App Lifecycle | `appLifecycle` | App state (pause/resume/background) |
-| 3 | Device Info | `deviceInfo` | Device model, OS, app version |
-| 4 | Connectivity | `connectivity` | Network status & monitoring |
-| 5 | Storage | `storage` | Key-value storage (SharedPreferences) |
-| 6 | File System | `fileSystem` | Sandboxed file read/write/list |
-| 7 | HTTP | `http` | Native HTTP client with download |
-| 8 | Intent | `intent` | URL launcher & deep links |
-| 9 | Clipboard | `clipboard` | Read/write clipboard |
-| 10 | Share | `share` | Native share sheet |
-| 11 | Camera | `camera` | Take photo & pick from gallery |
-| 12 | Geolocation | `geolocation` | GPS location & watch |
-| 13 | Back Button | `backButton` | Android back button intercept |
-| 14 | Secure Storage | `secureStorage` | Encrypted key-value storage |
-| 15 | Notification | `notification` | Local notifications |
-| 16 | Status Bar | `statusBar` | Status bar style & visibility |
-| 17 | Orientation | `orientation` | Lock screen orientation |
-| 18 | Haptic | `haptic` | Vibration feedback |
-| 19 | Keyboard | `keyboard` | Keyboard state & visibility |
-| 20 | Biometrics | `biometrics` | Fingerprint / Face ID |
-| 21 | QR Scanner | `qrScanner` | QR & barcode scanning |
-| 22 | Audio | `audio` | Record & play audio |
-| 23 | SMS OTP | `smsOtp` | Auto-read SMS OTP |
-| 24 | Download Manager | `downloadManager` | Download with progress |
-| 25 | Database | `database` | SQLite database |
-| 26 | Contacts | `contacts` | Read contacts |
-| 27 | Phone Dialer | `phoneDialer` | Call, SMS, Email |
-| 28 | Bluetooth | `bluetooth` | BLE scan, connect, read/write |
-| 29 | NFC | `nfc` | NFC tag read/write |
-| 30 | Speech to Text | `speechToText` | Voice recognition |
-| 31 | Text to Speech | `textToSpeech` | Read text aloud |
-| 32 | Video Player | `videoPlayer` | Play video (URL/file) |
-| 33 | In-App Browser | `inAppBrowser` | Open external pages |
-| 34 | PDF | `pdf` | Generate & print PDF |
-| 35 | Encryption | `encryption` | AES, SHA, HMAC, random |
-
----
-
-## 📡 All Events
-
-| Event | Source Plugin |
-|-------|-------------|
-| `app.lifecycle.change` | appLifecycle |
-| `connectivity.change` | connectivity |
-| `connectivity.error` | connectivity |
-| `intent.deepLink` | intent |
-| `intent.error` | intent |
-| `geolocation.position` | geolocation |
-| `geolocation.error` | geolocation |
-| `backButton.pressed` | backButton |
-| `notification.tap` | notification |
-| `keyboard.change` | keyboard |
-| `qrScanner.scanned` | qrScanner |
-| `audio.playerState` | audio |
-| `audio.position` | audio |
-| `smsOtp.received` | smsOtp |
-| `download.progress` | downloadManager |
-| `download.complete` | downloadManager |
-| `download.error` | downloadManager |
-| `bluetooth.deviceFound` | bluetooth |
-| `bluetooth.connectionState` | bluetooth |
-| `nfc.tagDiscovered` | nfc |
-| `nfc.error` | nfc |
-| `speechToText.result` | speechToText |
-| `speechToText.status` | speechToText |
-| `speechToText.error` | speechToText |
-| `tts.start` | textToSpeech |
-| `tts.complete` | textToSpeech |
-| `tts.cancel` | textToSpeech |
-| `tts.error` | textToSpeech |
-| `tts.progress` | textToSpeech |
-| `videoPlayer.state` | videoPlayer |
-| `inAppBrowser.loadStop` | inAppBrowser |
-| `inAppBrowser.error` | inAppBrowser |
-
----
-
-## 🔧 Angular Integration
-
-See [docs/angular-integration.md](docs/angular-integration.md)
-
-Quick:
-```bash
-ng build --configuration production --output-path /path/to/assets/www --base-href ./
 ```
-
-```typescript
-// In Angular component:
-const info = await (window as any).NativeSDK.deviceInfo.getAll();
+Sweet-Melon/
+├── android/                      # Android native config & permissions
+├── ios/                          # iOS native config
+├── assets/
+│   └── www/                      # ← Your HTML project goes here
+│       ├── index.html            # Entry point (fixed path)
+│       └── js/
+│           ├── native-sdk.js     # NativeSDK wrapper
+│           ├── native-sdk.d.ts   # TypeScript definitions
+│           └── app.js            # Example / test harness
+├── lib/
+│   ├── main.dart                 # App entry
+│   ├── app.dart                  # MaterialApp
+│   ├── di/service_locator.dart   # Dependency injection
+│   ├── screens/                  # WebView host screen
+│   ├── packages/                 # Internal framework packages
+│   │   ├── core/                 # Bridge, protocol, WebView host, runtime, SSL pinning, asset server
+│   │   ├── plugin_engine/        # Plugin base, registry, manager, lazy loader, versioning
+│   │   ├── security/             # Permission manager, rate limiter, execution guard
+│   │   ├── performance/          # Cache manager
+│   │   └── devtools/             # Bridge inspector
+│   └── plugins/                  # 104 native plugins (each with its own README)
+├── bin/sweetmelon.dart           # CLI (create / plugin / configure / validate / list / build / doctor)
+├── docs/                         # VitePress documentation site sources
+├── sweetmelon.yaml               # Plugin enable/disable configuration
+└── test/                         # Unit & widget tests
 ```
 
 ---
 
-## 📋 JS API Quick Reference
+## 💻 JavaScript SDK
+
+Everything is exposed through the global `NativeSDK` object. Full typings are in [`assets/www/js/native-sdk.d.ts`](assets/www/js/native-sdk.d.ts).
 
 ```javascript
-// Core
-NativeSDK.waitForReady(timeoutMs?)
-NativeSDK.call(plugin, method, args?, extra?)
-NativeSDK.batch(requests[], options?)
-NativeSDK.on(event, callback)         // returns unsubscribe function
-NativeSDK.off(event, callback)
-NativeSDK.info()
+// Await bridge readiness
+await NativeSDK.waitForReady();
 
-// Plugin shorthand
-NativeSDK.storage.get(key)
-NativeSDK.storage.set(key, value)
-NativeSDK.http.get(url, options?)
-NativeSDK.camera.takePhoto(options?)
-// ... etc for all 35 plugins
+// Call a plugin method — every call returns a Promise of a plain object
+const { ip } = await NativeSDK.networkInfo.getLocalIp();
+await NativeSDK.storage.set('theme', 'dark');
+const value = await NativeSDK.storage.get('theme');
+
+// Subscribe to native events
+const off = NativeSDK.on('connectivity.change', (data) => {
+  console.log('Network changed:', data);
+});
+off(); // unsubscribe
+
+// Batch multiple calls in one round-trip
+const results = await NativeSDK.batch([
+  { plugin: 'deviceInfo', method: 'getDeviceInfo', args: {} },
+  { plugin: 'storage', method: 'get', args: { key: 'theme' } },
+]);
 ```
 
----
-
-## 🛡 Security Features
-
-- **Permission Management** — real native permission_handler
-- **Rate Limiting** — per-plugin, per-method rate limits
-- **Execution Guard** — timeout protection for all calls
-- **Cache Manager** — LRU cache with TTL, mutation-aware
-- **Sandbox** — file system path traversal protection
-- **Encrypted Storage** — AES-encrypted SharedPreferences
+Every plugin documents its methods, parameters, return shapes, and events in its own README — linked from the catalog below.
 
 ---
 
-## Documentation
+## 🔌 Plugin Catalog
 
-- Architecture: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
-- Security model and known limitations: [docs/SECURITY.md](docs/SECURITY.md)
-- Tests and how to run them: [docs/TESTING.md](docs/TESTING.md)
-- Audit findings and status: [docs/AUDIT_EXECUTION_PLAN.md](docs/AUDIT_EXECUTION_PLAN.md)
-- Change journal: [docs/WORKLOG.md](docs/WORKLOG.md)
+**104 plugins · 714 methods · 74 event types.** Each link opens the plugin's dedicated README with the full API reference and usage examples.
 
+### Device & System
+
+| Plugin | JS namespace | Description |
+|--------|--------------|-------------|
+| [`deviceInfo`](lib/plugins/device_info/README.md) | `NativeSDK.deviceInfo` | Device and app info plugin |
+| [`appLifecycle`](lib/plugins/app_lifecycle/README.md) | `NativeSDK.appLifecycle` | App lifecycle state bridge |
+| [`simInfo`](lib/plugins/sim_info/README.md) | `NativeSDK.simInfo` | SIM card information plugin |
+| [`rootDetection`](lib/plugins/root_detection/README.md) | `NativeSDK.rootDetection` | Detect rooted/jailbroken devices |
+| [`appIntegrity`](lib/plugins/app_integrity/README.md) | `NativeSDK.appIntegrity` | Device integrity checks (Play Integrity on Android) |
+| [`clipboard`](lib/plugins/clipboard/README.md) | `NativeSDK.clipboard` | Clipboard text plugin |
+| [`backButton`](lib/plugins/back_button/README.md) | `NativeSDK.backButton` | Android back button and system navigation plugin |
+| [`wakeLock`](lib/plugins/wake_lock/README.md) | `NativeSDK.wakeLock` | Keep screen awake / wake lock plugin |
+| [`kioskMode`](lib/plugins/kiosk_mode/README.md) | `NativeSDK.kioskMode` | Lock device into kiosk mode |
+| [`privacyScreen`](lib/plugins/privacy_screen/README.md) | `NativeSDK.privacyScreen` | Block screenshots and app-switcher previews |
+| [`accessibility`](lib/plugins/accessibility/README.md) | `NativeSDK.accessibility` | Accessibility and screen reader plugin |
+| [`nativeSettings`](lib/plugins/native_settings/README.md) | `NativeSDK.nativeSettings` | Open native system settings screens |
+| [`intentLauncher`](lib/plugins/intent_launcher/README.md) | `NativeSDK.intentLauncher` | Launch Android intents and system screens |
+| [`intent`](lib/plugins/intent_link/README.md) | `NativeSDK.intent` | Deep links & URL/intent launching |
+
+### System UI & Haptics
+
+| Plugin | JS namespace | Description |
+|--------|--------------|-------------|
+| [`statusBar`](lib/plugins/status_bar/README.md) | `NativeSDK.statusBar` | Status bar and system UI control plugin |
+| [`navigationBar`](lib/plugins/navigation_bar/README.md) | `NativeSDK.navigationBar` | Android navigation bar color & style control |
+| [`orientation`](lib/plugins/orientation/README.md) | `NativeSDK.orientation` | Screen orientation control plugin |
+| [`screenBrightness`](lib/plugins/screen_brightness/README.md) | `NativeSDK.screenBrightness` | Control device screen brightness |
+| [`flashlight`](lib/plugins/flashlight/README.md) | `NativeSDK.flashlight` | Flashlight / torch control plugin |
+| [`keyboard`](lib/plugins/keyboard/README.md) | `NativeSDK.keyboard` | Keyboard visibility and height plugin |
+| [`safeArea`](lib/plugins/safe_area/README.md) | `NativeSDK.safeArea` | Get safe area insets (notch, status bar, etc) |
+| [`splashScreen`](lib/plugins/splash_screen/README.md) | `NativeSDK.splashScreen` | Splash screen control plugin |
+| [`haptic`](lib/plugins/haptic/README.md) | `NativeSDK.haptic` | Haptic feedback and vibration plugin |
+| [`shakeDetection`](lib/plugins/shake_detection/README.md) | `NativeSDK.shakeDetection` | Detect device shake gesture |
+| [`volumeButtons`](lib/plugins/volume_buttons/README.md) | `NativeSDK.volumeButtons` | Listen to volume button presses |
+| [`textZoom`](lib/plugins/text_zoom/README.md) | `NativeSDK.textZoom` | WebView text zoom for accessibility |
+| [`badge`](lib/plugins/badge/README.md) | `NativeSDK.badge` | App icon badge count plugin |
+| [`screenshot`](lib/plugins/screenshot/README.md) | `NativeSDK.screenshot` | Capture screenshots of the current view |
+
+### Storage & Files
+
+| Plugin | JS namespace | Description |
+|--------|--------------|-------------|
+| [`storage`](lib/plugins/storage/README.md) | `NativeSDK.storage` | Key-value storage plugin |
+| [`secureStorage`](lib/plugins/secure_storage/README.md) | `NativeSDK.secureStorage` | Encrypted key-value secure storage plugin |
+| [`database`](lib/plugins/database/README.md) | `NativeSDK.database` | SQLite database plugin |
+| [`fileSystem`](lib/plugins/file_system/README.md) | `NativeSDK.fileSystem` | Sandboxed internal file system plugin |
+| [`filePicker`](lib/plugins/file_picker/README.md) | `NativeSDK.filePicker` | Pick files, images, videos from device |
+| [`fileOpener`](lib/plugins/file_opener/README.md) | `NativeSDK.fileOpener` | Open files with system default app |
+| [`fileCompressor`](lib/plugins/file_compressor/README.md) | `NativeSDK.fileCompressor` | Image compression plugin (JPEG, PNG, WebP) |
+| [`downloadManager`](lib/plugins/download_manager/README.md) | `NativeSDK.downloadManager` | Download manager with progress events |
+| [`zip`](lib/plugins/zip/README.md) | `NativeSDK.zip` | Zip and unzip files plugin |
+| [`cacheControl`](lib/plugins/cache_control/README.md) | `NativeSDK.cacheControl` | WebView cache control, clear, and preload plugin |
+| [`cookieManager`](lib/plugins/cookie_manager/README.md) | `NativeSDK.cookieManager` | WebView cookie and session management plugin |
+| [`mediaManager`](lib/plugins/media_manager/README.md) | `NativeSDK.mediaManager` | Save media to gallery, manage albums |
+| [`documentScanner`](lib/plugins/document_scanner/README.md) | `NativeSDK.documentScanner` | Document scanning with auto-crop |
+| [`pdf`](lib/plugins/pdf_plugin/README.md) | `NativeSDK.pdf` | PDF generate, view, print plugin |
+
+### Networking & Servers
+
+| Plugin | JS namespace | Description |
+|--------|--------------|-------------|
+| [`connectivity`](lib/plugins/connectivity/README.md) | `NativeSDK.connectivity` | Network connectivity plugin |
+| [`http`](lib/plugins/http_native/README.md) | `NativeSDK.http` | Native HTTP client plugin |
+| [`websocket`](lib/plugins/websocket/README.md) | `NativeSDK.websocket` | WebSocket real-time communication plugin |
+| [`networkInfo`](lib/plugins/network_info/README.md) | `NativeSDK.networkInfo` | Network interfaces, IPs, and diagnostics |
+| [`pingDns`](lib/plugins/ping_dns/README.md) | `NativeSDK.pingDns` | Ping hosts and DNS lookup |
+| [`socket`](lib/plugins/socket/README.md) | `NativeSDK.socket` | Raw TCP and UDP socket plugin |
+| [`tcpServer`](lib/plugins/tcp_server/README.md) | `NativeSDK.tcpServer` | TCP server for accepting incoming connections |
+| [`udpServer`](lib/plugins/udp_server/README.md) | `NativeSDK.udpServer` | UDP server for receiving datagrams |
+| [`httpServer`](lib/plugins/http_server/README.md) | `NativeSDK.httpServer` | Local HTTP/HTTPS server plugin |
+| [`websocketServer`](lib/plugins/websocket_server/README.md) | `NativeSDK.websocketServer` | WebSocket server for P2P communication |
+| [`sshClient`](lib/plugins/ssh_client/README.md) | `NativeSDK.sshClient` | SSH client for remote server management |
+| [`sshServer`](lib/plugins/ssh_server/README.md) | `NativeSDK.sshServer` | Command server with SSH-like interface |
+| [`ftpClient`](lib/plugins/ftp_client/README.md) | `NativeSDK.ftpClient` | FTP client for file transfer |
+| [`ftpServer`](lib/plugins/ftp_server/README.md) | `NativeSDK.ftpServer` | FTP server for file sharing on local network |
+
+### Location & Wireless
+
+| Plugin | JS namespace | Description |
+|--------|--------------|-------------|
+| [`geolocation`](lib/plugins/geolocation/README.md) | `NativeSDK.geolocation` | Geolocation and GPS plugin |
+| [`backgroundGeolocation`](lib/plugins/background_geolocation/README.md) | `NativeSDK.backgroundGeolocation` | Background geolocation tracking plugin |
+| [`nfc`](lib/plugins/nfc/README.md) | `NativeSDK.nfc` | NFC read/write plugin |
+| [`bluetooth`](lib/plugins/bluetooth/README.md) | `NativeSDK.bluetooth` | Bluetooth Low Energy (BLE) plugin |
+| [`qrScanner`](lib/plugins/qr_scanner/README.md) | `NativeSDK.qrScanner` | QR and barcode scanner plugin |
+| [`wifiManager`](lib/plugins/wifi_manager/README.md) | `NativeSDK.wifiManager` | WiFi network information and management |
+| [`wifiAdvanced`](lib/plugins/wifi_advanced/README.md) | `NativeSDK.wifiAdvanced` | Advanced WiFi: scan, connect, hotspot, direct |
+
+### Motion & Sensors
+
+| Plugin | JS namespace | Description |
+|--------|--------------|-------------|
+| [`sensors`](lib/plugins/sensors/README.md) | `NativeSDK.sensors` | Accelerometer, gyroscope & magnetometer streams |
+| [`pedometer`](lib/plugins/pedometer/README.md) | `NativeSDK.pedometer` | Step counter and pedestrian status plugin |
+
+### Media & AV
+
+| Plugin | JS namespace | Description |
+|--------|--------------|-------------|
+| [`camera`](lib/plugins/camera/README.md) | `NativeSDK.camera` | Camera and image picker plugin |
+| [`cameraPreview`](lib/plugins/camera_preview/README.md) | `NativeSDK.cameraPreview` | Native camera preview with custom controls |
+| [`audio`](lib/plugins/audio/README.md) | `NativeSDK.audio` | Audio recorder and player plugin |
+| [`videoPlayer`](lib/plugins/video_player/README.md) | `NativeSDK.videoPlayer` | Video player plugin |
+| [`speechToText`](lib/plugins/speech_to_text/README.md) | `NativeSDK.speechToText` | Speech to text recognition plugin |
+| [`textToSpeech`](lib/plugins/text_to_speech/README.md) | `NativeSDK.textToSpeech` | Text to speech plugin |
+
+### UI, Dialogs & Notifications
+
+| Plugin | JS namespace | Description |
+|--------|--------------|-------------|
+| [`dialog`](lib/plugins/dialog/README.md) | `NativeSDK.dialog` | Native dialog windows: alert, confirm, prompt |
+| [`toast`](lib/plugins/toast/README.md) | `NativeSDK.toast` | Native toast notification plugin |
+| [`actionSheet`](lib/plugins/action_sheet/README.md) | `NativeSDK.actionSheet` | Bottom sheet action selector plugin |
+| [`datePicker`](lib/plugins/date_picker/README.md) | `NativeSDK.datePicker` | Native date and time picker dialogs |
+| [`notification`](lib/plugins/notification/README.md) | `NativeSDK.notification` | Local notification plugin |
+| [`inAppBrowser`](lib/plugins/in_app_browser/README.md) | `NativeSDK.inAppBrowser` | In-app browser for external pages, OAuth, etc. |
+
+### Contacts & Communication
+
+| Plugin | JS namespace | Description |
+|--------|--------------|-------------|
+| [`contacts`](lib/plugins/contacts/README.md) | `NativeSDK.contacts` | Contacts read plugin |
+| [`phoneDialer`](lib/plugins/phone_dialer/README.md) | `NativeSDK.phoneDialer` | Phone dialer and call plugin |
+| [`smsOtp`](lib/plugins/sms_otp/README.md) | `NativeSDK.smsOtp` | SMS OTP auto-read plugin |
+| [`emailComposer`](lib/plugins/email_composer/README.md) | `NativeSDK.emailComposer` | Compose and send email with attachments |
+| [`share`](lib/plugins/share/README.md) | `NativeSDK.share` | Native share plugin |
+| [`shareTarget`](lib/plugins/share_target/README.md) | `NativeSDK.shareTarget` | Receive shared content from other apps |
+
+### Security & Auth
+
+| Plugin | JS namespace | Description |
+|--------|--------------|-------------|
+| [`permission`](lib/plugins/permission/README.md) | `NativeSDK.permission` | Permission bridge for JS |
+| [`encryption`](lib/plugins/encryption/README.md) | `NativeSDK.encryption` | AES/RSA encryption and hashing plugin |
+| [`biometrics`](lib/plugins/biometrics/README.md) | `NativeSDK.biometrics` | Fingerprint & face authentication |
+| [`oauth2`](lib/plugins/oauth2/README.md) | `NativeSDK.oauth2` | Generic OAuth2 authentication plugin |
+| [`socialLogin`](lib/plugins/social_login/README.md) | `NativeSDK.socialLogin` | Social login (Google, phone, anonymous) |
+
+### Firebase
+
+| Plugin | JS namespace | Description |
+|--------|--------------|-------------|
+| [`firebaseAnalytics`](lib/plugins/firebase_analytics/README.md) | `NativeSDK.firebaseAnalytics` | Firebase Analytics integration |
+| [`firebaseAuth`](lib/plugins/firebase_auth/README.md) | `NativeSDK.firebaseAuth` | Firebase Authentication plugin |
+| [`firebaseCrashlytics`](lib/plugins/firebase_crashlytics/README.md) | `NativeSDK.firebaseCrashlytics` | Firebase Crashlytics integration |
+| [`firebaseRemoteConfig`](lib/plugins/firebase_remote_config/README.md) | `NativeSDK.firebaseRemoteConfig` | Firebase Remote Config integration |
+| [`pushNotification`](lib/plugins/push_notification/README.md) | `NativeSDK.pushNotification` | FCM push notifications with topics & permissions |
+
+### Tasks, Scheduling & Services
+
+| Plugin | JS namespace | Description |
+|--------|--------------|-------------|
+| [`alarm`](lib/plugins/alarm/README.md) | `NativeSDK.alarm` | Timer-based alarm plugin |
+| [`calendar`](lib/plugins/calendar/README.md) | `NativeSDK.calendar` | Device calendar read/write plugin |
+| [`backgroundTask`](lib/plugins/background_task/README.md) | `NativeSDK.backgroundTask` | Background task scheduler and executor plugin |
+| [`foregroundService`](lib/plugins/foreground_service/README.md) | `NativeSDK.foregroundService` | Android foreground service for persistent tasks |
+
+### Store, Updates & Monetization
+
+| Plugin | JS namespace | Description |
+|--------|--------------|-------------|
+| [`inAppPurchase`](lib/plugins/in_app_purchase/README.md) | `NativeSDK.inAppPurchase` | In-app purchase and subscription plugin |
+| [`inAppReview`](lib/plugins/in_app_review/README.md) | `NativeSDK.inAppReview` | In-app review and rating prompt |
+| [`nativeMarket`](lib/plugins/native_market/README.md) | `NativeSDK.nativeMarket` | Link to app stores and market pages |
+| [`appUpdate`](lib/plugins/app_update/README.md) | `NativeSDK.appUpdate` | App version check and update plugin |
+| [`liveUpdater`](lib/plugins/live_updater/README.md) | `NativeSDK.liveUpdater` | Live update plugin for www assets |
+
+### Maps
+
+| Plugin | JS namespace | Description |
+|--------|--------------|-------------|
+| [`googleMaps`](lib/plugins/google_maps/README.md) | `NativeSDK.googleMaps` | Google Maps geocoding, directions, and places |
+
+### Internal
+
+| Plugin | JS namespace | Description |
+|--------|--------------|-------------|
+| [`_loader`](lib/plugins/loader_status/README.md) | `NativeSDK._loader` | Internal plugin loader status |
 ---
 
-## Requirements
+## 🧩 Adding Your Own Plugin
 
-- Flutter stable (3.27 or newer; the code uses `Color.withValues`)
-- Dart SDK `^3.0.0` (bundled with Flutter)
-- Android SDK for Android builds; Xcode and a Mac for iOS (see the iOS note below)
-- Node.js 20+ to run the injected-SDK tests
+Every plugin is a small Dart class living in `lib/plugins/<name>/` with this layout:
 
-## Setup and common commands
+```
+lib/plugins/my_plugin/
+├── README.md                     # API documentation (required)
+├── pubspec.yaml
+└── lib/
+    └── my_plugin_plugin.dart     # Plugin implementation
+```
+
+A minimal implementation:
+
+```dart
+class MyPluginPlugin extends Plugin {
+  @override
+  String get name => 'myPlugin';           // JS namespace: NativeSDK.myPlugin
+
+  @override
+  String get version => '1.0.0';
+
+  @override
+  String get description => 'Does something useful';
+
+  @override
+  List<String> get supportedMethods => ['doThing', 'getInfo'];
+
+  @override
+  Future<dynamic> onCall(String method, Map<String, dynamic> args) async {
+    switch (method) {
+      case 'doThing':
+        final input = args['input'] as String;
+        return {'done': true, 'echo': input};
+      case 'getInfo':
+        return {'name': name, 'version': version};
+      default:
+        throw UnsupportedError('Method "$method" not supported');
+    }
+  }
+
+  // Emit events to JS: eventEmitter?.call('myPlugin.done', {'ok': true});
+}
+```
+
+Then register it in the service locator, add its namespace to `assets/www/js/native-sdk.js`, and enable it in `sweetmelon.yaml`. The CLI scaffolds all of this:
 
 ```bash
-flutter pub get
-
-flutter analyze --fatal-warnings      # static analysis (CI uses this)
-bash .github/scripts/format_report.sh   # formatting (CI; fails on any unformatted file)
-flutter test test/                    # unit, security, regression, integration, performance
-flutter test --coverage test/         # same, writes coverage/lcov.info
-python3 .github/scripts/coverage_gate.py coverage/lcov.info 55 '(^|/)(gen|generated)/|\.g\.dart$'
-node --test test/js/bridge_sdk.test.mjs   # injected JavaScript SDK
-
-flutter run                           # debug app on a device or emulator
-flutter build apk --debug
-flutter test integration_test/app_test.dart -d <android-device-id>
+dart run bin/sweetmelon.dart plugin add my_plugin
 ```
 
-## Release signing
+### CLI
 
-Release builds are never signed with the debug key (SEC-006). To produce a
-signed release APK, set these environment variables before running
-`flutter build apk --release`:
+```bash
+dart run bin/sweetmelon.dart <command>
 
-| Variable | Meaning |
-| --- | --- |
-| `SWEETMELON_KEYSTORE_PATH` | Path to a `.jks`/`.keystore` file |
-| `SWEETMELON_KEYSTORE_PASSWORD` | Keystore password |
-| `SWEETMELON_KEY_ALIAS` | Key alias |
-| `SWEETMELON_KEY_PASSWORD` | Key password |
-
-Without `SWEETMELON_KEYSTORE_PATH` the release APK is built unsigned. Keystores
-and passwords must never be committed.
-
-## Layout
-
-```
-lib/
-  app.dart, main.dart          application entry
-  di/service_locator.dart      dependency wiring (get_it)
-  screens/home_screen.dart     demo page hosting the WebView
-  packages/
-    core/                      protocol, bridge, WebView host, JS SDK, logger
-    plugin_engine/             plugin interface, registry, execution manager
-    security/                  permissions, rate limiter, execution guard
-    performance/               bounded LRU cache with TTL
-    devtools/                  debug-only bridge inspector (payloads redacted)
-  plugins/
-    camera/ geolocation/ storage/
-test/unit/                     unit tests
-test/security/                 attacker-input tests (storage paths, sizes)
-test/regression/               regression tests; each file names the findings it covers
-test/integration/              JSON -> bridge -> manager -> plugin -> response
-test/performance/              smoke budgets (bridge, events, cache)
-test/helpers/                  fakes shared by the Dart tests
-test/js/                       injected SDK tests (Node VM)
-integration_test/              on-device end-to-end test (Android emulator)
-android/, ios/                 platform projects (ios/Podfile is committed)
-.github/workflows/ci.yml       CI pipeline
-.github/scripts/               CI helpers (E2E runner, coverage gate, format report)
-docs/                          architecture, security, testing, audit plan, worklog
+create      Scaffold a new Sweetmelon project
+plugin      Add/remove/inspect plugins
+configure   Enable/disable plugins in sweetmelon.yaml
+validate    Validate project configuration
+list        List all plugins and their status
+info        Show plugin details
+build       Assemble a release build
+clean       Clean build artifacts
+doctor      Diagnose environment issues
 ```
 
-## iOS
+Disabling a plugin in `sweetmelon.yaml` removes it from the service locator, the JS SDK, its pubspec dependency, and its Android manifest permissions — keeping the final binary lean.
 
-The iOS project is built in CI on a macOS runner with `flutter build ios --debug
---no-codesign`. CI keeps the CocoaPods integration (Flutter's Swift Package
-Manager migration is turned off for the job) and runs `pod install` before the
-build. The minimum iOS version is 13.0, matching `ios/Podfile` and the
-`IPHONEOS_DEPLOYMENT_TARGET` setting. Running on a device needs a Mac with Xcode
-and your own signing team.
+---
 
-## Before release
+## 🧱 Core Packages
 
-Identifiers are placeholders inherited from the Flutter template. Before you
-publish the app, choose your own values:
+| Package | Responsibility |
+|---------|----------------|
+| [`core`](lib/packages/core) | Bridge protocol, JSON message transport, WebView host, runtime utilities, SSL pinning, bundled asset server |
+| [`plugin_engine`](lib/packages/plugin_engine) | `Plugin` base class, registry, plugin manager, lazy loader, versioned plugin manager, migrations |
+| [`security`](lib/packages/security) | Permission manager (per-method JS↔native grants), rate limiter, execution guard |
+| [`performance`](lib/packages/performance) | Response cache manager for bridge calls |
+| [`devtools`](lib/packages/devtools) | Bridge inspector for debugging message traffic |
 
-- Android `applicationId` in `android/app/build.gradle.kts`
-  (currently `com.example.sweet_melon`).
-- iOS `PRODUCT_BUNDLE_IDENTIFIER` in `ios/Runner.xcodeproj/project.pbxproj`
-  (currently `com.example.sweet_melon`, kept equal to the Android ID).
-- Release signing environment variables, as described above.
+---
+
+## 🔐 Security Model
+
+- **Permission manager** — native methods can require explicit user grants before JS may invoke them; grants are persisted and revocable.
+- **Rate limiter** — per-plugin call throttling protects against runaway web code.
+- **Execution guard** — validates plugin availability and method allowlists before dispatch.
+- **SSL pinning** — pinned certificates via an isolated `SecurityContext` for update channels and sensitive endpoints.
+- **Asset server** — bundled `www` assets are served through a hardened local server that rejects path traversal and serves correct MIME types.
+- **Sandboxed file access** — `fileSystem` resolves paths only inside base directories (`documents`, `downloads`, `temporary`, ...) and blocks escaping them.
+- **Root/integrity detection** — `rootDetection` and `appIntegrity` let apps adapt to compromised devices.
+
+See [`docs/SECURITY.md`](docs/SECURITY.md) for details.
+
+---
+
+## 🔄 Live Updates
+
+The `liveUpdater` plugin delivers new versions of your `www` bundle over HTTPS, applies them on next start, and supports:
+
+- Release **channels** (`production`, `beta`, ...) via `setChannel`
+- Automatic **rollback** when a bundle fails (`update.autoRolledBack` event)
+- Delta-free full-bundle updates with version history and status APIs
+
+Combined with the standard `appUpdate` plugin (store-driven updates), you get both instant web updates and store compliance.
+
+---
+
+## 🧪 Testing
+
+```bash
+flutter test                 # unit + widget tests
+flutter test --coverage      # coverage report
+```
+
+- **500+ tests** covering the bridge protocol, plugin engine, security middleware, and every plugin's `onCall`/`validateArgs` contract
+- CI enforces a **coverage gate** (current floor 55%, repo baseline tracked per PR) plus `flutter analyze` and `dart format` checks
+- Integration tests live in [`integration_test/`](integration_test)
+
+CI workflows: [`ci.yml`](.github/workflows/ci.yml) (tests, analyze, coverage), [`docs.yml`](.github/workflows/docs.yml), [`release.yml`](.github/workflows/release.yml).
+
+---
+
+## 📚 Documentation
+
+A VitePress documentation site lives in [`docs/`](docs):
+
+- [`docs/guide/introduction.md`](docs/guide/introduction.md) — concepts & overview
+- [`docs/guide/getting-started.md`](docs/guide/getting-started.md) — setup walkthrough
+- [`docs/plugins/overview.md`](docs/plugins/overview.md) — plugin system deep-dive
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — internals
+- [`docs/SECURITY.md`](docs/SECURITY.md) · [`docs/TESTING.md`](docs/TESTING.md) · [`docs/RELEASE_CHECKLIST.md`](docs/RELEASE_CHECKLIST.md)
+- [`docs/angular-integration.md`](docs/angular-integration.md) — Angular-specific guide
+
+Every plugin additionally ships its own README under `lib/plugins/<plugin>/README.md` — these are the authoritative API references and are kept in sync with the Dart sources.
+
+---
+
+## 🤝 Contributing
+
+1. Create a plugin or fix in a feature branch.
+2. Add/extend tests — the coverage gate must pass.
+3. Update the affected plugin README(s): every supported method, parameter, return shape, and event must be documented.
+4. Run `flutter analyze`, `dart format .`, and `flutter test` before opening a PR.
+
+---
+
+## 📄 License
+
+Sweetmelon is released under the [MIT License](License).

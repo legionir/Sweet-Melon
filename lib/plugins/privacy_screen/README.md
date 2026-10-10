@@ -12,6 +12,7 @@ Prevent screenshots and hide content in app switcher.
 | `enable` | `{ enabled: true }` |
 | `disable` | `{ enabled: false }` |
 | `isEnabled` | `{ enabled: bool }` |
+| `getInfo` | `{ name, version, enabled, platform }` |
 
 ## Use Cases
 - Banking/finance apps

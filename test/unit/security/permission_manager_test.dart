@@ -47,8 +47,8 @@ void main() {
       expect(await manager.request('camera'), true);
       expect(await manager.check('mic'), false);
       expect(await manager.request('mic'), false);
-      expect(await manager.checkStatus('mic'),
-          PermissionStatus.permanentlyDenied);
+      expect(
+          await manager.checkStatus('mic'), PermissionStatus.permanentlyDenied);
     });
 
     test('unknown permissions use the provider default status', () async {

@@ -14,6 +14,7 @@ Adjust WebView text size for accessibility.
 | `increase` | `step?: number` (default 10) | `{ zoom }` |
 | `decrease` | `step?: number` (default 10) | `{ zoom }` |
 | `reset` | — | `{ zoom: 100 }` |
+| `getInfo` | — | `{ name, version, zoom, minZoom, maxZoom }` |
 
 ## Events
 | Event | Data |

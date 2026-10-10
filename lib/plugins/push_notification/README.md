@@ -26,6 +26,22 @@ Register device and get FCM token.
 | `alert` | `bool` | `true` |
 | `badge` | `bool` | `true` |
 | `sound` | `bool` | `true` |
+| `provisional` | `bool` (iOS) | `false` |
+| `criticalAlert` | `bool` (iOS) | `false` |
+
+### `checkPermission`
+Re-reads the current notification settings.
+**Returns:** `{ granted, status }` — `status` is the FCM authorization status name.
+
+### `setForegroundNotificationPresentationOptions`
+Control how foreground notifications present (iOS).
+| Param | Type | Default |
+|-------|------|---------|
+| `alert` | `bool` | `true` |
+| `badge` | `bool` | `true` |
+| `sound` | `bool` | `true` |
+
+**Returns:** `{ set: true, alert, badge, sound }`
 
 ### `subscribe` / `unsubscribe`
 | Param | Type | Required |
@@ -41,6 +57,10 @@ Register device and get FCM token.
 ### `removeAllDeliveredNotifications`
 ### `getInitialMessage` — Get notification that opened the app
 ### `deleteToken`
+
+### `getInfo`
+
+**Returns:** `{ name, version, token, permissionGranted, receivedCount, fcmReady, platform }`
 
 ## Events
 | Event | Data |

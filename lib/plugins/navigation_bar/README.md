@@ -12,7 +12,6 @@ Control Android navigation bar appearance.
 |-------|------|----------|
 | `color` | `string` (#RRGGBB) | ✅ |
 | `darkIcons` | `bool` | — |
-| `navigationBarColor` | `string` | — |
 
 ### `setStyle`
 | Param | Type | Values |
@@ -20,6 +19,10 @@ Control Android navigation bar appearance.
 | `style` | `string` | `"light"`, `"dark"`, `"default"` |
 
 ### `show` / `hide` / `setTransparent`
+
+### `getInfo`
+
+**Returns:** `{ name, version }`
 
 ## Usage
 ```javascript

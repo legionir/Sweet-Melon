@@ -24,8 +24,19 @@ Take photos and pick images from gallery.
 |-------|------|---------|
 | `multiple` | `bool` | `false` |
 
+### `recordVideo`
+| Param | Type | Default |
+|-------|------|---------|
+| `maxDurationSeconds` | `number` | — |
+
+**Returns:**
+```json
+{ "path": "/...", "name": "video.mp4", "size": 1234567, "mimeType": "video/mp4" }
+```
+Throws if the user cancels recording.
+
 ### `getInfo`
-Returns plugin info.
+Returns `{ name, version, supportedMethods, platform }`.
 
 ## Usage
 ```javascript

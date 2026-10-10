@@ -27,6 +27,10 @@ Start monitoring connectivity changes.
 ### `stopWatch`
 Stop monitoring.
 
+### `getInfo`
+
+**Returns:** `{ watching, eventName }`
+
 ## Events
 
 ### `connectivity.change`

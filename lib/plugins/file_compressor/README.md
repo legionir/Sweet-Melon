@@ -19,8 +19,7 @@ Compress images before upload or storage.
 
 **format:** `"jpeg"`, `"png"`, `"webp"`
 
-### `compressToWebP`
-Same as `compressImage` with `format: "webp"`.
+### `compressToWebP` — same as compressImage: `path`, `quality`, `maxWidth`, `maxHeight`, `keepExif` (`format` is ignored — always webp)
 
 **Returns:**
 ```json
@@ -34,6 +33,10 @@ Same as `compressImage` with `format: "webp"`.
   "format": "jpeg"
 }
 ```
+
+### `getInfo`
+
+**Returns:** `{ name, version, supportedFormats }`
 
 ## Usage
 ```javascript

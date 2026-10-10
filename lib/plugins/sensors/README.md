@@ -19,8 +19,9 @@ Access device motion and orientation sensors.
 | `stopUserAccelerometer` | — | — |
 | `stopAll` | — | stop all sensors |
 | `getActiveStreams` | — | list active sensors |
+| `getInfo` | — | Plugin info: `{ name, version, activeStreams, availableSensors }` |
 
-**Options for all start methods:**
+### `startAccelerometer` / `startGyroscope` / `startMagnetometer` / `startUserAccelerometer`
 | Param | Type | Default |
 |-------|------|---------|
 | `intervalMs` | `number` | `100` |
