@@ -127,7 +127,7 @@ void main() {
       '\r\n',
     );
     await socket.flush();
-    final response = await socket.transform(utf8.decoder).join();
+    final response = await utf8.decodeStream(socket);
     socket.destroy();
     return int.parse(response.split('\r\n').first.split(' ')[1]);
   }
