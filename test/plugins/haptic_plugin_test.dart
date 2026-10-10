@@ -30,21 +30,21 @@ void main() {
     });
 
     const feedbackTypes = {
-      'lightImpact': 'light',
-      'mediumImpact': 'medium',
-      'heavyImpact': 'heavy',
-      'selectionClick': 'selection',
-      'vibrate': 'vibrate',
+      'lightImpact': ('light', 'HapticFeedback.lightImpact'),
+      'mediumImpact': ('medium', 'HapticFeedback.mediumImpact'),
+      'heavyImpact': ('heavy', 'HapticFeedback.heavyImpact'),
+      'selectionClick': ('selection', 'HapticFeedback.selectionClick'),
+      'vibrate': ('vibrate', 'HapticFeedback.vibrate'),
     };
 
     for (final entry in feedbackTypes.entries) {
       test('${entry.key} triggers platform feedback', () async {
         final result = await plugin.onCall(entry.key, {});
 
-        expect(result, {'type': entry.value, 'triggered': true});
+        expect(result, {'type': entry.value.$1, 'triggered': true});
         expect(
           calls.map((call) => call.method),
-          contains('HapticFeedback.vibrate'),
+          contains(entry.value.$2),
         );
       });
     }

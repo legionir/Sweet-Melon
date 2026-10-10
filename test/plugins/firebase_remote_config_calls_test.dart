@@ -78,8 +78,7 @@ void main() {
       expect(result, {'values': {}, 'count': 0});
     });
 
-    test('setDefaults and setConfigSettings report applied values',
-        () async {
+    test('setDefaults and setConfigSettings report applied values', () async {
       final defaults = await plugin.onCall(
         'setDefaults',
         {

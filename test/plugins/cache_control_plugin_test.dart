@@ -45,8 +45,7 @@ void main() {
       );
     });
 
-    test('clearAppCache deletes files from the app cache directory',
-        () async {
+    test('clearAppCache deletes files from the app cache directory', () async {
       final cacheDir = await getApplicationCacheDirectory();
       await cacheDir.create(recursive: true);
       final probe = File('${cacheDir.path}/sweetmelon_cache_probe.txt');

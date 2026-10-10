@@ -43,8 +43,7 @@ void main() {
       expect(result, {'signedIn': false});
     });
 
-    test('signInWithEmail returns an empty result without Firebase',
-        () async {
+    test('signInWithEmail returns an empty result without Firebase', () async {
       final result = await plugin.onCall('signInWithEmail', {
         'email': 'user@example.com',
         'password': 'secret123',
@@ -55,8 +54,7 @@ void main() {
       expect(result['isNewUser'], false);
     });
 
-    test('signUpWithEmail returns an empty result without Firebase',
-        () async {
+    test('signUpWithEmail returns an empty result without Firebase', () async {
       final result = await plugin.onCall('signUpWithEmail', {
         'email': 'new@example.com',
         'password': 'secret123',

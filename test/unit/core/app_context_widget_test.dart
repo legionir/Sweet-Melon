@@ -60,8 +60,7 @@ void main() {
     expect(appContext.mediaQuery!.size.width, greaterThan(0));
   });
 
-  testWidgets('pushPage opens the page and popPage closes it',
-      (tester) async {
+  testWidgets('pushPage opens the page and popPage closes it', (tester) async {
     await pumpApp(tester);
 
     final pushed = AppContext().pushPage<void>(
@@ -79,8 +78,7 @@ void main() {
     await pushed;
   });
 
-  testWidgets('showAppDialog presents and dismisses a dialog',
-      (tester) async {
+  testWidgets('showAppDialog presents and dismisses a dialog', (tester) async {
     await pumpApp(tester);
 
     final shown = AppContext().showAppDialog<void>(

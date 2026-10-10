@@ -64,7 +64,13 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-        run: bash .github/scripts/pr_diagnostic.sh "Unit tests" unit.txt
+        run: |
+          {
+            grep -n -A24 ' \[E\]' unit.txt
+            echo '----- summary -----'
+            grep -n 'Some tests failed\|All tests passed' unit.txt
+          } > test-failures.txt 2>&1 || true
+          bash .github/scripts/pr_diagnostic.sh "Unit tests" test-failures.txt unit.txt
 
       - name: Coverage gate
         shell: bash

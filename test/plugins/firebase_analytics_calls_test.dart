@@ -141,8 +141,8 @@ void main() {
       expect(await plugin.onCall('logLevelStart', {'levelName': 'l-1'}),
           {'logged': true});
       expect(
-        await plugin.onCall(
-            'logLevelEnd', {'levelName': 'l-1', 'success': 'false'}),
+        await plugin
+            .onCall('logLevelEnd', {'levelName': 'l-1', 'success': 'false'}),
         {'logged': true},
       );
     });

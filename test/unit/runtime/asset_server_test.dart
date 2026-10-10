@@ -135,7 +135,13 @@ void main() {
   });
 
   test('falls back to the default mime for unknown extensions', () async {
-    final running = await startServer();
+    // Allow the otherwise-blocked extension so the file is extracted and the
+    // mime lookup hits the switch default instead of the SPA fallback.
+    final running = await startServer(
+      config: const AssetServerConfig(
+        allowedExtensions: {'.unknownext'},
+      ),
+    );
 
     final blob = await send(running, '/blob.unknownext');
     expect(blob.status, HttpStatus.ok);
