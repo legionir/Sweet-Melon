@@ -14,6 +14,7 @@ Make calls, send SMS, send email.
 | `canDial` | `number` |
 | `sendSms` | `number, body?` |
 | `sendEmail` | `to, subject?, body?, cc?, bcc?` |
+| `getInfo` | — (returns `{ name, version, supportedSchemes }`) |
 
 ## Usage
 ```javascript

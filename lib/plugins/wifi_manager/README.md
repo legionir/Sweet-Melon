@@ -24,6 +24,10 @@ Get WiFi connection information.
 ### `isEnabled`
 **Returns:** `{ enabled: bool }`
 
+### `getInfo`
+
+**Returns:** `{ name, version, platform }`
+
 ## Usage
 ```javascript
 const info = await NativeSDK.wifiManager.getConnectionInfo();

@@ -24,6 +24,10 @@ Run persistent Android foreground services.
 
 ### `isRunning`
 
+### `getInfo`
+
+**Returns:** `{ name, version, running, title, body }`
+
 ## Events
 | Event | Data |
 |-------|------|

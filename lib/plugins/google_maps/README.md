@@ -12,6 +12,13 @@ await NativeSDK.googleMaps.configure({ apiKey: 'YOUR_GOOGLE_MAPS_API_KEY' });
 
 ## Methods
 
+### `configure`
+| Param | Type | Required |
+|-------|------|----------|
+| `apiKey` | `string` | ✅ |
+
+Sets the Google Maps/Places API key used by `getDirections`, `searchPlaces` and `getPlaceDetails`. Returns `{ configured }`.
+
 ### `geocode`
 | Param | Type | Required |
 |-------|------|----------|
@@ -51,6 +58,10 @@ await NativeSDK.googleMaps.configure({ apiKey: 'YOUR_GOOGLE_MAPS_API_KEY' });
 
 ### `calculateDistance` — Haversine formula (no API call)
 ### `getStaticMapUrl` — Generate static map image URL
+
+### `getInfo`
+
+**Returns:** `{ name, version, configured }`
 
 ## Usage
 ```javascript

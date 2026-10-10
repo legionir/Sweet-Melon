@@ -15,7 +15,9 @@ Command server with authentication and whitelisting.
 | `addAllowedCommand` | Whitelist a command |
 | `addBlockedCommand` | Block a command |
 | `getClients` | List sessions |
+| `disconnectClient` | Disconnect one session (`sessionId`) |
 | `getCommandLog` | Get command history |
+| `getInfo` | Returns plugin info: `{ name, version, running, port, clients, allowAllCommands }` |
 
 ### configure
 | Param | Type | Default |
@@ -37,6 +39,7 @@ Command server with authentication and whitelisting.
 | `sshServer.clientConnected` | `{ sessionId, remoteAddress }` |
 | `sshServer.command` | `{ sessionId, command }` |
 | `sshServer.commandResult` | `{ sessionId, command, exitCode }` |
+| `sshServer.clientDisconnected` | `{ sessionId }` |
 
 ## Security
 - Commands `rm -rf`, `format`, `mkfs`, `dd` are blocked by default

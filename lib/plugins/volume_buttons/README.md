@@ -12,6 +12,7 @@ Capture hardware volume button presses.
 | `startListening` | `{ started: bool }` |
 | `stopListening` | `{ stopped: bool }` |
 | `isListening` | `{ listening: bool }` |
+| `getInfo` | `{ name, version, listening }` |
 
 ## Events
 | Event | Data |

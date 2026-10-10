@@ -13,6 +13,7 @@ Monitor keyboard visibility and height.
 | `startWatch` | `{ watching: true }` |
 | `stopWatch` | `{ watching: false }` |
 | `hide` | `{ hidden: true }` |
+| `getInfo` | `{ name, version, watching, visible, height }` |
 
 ## Events
 

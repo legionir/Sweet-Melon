@@ -27,6 +27,8 @@ Encoders: `aacLc`, `aacEld`, `aacHe`, `opus`, `wav`, `flac`
 | `setVolume` | `volume (0-1)` | `{ volume }` |
 | `getDuration` | — | `{ durationMs }` |
 | `getPosition` | — | `{ positionMs }` |
+| `isPlaying` | — | `{ playing: bool }` |
+| `getInfo` | — | `{ name, version, recording, playing, currentRecordingPath }` |
 
 ## Events
 - `audio.playerState` — `{ state, isPlaying }`

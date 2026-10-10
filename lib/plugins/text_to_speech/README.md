@@ -18,6 +18,8 @@ Read text aloud using system TTS engine.
 | `setVolume` | `volume` (0.0 - 1.0) |
 | `getLanguages` | List available languages |
 | `getVoices` | List available voices |
+| `isSpeaking` | — (returns `{ speaking }`) |
+| `getInfo` | — (returns `{ name, version, speaking }`) |
 
 ## Events
 - `tts.start`, `tts.complete`, `tts.cancel`, `tts.error`

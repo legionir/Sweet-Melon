@@ -15,6 +15,7 @@ Manage app icon badge count.
 | `decrease` | `by?: number` (default 1) | `{ count }` |
 | `get` | — | `{ count }` |
 | `isSupported` | — | `{ supported: bool }` |
+| `getInfo` | — | `{ name, version, count }` |
 
 ## Usage
 ```javascript

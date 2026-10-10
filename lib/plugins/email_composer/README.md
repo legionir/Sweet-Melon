@@ -19,6 +19,10 @@ Open email compose window.
 ### `canCompose`
 **Returns:** `{ available: bool }`
 
+### `getInfo`
+
+**Returns:** `{ name, version }`
+
 ## Usage
 ```javascript
 // Support email

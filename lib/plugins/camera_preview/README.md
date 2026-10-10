@@ -43,6 +43,10 @@ Live camera preview with full control.
 ### `setExposureMode` — `auto` or `locked`
 ### `getAvailableCameras` / `getState`
 
+### `getInfo`
+
+**Returns:** `{ name, version, camerasCount, initialized, recording }`
+
 ## Events
 | Event | Data |
 |-------|------|

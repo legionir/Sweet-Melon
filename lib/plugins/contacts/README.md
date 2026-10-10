@@ -14,6 +14,7 @@ Read device contacts.
 | `search` | `query` |
 | `getCount` | — |
 | `pickContact` | Opens native contact picker |
+| `getInfo` | — (returns `{ name, version }`) |
 
 ## Contact Object
 ```json

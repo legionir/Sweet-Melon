@@ -23,6 +23,10 @@ Verify app installation authenticity.
 
 ### `isGenuineInstall` / `getInstallSource` / `getSigningInfo`
 
+### `getInfo`
+
+**Returns:** `{ name, version, platform, playIntegrityReady }`
+
 ## Usage
 ```javascript
 const integrity = await NativeSDK.appIntegrity.checkIntegrity();

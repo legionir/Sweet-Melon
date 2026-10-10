@@ -13,6 +13,7 @@ AES encryption, SHA/MD5 hashing, HMAC, and random bytes.
 | `generateAesKey` | `bits? (128/256)` | `{ key, iv }` (base64) |
 | `aesEncrypt` | `data, key, iv?` | `{ encrypted, iv }` (base64) |
 | `aesDecrypt` | `data, key, iv` | `{ decrypted }` |
+| `getInfo` | — | `{ name, version, algorithms }` |
 
 ### Hashing
 | Method | Args | Returns |

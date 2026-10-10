@@ -42,6 +42,10 @@ Generic OAuth2 authentication for any provider.
 | `refreshToken` | `string` | ✅ |
 | `clientId` | `string` | ✅ |
 
+### `getInfo`
+
+**Returns:** `{ name, version }`
+
 ## Usage
 ```javascript
 // GitHub OAuth

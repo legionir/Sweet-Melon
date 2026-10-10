@@ -15,6 +15,10 @@ Detect device shake gesture.
 
 ### `stopListening` / `configure` / `getShakeCount` / `resetCount` / `isListening`
 
+### `getInfo`
+
+**Returns:** `{ name, version, listening, threshold, cooldownMs, shakeCount }`
+
 ## Events
 | Event | Data |
 |-------|------|

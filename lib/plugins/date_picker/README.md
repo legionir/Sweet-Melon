@@ -46,6 +46,10 @@ Combination of pickDate then pickTime.
 { "picked": true, "start": { "dateMs": ... }, "end": { "dateMs": ... }, "durationDays": 7 }
 ```
 
+### `getInfo`
+
+**Returns:** `{ name, version }`
+
 ## Usage
 ```javascript
 // Birthday picker

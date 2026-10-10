@@ -14,6 +14,7 @@ Auto-read SMS OTP codes (Android only).
 | `stopListening` | `{ listening: false }` |
 | `getLastCode` | `{ code: "123456" }` |
 | `requestHint` | `{ hint: "+98912***789" }` |
+| `getInfo` | `{ name, version, listening, signature, lastCode }` |
 
 ## Events
 ### `smsOtp.received`

@@ -7,6 +7,20 @@ Native HTTP client with full control over headers, body, and downloads.
 
 ## Methods
 
+### `request`
+Same as the verb methods below, with the HTTP verb passed explicitly:
+
+| Param | Type | Required | Default |
+|-------|------|----------|---------|
+| `method` | `string` | — | `GET` |
+| `url` | `string` | ✅ | — |
+| `headers` | `object` | — | `{}` |
+| `body` | `any` | — | — |
+| `bodyType` | `string` | — | `auto` |
+| `responseType` | `string` | — | `auto` |
+| `query` | `object` | — | — |
+| `timeoutMs` | `number` | — | `30000` |
+
 ### `get`, `post`, `put`, `patch`, `delete`
 | Param | Type | Required | Default |
 |-------|------|----------|---------|
@@ -15,6 +29,8 @@ Native HTTP client with full control over headers, body, and downloads.
 | `body` | `any` | — | — |
 | `bodyType` | `string` | — | `auto` |
 | `responseType` | `string` | — | `auto` |
+| `query` | `object` | — | — |
+| `timeoutMs` | `number` | — | `30000` |
 | `query` | `object` | — | — |
 | `timeoutMs` | `number` | — | `30000` |
 

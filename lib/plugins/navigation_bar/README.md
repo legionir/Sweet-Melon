@@ -21,6 +21,10 @@ Control Android navigation bar appearance.
 
 ### `show` / `hide` / `setTransparent`
 
+### `getInfo`
+
+**Returns:** `{ name, version }`
+
 ## Usage
 ```javascript
 // Match app theme

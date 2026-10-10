@@ -12,6 +12,7 @@ Lock device into single-app kiosk mode.
 | `enable` | `{ enabled: true }` |
 | `disable` | `{ enabled: false }` |
 | `isEnabled` | `{ enabled: bool }` |
+| `getInfo` | `{ name, version, enabled }` |
 
 ## What it does
 - Hides status bar (immersive sticky)

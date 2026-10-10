@@ -33,6 +33,10 @@ Pick a directory path.
 }
 ```
 
+### `getInfo`
+
+**Returns:** `{ name, version }`
+
 ## Usage
 ```javascript
 // Pick any file

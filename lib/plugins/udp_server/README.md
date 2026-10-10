@@ -11,10 +11,12 @@ Receive UDP datagrams and respond.
 |--------|-------------|
 | `start` | Bind UDP socket |
 | `stop` | Close socket |
+| `stopAll` | Close every socket; returns `{ stopped: <count> }` |
 | `sendTo` | Send to specific address |
 | `broadcast` | Send broadcast |
 | `getServers` | List active sockets |
 | `getStats` | Get statistics |
+| `getInfo` | Returns plugin info: `{ name, version, activeServers }` |
 
 ### start
 | Param | Type | Default |

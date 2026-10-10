@@ -21,6 +21,7 @@ Play video from URL or local file (headless — audio only, no visual widget in 
 | `getState` | `playerId` — full state object |
 | `dispose` | `playerId` |
 | `disposeAll` | — |
+| `getInfo` | — (returns `{ name, version, activePlayers }`) |
 
 ## Events
 ### `videoPlayer.state`

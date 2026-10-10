@@ -13,6 +13,7 @@ Receive shared content from other apps.
 | `stopListening` | `{ listening: false }` |
 | `getLastShared` | shared data or `{ available: false }` |
 | `clearLastShared` | `{ cleared: true }` |
+| `getInfo` | `{ name, version, listening, hasSharedData }` |
 
 **Shared Data Format:**
 ```json

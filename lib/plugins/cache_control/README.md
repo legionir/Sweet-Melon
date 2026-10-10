@@ -26,6 +26,10 @@ Delete files in app cache directory.
 ### `clearAll`
 Clear WebView cache + app cache + temp files.
 
+### `getInfo`
+
+**Returns:** `{ name, version }`
+
 ## Usage
 ```javascript
 // Check cache size

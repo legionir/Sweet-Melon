@@ -21,6 +21,10 @@ Download files with real-time progress events.
 ### `cancelAll`
 ### `getActive`
 
+### `getInfo`
+
+**Returns:** `{ name, version, activeDownloads }`
+
 ## Events
 - `download.progress` — `{ taskId, percent, receivedBytes, totalBytes }`
 - `download.complete` — `{ taskId, path, size, mimeType }`

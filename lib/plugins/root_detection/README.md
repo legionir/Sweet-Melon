@@ -29,6 +29,10 @@ Detect rooted/jailbroken devices for security.
 ### `getSecurityInfo`
 Returns `isRooted` + `isEmulator`, `isDebugMode`, `adbEnabled`.
 
+### `getInfo`
+
+**Returns:** `{ name, version }`
+
 ## Usage
 ```javascript
 // Block on rooted devices (banking/medical)

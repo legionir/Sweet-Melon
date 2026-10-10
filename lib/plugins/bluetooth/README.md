@@ -19,6 +19,7 @@ Scan, connect, read/write BLE characteristics.
 | `readCharacteristic` | Read value |
 | `writeCharacteristic` | Write value (base64) |
 | `getConnectedDevices` | List connected devices |
+| `getInfo` | Returns plugin info: `{ name, version, scanning, connectedDevices }` |
 
 ## Events
 - `bluetooth.deviceFound` — `{ deviceId, name, rssi }`

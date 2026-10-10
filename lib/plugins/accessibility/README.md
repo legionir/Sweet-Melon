@@ -31,6 +31,10 @@ Detect and respond to accessibility features.
 
 ### `isBoldTextEnabled` / `isReduceMotionEnabled` / `isHighContrastEnabled`
 
+### `getInfo`
+
+**Returns:** `{ name, version }`
+
 ## Usage
 ```javascript
 // Adapt UI to accessibility settings

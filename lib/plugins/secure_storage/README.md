@@ -15,6 +15,7 @@ AES-encrypted key-value storage for sensitive data (tokens, passwords, etc).
 | `remove` | `key` | `{ removed: true }` |
 | `keys` | — | `{ keys: [], count: n }` |
 | `clear` | — | `{ cleared: n }` |
+| `getInfo` | — | `{ name, version, encrypted, prefix }` |
 
 ## Usage
 ```javascript

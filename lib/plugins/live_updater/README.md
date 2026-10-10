@@ -44,6 +44,10 @@ Revert to previous version.
 ### `getCurrentVersion` / `getAvailableUpdate` / `getStatus`
 ### `getUpdateHistory` / `setChannel` / `reset`
 
+### `getInfo`
+
+**Returns:** `{ name, version, currentVersion, status, configured, channel }`
+
 ## Events
 | Event | Data |
 |-------|------|

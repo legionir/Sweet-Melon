@@ -37,6 +37,10 @@ Create and extract ZIP archives.
 |-------|------|----------|
 | `path` | `string` | ✅ |
 
+### `getInfo`
+
+**Returns:** `{ name, version }`
+
 ## Usage
 ```javascript
 // Create zip backup

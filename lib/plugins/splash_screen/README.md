@@ -24,6 +24,10 @@ Hides the splash screen.
 ### `isVisible`
 **Returns:** `{ visible: true/false }`
 
+### `getInfo`
+
+**Returns:** `{ name, version, visible, autoHide, autoHideDelayMs }`
+
 ## Events
 | Event | Data |
 |-------|------|

@@ -14,6 +14,7 @@ Vibration and haptic feedback.
 | `heavyImpact` | Heavy haptic tap |
 | `selectionClick` | Selection tick |
 | `vibrate` | Standard vibration |
+| `getInfo` | Returns plugin info: `{ name, version, supportedTypes }` |
 
 ## Usage
 ```javascript

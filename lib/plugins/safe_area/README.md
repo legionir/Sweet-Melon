@@ -31,6 +31,10 @@ Get device safe area insets for notches and system bars.
 }
 ```
 
+### `getInfo`
+
+**Returns:** `{ name, version }`
+
 ## Usage
 ```javascript
 // Apply safe area padding to content

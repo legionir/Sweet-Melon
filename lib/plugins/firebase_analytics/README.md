@@ -27,8 +27,18 @@ Track events and user behavior with Firebase Analytics.
 | `logAddToCart` | `currency`, `value`, `items` |
 | `logBeginCheckout` | `currency`, `value`, `items` |
 | `logShare` | `contentType`, `itemId`, `method` |
+| `logSelectContent` | `contentType` ✅, `itemId` ✅ |
+| `logViewItemList` | `itemListId`, `itemListName`, `items` |
+| `logTutorialBegin` | — |
+| `logTutorialComplete` | — |
+| `logLevelStart` | `levelName` |
+| `logLevelEnd` | `levelName`, `success` |
 
 ### `setAnalyticsCollectionEnabled` / `resetAnalyticsData` / `getAppInstanceId`
+
+### `getInfo`
+
+**Returns:** `{ name, version, enabled, initialized }`
 
 ## Usage
 ```javascript

@@ -24,6 +24,10 @@ Save media files to device gallery.
 |-------|------|----------|
 | `path` | `string` | ✅ |
 
+### `getInfo`
+
+**Returns:** `{ name, version }`
+
 ## Usage
 ```javascript
 // Take photo and save to gallery

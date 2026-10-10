@@ -15,6 +15,8 @@ Control app behavior without releasing new versions.
 | `defaults` | `object` | — |
 
 ### `fetchAndActivate` — Fetch + activate in one call
+### `fetch` — Fetch latest values without activating; returns `{ fetched, error? }`
+### `activate` — Apply fetched values; returns `{ activated }`
 ### `getString` / `getInt` / `getDouble` / `getBool` / `getJson`
 | Param | Type | Required |
 |-------|------|----------|
@@ -22,6 +24,16 @@ Control app behavior without releasing new versions.
 
 ### `getAll` — Get all config values
 ### `setDefaults` / `getLastFetchStatus`
+### `getLastFetchTime` — returns `{ timestamp, ms }`
+### `setConfigSettings`
+| Param | Type | Default |
+|-------|------|---------|
+| `fetchTimeoutMs` | `number` | `60000` |
+| `minimumFetchIntervalMs` | `number` | `3600000` (1hr) |
+
+### `getInfo`
+
+**Returns:** `{ name, version, initialized, lastFetchStatus }`
 
 ## Events
 | Event | Data |

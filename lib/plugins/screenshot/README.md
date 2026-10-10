@@ -29,6 +29,10 @@ Capture screenshots of the current view.
 }
 ```
 
+### `getInfo`
+
+**Returns:** `{ name, version }`
+
 ## Usage
 ```javascript
 // Simple screenshot

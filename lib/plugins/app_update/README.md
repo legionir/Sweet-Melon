@@ -53,6 +53,10 @@ Check for app updates and open store.
 
 ### `getLastCheckResult`
 
+### `getInfo`
+
+**Returns:** `{ name, version, currentVersion, buildNumber, configured }`
+
 ## Events
 | Event | Data |
 |-------|------|

@@ -28,7 +28,12 @@ Authenticate with Google and Phone (SMS).
 
 ### `signInAnonymously` / `signOut`
 ### `linkWithGoogle` — Link Google to existing account
+### `linkWithPhone` — Phone sign-in/link flow; same params and result as `signInWithPhone`
 ### `getCurrentUser` / `isSignedIn` / `getProviders`
+
+### `getInfo`
+
+**Returns:** `{ name, version }`
 
 ## Events
 | Event | Data |

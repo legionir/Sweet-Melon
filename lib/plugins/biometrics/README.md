@@ -28,6 +28,10 @@ Or on failure:
 { "authenticated": false, "errorCode": "not_enrolled", "errorMessage": "..." }
 ```
 
+### `getInfo`
+
+**Returns:** `{ name, version, platform }`
+
 ## Usage
 ```javascript
 const { available } = await NativeSDK.biometrics.isAvailable();

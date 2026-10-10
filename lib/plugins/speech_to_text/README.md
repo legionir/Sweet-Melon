@@ -13,7 +13,9 @@ Voice recognition / dictation.
 | `startListening` | Start voice recognition |
 | `stopListening` | Stop recognition |
 | `cancelListening` | Cancel |
+| `isAvailable` | Check engine availability; returns `{ available }` |
 | `getLocales` | Get supported languages |
+| `getInfo` | Returns plugin info: `{ name, version, available, listening }` |
 
 ### startListening Args
 | Param | Type | Default |

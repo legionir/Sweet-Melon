@@ -13,6 +13,7 @@ Keep device screen on during active operations.
 | `disable` | Allow screen to sleep | `{ enabled: false }` |
 | `toggle` | Toggle current state | current state |
 | `isEnabled` | Check current state | `{ enabled: bool }` |
+| `getInfo` | Plugin info | `{ name, version, enabled }` |
 
 ## Usage
 ```javascript

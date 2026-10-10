@@ -45,6 +45,10 @@ Real-time bidirectional communication over WebSocket.
 
 ### `getState` / `getConnections` / `disconnectAll`
 
+### `getInfo`
+
+**Returns:** `{ name, version, activeConnections }`
+
 ## Events
 | Event | Data |
 |-------|------|

@@ -47,6 +47,10 @@ All require `path` and optional `baseDir`.
 ### `createDirectory`, `deleteDirectory`
 Require `path`, optional `baseDir` and `recursive`.
 
+### `getInfo`
+
+**Returns:** `{ name, version, supportedBaseDirs, encodings }`
+
 ## Usage
 ```javascript
 await NativeSDK.fileSystem.writeFile('logs/app.log', 'Hello World');

@@ -27,6 +27,10 @@ Display local notifications with channels and actions.
 ### `getPending` — list pending notifications
 ### `createChannel` — create Android notification channel
 
+### `getInfo`
+
+**Returns:** `{ name, version, initialized, platform }`
+
 ## Events
 
 ### `notification.tap`

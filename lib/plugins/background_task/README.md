@@ -34,6 +34,10 @@ Schedule and run background tasks with custom actions.
 
 ### `stop` / `stopAll` / `unregister` / `getTaskState` / `getAllTasks`
 
+### `getInfo`
+
+**Returns:** `{ name, version, registeredTasks, runningTimers }`
+
 ## Events
 | Event | Data |
 |-------|------|

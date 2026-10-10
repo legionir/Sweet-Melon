@@ -23,6 +23,10 @@ Clear all WebView cookies.
 ### `clearSession`
 Clear session cookies.
 
+### `getInfo`
+
+**Returns:** `{ name, version }`
+
 ## Usage
 ```javascript
 // Set auth cookie for API domain

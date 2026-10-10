@@ -21,6 +21,10 @@ Schedule timer-based alarms with events.
 
 ### `cancel` / `cancelAll` / `getAlarm` / `getAllAlarms`
 
+### `getInfo`
+
+**Returns:** `{ name, version, activeAlarms }`
+
 ## Events
 | Event | Data |
 |-------|------|

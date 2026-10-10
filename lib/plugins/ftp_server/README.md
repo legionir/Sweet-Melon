@@ -13,7 +13,9 @@ Share files over local network via FTP.
 | `stop` | Stop server |
 | `configure` | Set credentials |
 | `getClients` | List connected clients |
+| `disconnectClient` | Disconnect one client (`sessionId`) |
 | `getStats` | Server statistics |
+| `getInfo` | Returns plugin info: `{ name, version, running, port, rootDir, clients }` |
 
 ### configure
 | Param | Type | Default |

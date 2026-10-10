@@ -35,6 +35,10 @@ Same as `compressImage` with `format: "webp"`.
 }
 ```
 
+### `getInfo`
+
+**Returns:** `{ name, version, supportedFormats }`
+
 ## Usage
 ```javascript
 // Before upload

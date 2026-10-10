@@ -15,8 +15,10 @@ Accept incoming TCP connections and exchange data.
 | `sendToClient` | Send data to specific client |
 | `sendToAll` | Broadcast to all clients |
 | `disconnectClient` | Disconnect a client |
+| `disconnectAllClients` | Disconnect every client of a server (`serverId`); returns `{ disconnected: <count> }` |
 | `getClients` | List connected clients |
 | `getServers` | List running servers |
+| `getInfo` | Returns plugin info: `{ name, version, activeServers }` |
 
 ### start
 | Param | Type | Default |
@@ -34,6 +36,7 @@ Accept incoming TCP connections and exchange data.
 | `tcpServer.clientConnected` | `{ serverId, clientId, remoteAddress }` |
 | `tcpServer.data` | `{ serverId, clientId, data, bytes }` |
 | `tcpServer.clientDisconnected` | `{ serverId, clientId }` |
+| `tcpServer.clientError` | `{ serverId, clientId, error }` |
 
 ## Usage
 ```javascript

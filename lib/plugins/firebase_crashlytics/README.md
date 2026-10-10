@@ -21,6 +21,11 @@ Crash reporting and diagnostics.
 ### `sendUnsentReports` / `deleteUnsentReports`
 ### `checkForUnsentReports`
 ### `setCrashlyticsCollectionEnabled`
+### `crash` — force a native crash (debug builds only; returns `{ crashed: false, reason: "only_in_debug" }` in release)
+
+### `getInfo`
+
+**Returns:** `{ name, version, initialized, isCrashlyticsCollectionEnabled }`
 
 ## Usage
 ```javascript

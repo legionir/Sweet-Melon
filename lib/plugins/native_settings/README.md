@@ -18,6 +18,10 @@ Open Android system settings screens.
 ### `getAvailableSettings`
 Returns all supported setting names.
 
+### `getInfo`
+
+**Returns:** `{ name, version, platform, availableSettings }`
+
 ## Available Settings
 `app`, `wifi`, `bluetooth`, `location`, `notification`, `battery`, `display`, `sound`, `security`, `date`, `accessibility`, `storage`, `developer`, `about`, `nfc`, `airplane`, `apn`, `data_usage`, `vpn`, `input_method`, `locale`, `privacy`, `biometric`, `default_apps`
 

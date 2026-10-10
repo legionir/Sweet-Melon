@@ -27,6 +27,10 @@ Open another app's store page.
 ### `getStoreUrl`
 Get Play Store URL without opening.
 
+### `getInfo`
+
+**Returns:** `{ name, version, packageName }`
+
 ## Usage
 ```javascript
 // Rate this app

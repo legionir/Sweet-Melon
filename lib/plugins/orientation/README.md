@@ -17,6 +17,10 @@ Values: `portrait`, `portraitUp`, `portraitDown`, `landscape`, `landscapeLeft`, 
 ### `unlock`
 Unlock to all orientations.
 
+### `getInfo`
+
+**Returns:** `{ name, version, supportedOrientations }`
+
 ## Usage
 ```javascript
 await NativeSDK.orientation.lock('landscape');  // video player

@@ -19,11 +19,21 @@ Full SQLite database with CRUD, raw queries, and batch operations.
 |-------|------|
 | `name` | database name |
 | `table` | table name |
+| `columns` | `string[]` (columns to return) |
 | `where` | SQL where clause |
 | `whereArgs` | `any[]` |
 | `orderBy` | `string` |
 | `limit` | `number` |
 | `offset` | `number` |
+
+### `execute`
+| Param | Type |
+|-------|------|
+| `name` | database name |
+| `sql` | SQL statement |
+| `params` | `any[]` |
+
+### `getOpenDatabases` — returns `{ databases: string[] }`
 
 ### `insert`
 | Param | Type |
@@ -41,6 +51,10 @@ Direct SQL execution.
 Execute multiple operations atomically.
 
 ### `tableExists`, `deleteDatabase`, `close`
+
+### `getInfo`
+
+**Returns:** `{ name, version, openDatabases }`
 
 ## Usage
 ```javascript

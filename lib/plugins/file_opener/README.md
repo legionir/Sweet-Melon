@@ -19,6 +19,10 @@ Check if file can be opened.
 ### `getMimeType`
 Get MIME type from file path.
 
+### `getInfo`
+
+**Returns:** `{ name, version }`
+
 ## Usage
 ```javascript
 // Open PDF

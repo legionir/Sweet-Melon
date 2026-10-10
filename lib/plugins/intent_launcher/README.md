@@ -26,6 +26,10 @@ Launch Android intents and system settings.
 |-------|------|----------|
 | `packageName` | `string` | ✅ |
 
+### `getInfo`
+
+**Returns:** `{ name, version, knownIntents }` — `knownIntents` lists every intent name accepted by `launch`.
+
 ## Usage
 ```javascript
 // Open system settings

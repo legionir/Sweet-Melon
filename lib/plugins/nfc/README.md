@@ -14,6 +14,7 @@ Read and write NFC tags.
 | `stopSession` | Stop session |
 | `writeText` | Write text to NFC tag |
 | `writeUri` | Write URL to NFC tag |
+| `getInfo` | Returns plugin info: `{ name, version, sessionActive }` |
 
 ## Events
 - `nfc.tagDiscovered` — `{ id, type, records, isWritable }`

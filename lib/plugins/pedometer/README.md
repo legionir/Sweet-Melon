@@ -14,6 +14,7 @@ Track steps using device pedometer sensor.
 | `getStepCount` | `{ steps: number }` |
 | `getStatus` | `{ status: "walking"/"stopped" }` |
 | `isTracking` | `{ tracking: bool }` |
+| `getInfo` | `{ name, version, tracking, lastStepCount, lastStatus }` |
 
 ## Events
 | Event | Data |

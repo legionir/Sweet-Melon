@@ -19,6 +19,10 @@ Native toast notification messages.
 **duration:** `"short"` (2s) or `"long"` (4s)
 **position:** `"bottom"` or `"top"`
 
+### `getInfo`
+
+**Returns:** `{ name, version }`
+
 ## Usage
 ```javascript
 // Simple
