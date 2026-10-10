@@ -74,6 +74,12 @@ jobs:
           cat coverage-gate.txt
           exit $rc
 
+      - name: Coverage annotations (readable via check-run API)
+        if: always()
+        shell: bash
+        run: |
+          python3 .github/scripts/annotate_output.py coverage-gate.txt 20 || true
+
       - name: Diagnostic (coverage)
         if: failure()
         shell: bash
