@@ -30,10 +30,10 @@ void main() {
     await pumpApp(tester);
 
     AppContext().showSnackBar(
-      SnackBar(
-        content: const Text('fallback-snack'),
+      const SnackBar(
+        content: Text('fallback-snack'),
         behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 2),
+        duration: Duration(seconds: 2),
       ),
     );
     await tester.pump();
@@ -135,10 +135,10 @@ void main() {
     );
 
     AppContext().showSnackBar(
-      SnackBar(
-        content: const Text('direct-snack'),
+      const SnackBar(
+        content: Text('direct-snack'),
         behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 2),
+        duration: Duration(seconds: 2),
       ),
     );
     await tester.pump();
