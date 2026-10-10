@@ -59,8 +59,35 @@ void main() {
     return body;
   }
 
+  Future<List<String>> extractedTree(Directory dir) async {
+    if (!dir.existsSync()) {
+      return <String>['<missing dir: ${dir.path}>'];
+    }
+    final paths = <String>[];
+    await for (final entity in dir.list(recursive: true)) {
+      if (entity is File) {
+        paths.add(entity.path.substring(dir.path.length + 1));
+      }
+    }
+    paths.sort();
+    return paths;
+  }
+
   test('starts from the real toolchain bundle and serves bundled assets',
       () async {
+    // عیب‌یابی چندمرحله‌ای: اول وضعیت خود bundle واقعی ثبت می‌شود تا اگر
+    // چیزی در محیط تست خراب بود، دلیل شکست دقیقاً همان مرحله را نشان بدهد.
+    final manifestKeys =
+        (await AssetManifest.loadFromAssetBundle(rootBundle)).listAssets();
+
+    String nestedProbe;
+    try {
+      final data = await rootBundle.load('assets/www/css/styles.css');
+      nestedProbe = 'ok(${data.lengthInBytes}b)';
+    } catch (e) {
+      nestedProbe = 'FAILED: $e';
+    }
+
     final started = AssetServer(config: const AssetServerConfig());
     server = started;
 
@@ -70,21 +97,49 @@ void main() {
     expect(started.isRunning, true);
     expect(started.port, greaterThan(0));
 
+    final tempDir = await getTemporaryDirectory();
+    final wwwDir = Directory('${tempDir.path}/www_server');
+    final tree = await extractedTree(wwwDir);
+    final diag =
+        'manifest=${manifestKeys.join(',')} | '
+        'nestedLoad=$nestedProbe | '
+        'extracted=${tree.join(',')}';
+
+    // مرحله ۱: مانیفست واقعی باید کلیدهای تودرتو را داشته باشد.
+    expect(
+      manifestKeys.join(','),
+      contains('assets/www/css/styles.css'),
+      reason: diag,
+    );
+
+    // مرحله ۲: بارگذاری مستقیم یک کلید تودرتو از کانال واقعی.
+    expect(nestedProbe, startsWith('ok('), reason: diag);
+
+    // مرحله ۳: استخراج باید فایل تودرتو را روی دیسک نوشته باشد.
+    expect(tree, contains('css/styles.css'), reason: diag);
+
     // index برنامه با محتوای واقعی فایل مخزن سرو می‌شود.
     final expectedIndex = await File('assets/www/index.html').readAsString();
-    expect(await fetchBody(started, '/index.html'), expectedIndex);
-    expect(await fetchBody(started, '/'), expectedIndex);
+    expect(
+      await fetchBody(started, '/index.html'),
+      expectedIndex,
+      reason: diag,
+    );
+    expect(await fetchBody(started, '/'), expectedIndex, reason: diag);
 
     // assetهای تودرتو نیز استخراج و سرو می‌شوند.
     final expectedCss = await File('assets/www/css/styles.css').readAsString();
-    expect(await fetchBody(started, '/css/styles.css'), expectedCss);
+    final cssBody = await fetchBody(started, '/css/styles.css');
+    expect(cssBody, expectedCss, reason: '$diag | servedLen=${cssBody.length}');
 
     final expectedJs = await File('assets/www/js/app.js').readAsString();
-    expect(await fetchBody(started, '/js/app.js'), expectedJs);
+    expect(
+      await fetchBody(started, '/js/app.js'),
+      expectedJs,
+      reason: diag,
+    );
 
     // filtering پسوند حفظ شده است: .d.ts در فهرست مجاز نیست.
-    final tempDir = await getTemporaryDirectory();
-    final wwwDir = Directory('${tempDir.path}/www_server');
     expect(File('${wwwDir.path}/js/native-sdk.d.ts').existsSync(), false);
   });
 }
