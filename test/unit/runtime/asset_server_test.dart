@@ -205,8 +205,10 @@ void main() {
   test('blocks path traversal attempts', () async {
     final running = await startServer();
 
-    final traversal = await send(running, '/%2e%2e/%2e%2e/etc/passwd');
-    expect(traversal.status, HttpStatus.forbidden);
+    // %2f stays percent-encoded through Uri.parse, so the '..' sequences
+    // survive inside one path segment until the server decodes them.
+    final traversal = await sendRaw(running, '/..%2f..%2fetc/passwd');
+    expect(traversal, HttpStatus.forbidden);
 
     final tilde = await sendRaw(running, '/~root/secrets');
     expect(tilde, HttpStatus.forbidden);
