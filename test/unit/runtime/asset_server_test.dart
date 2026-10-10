@@ -63,9 +63,15 @@ void main() {
           message.lengthInBytes,
         ),
       );
-      if (key == 'AssetManifest.json') {
-        final encoded = utf8.encode(jsonEncode(manifest));
-        return ByteData.sublistView(Uint8List.fromList(encoded));
+      if (key == 'AssetManifest.bin') {
+        // همان کلیدهای نسخهٔ JSON قدیمی، اما در قالب باینری
+        // StandardMessageCodec که AssetManifest.loadFromAssetBundle می‌خواند؛
+        // عمداً هیچ پاسخی برای AssetManifest.json وجود ندارد تا بازگشت به
+        // وابستگی قدیمی فوراً شکست بخورد.
+        final binManifest = <String, List<Object>>{
+          for (final assetKey in manifest.keys) assetKey: const <Object>[],
+        };
+        return const StandardMessageCodec().encodeMessage(binManifest);
       }
       final body = assetBodies[key];
       if (body == null) return null;

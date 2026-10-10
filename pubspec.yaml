@@ -94,6 +94,10 @@ dev_dependencies:
   integration_test:
     sdk: flutter
   flutter_lints: ^3.0.0
+  # برای تست مسیر فعالِ پلاگین‌های Firebase: mockهای رسمی هسته و جایگزینی
+  # platform double برای کانال آنالیتیکس.
+  firebase_core_platform_interface: ^6.0.0
+  firebase_analytics_platform_interface: ^4.4.3
 
 
 flutter:

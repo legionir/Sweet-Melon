@@ -255,9 +255,19 @@ class FirebaseAnalyticsPlugin extends Plugin {
   ) async {
     await _analytics?.logLevelEnd(
       levelName: args['levelName'] as String? ?? '',
-      success: (args['success'] as String? ?? 'true') == 'true' ? 1 : 0,
+      success: _toSuccessFlag(args['success']),
     );
     return {'logged': true};
+  }
+
+  /// نگاشت مقدار success ورودی پل به عدد موردانتظار SDK.
+  ///
+  /// هم مقدار بولی واقعی (مثلاً `false`) و هم رشتهٔ «'true'/'false'» پذیرفته
+  /// می‌شود؛ در نبود مقدار، پیش‌فرض موفق است.
+  int _toSuccessFlag(dynamic raw) {
+    if (raw is bool) return raw ? 1 : 0;
+    if (raw is String) return raw == 'true' ? 1 : 0;
+    return 1;
   }
 
   Future<Map<String, dynamic>> _setCollectionEnabled(
@@ -280,7 +290,9 @@ class FirebaseAnalyticsPlugin extends Plugin {
       } else if (value is double) {
         result[key] = value;
       } else if (value is bool) {
-        result[key] = value;
+        // SDK فقط string یا number را می‌پذیرد؛ ارسال مستقیم boolean باعث
+        // AssertionError در مسیر فعال Firebase می‌شود.
+        result[key] = value ? 'true' : 'false';
       } else {
         result[key] = value.toString();
       }
