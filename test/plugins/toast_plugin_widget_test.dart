@@ -54,7 +54,8 @@ void main() {
     expect(text.style?.color, const Color(0x80112233));
 
     // Let the snack bar hide timer expire so no timer is left pending.
-    await tester.pumpAndSettle(const Duration(seconds: 4));
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
   });
 
   testWidgets('show defaults to a short bottom toast', (tester) async {
@@ -70,7 +71,8 @@ void main() {
     expect(snackBar.backgroundColor, const Color(0xFF323232));
 
     // Let the snack bar hide timer expire so no timer is left pending.
-    await tester.pumpAndSettle(const Duration(seconds: 2));
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
   });
 
   testWidgets('show falls back to defaults for unparseable colors',
@@ -93,7 +95,8 @@ void main() {
     expect(text.style?.color, Colors.white);
 
     // Let the snack bar hide timer expire so no timer is left pending.
-    await tester.pumpAndSettle(const Duration(seconds: 2));
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
   });
 
   test('show reports no_context when the navigator key is missing', () async {

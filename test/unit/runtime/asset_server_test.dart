@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sweetmelon/packages/core/lib/core.dart';
@@ -39,8 +40,18 @@ void main() {
   };
 
   AssetServer? server;
+  Directory? tempRoot;
 
   setUp(() {
+    // path_provider has no platform implementation under `flutter test`, so
+    // route its method channel to a fresh per-test directory.
+    tempRoot = Directory.systemTemp.createTempSync('asset_server_test');
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+      const MethodChannel('plugins.flutter.io/path_provider'),
+      (call) async => tempRoot!.path,
+    );
+
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMessageHandler('flutter/assets', (message) async {
       final key = utf8.decode(
@@ -64,6 +75,15 @@ void main() {
     server = null;
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMessageHandler('flutter/assets', null);
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+      const MethodChannel('plugins.flutter.io/path_provider'),
+      null,
+    );
+    if (tempRoot != null && tempRoot!.existsSync()) {
+      tempRoot!.deleteSync(recursive: true);
+    }
+    tempRoot = null;
   });
 
   Future<AssetServer> startServer({AssetServerConfig? config}) async {

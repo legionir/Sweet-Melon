@@ -66,7 +66,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           {
-            grep -n -A24 ' \[E\]' unit.txt
+            grep -n -A6 ' \[E\]' unit.txt
+            echo '----- exceptions -----'
+            grep -n -A22 'EXCEPTION CAUGHT' unit.txt
             echo '----- summary -----'
             grep -n 'Some tests failed\|All tests passed' unit.txt
           } > test-failures.txt 2>&1 || true

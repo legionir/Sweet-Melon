@@ -35,7 +35,8 @@ void main() {
     expect(find.text('fallback-snack'), findsOneWidget);
 
     // Let the snack bar hide timer expire so no timer is left pending.
-    await tester.pumpAndSettle(const Duration(seconds: 4));
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
     expect(find.text('fallback-snack'), findsNothing);
   });
 
@@ -133,7 +134,8 @@ void main() {
     expect(find.text('direct-snack'), findsOneWidget);
 
     // Let the snack bar hide timer expire so no timer is left pending.
-    await tester.pumpAndSettle(const Duration(seconds: 4));
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
     expect(find.text('direct-snack'), findsNothing);
   });
 }

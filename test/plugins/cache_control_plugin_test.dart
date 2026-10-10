@@ -1,10 +1,31 @@
 import 'dart:io';
 
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sweetmelon/plugins/cache_control/lib/cache_control_plugin.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  // path_provider has no platform implementation under `flutter test`, so
+  // route its method channel to controlled local directories instead.
+  final fakeCacheDir = Directory.systemTemp.createTempSync('cache_ctrl_cache');
+  final fakeTempDir = Directory.systemTemp.createTempSync('cache_ctrl_temp');
+
+  setUpAll(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+      const MethodChannel('plugins.flutter.io/path_provider'),
+      (call) async {
+        if (call.method == 'getTemporaryDirectory') {
+          return fakeTempDir.path;
+        }
+        return fakeCacheDir.path;
+      },
+    );
+  });
+
   group('CacheControlPlugin', () {
     late CacheControlPlugin plugin;
 
