@@ -48,9 +48,28 @@ void main() {
     return body;
   }
 
-  String pinOf(String certPem) {
-    final cert = X509Certificate.fromData(data: utf8.encode(certPem));
-    return sha256.convert(cert.der).toString();
+  /// پین «درست» برای گواهی‌ای که سرور روی پورت [port] سرو می‌کند.
+  ///
+  /// در dart:io هیچ کارخانهٔ عمومی برای ساخت [X509Certificate] از PEM وجود
+  /// ندارد؛ تنها راه رسیدن به شیء گواهی، یک هندشیک واقعی است. پس یک اتصال
+  /// کوتاه با [SecureSocket] باز می‌کنیم و گواهی را از مسیر
+  /// [onBadCertificate] (که برای گواهی خودامضا همیشه فراخوانی می‌شود)
+  /// می‌گیریم و دقیقاً مثل تولید، hash از `der` آن می‌سازیم.
+  Future<String> servedPin(int port) async {
+    X509Certificate? captured;
+    final socket = await SecureSocket.connect(
+      'localhost',
+      port,
+      onBadCertificate: (cert) {
+        captured ??= cert;
+        return true;
+      },
+    );
+    final cert = captured;
+    expect(cert, isNotNull, reason: 'handshake must expose the certificate');
+    final pin = sha256.convert(cert!.der).toString();
+    await socket.close();
+    return pin;
   }
 
   group('SslPinning over a real TLS handshake', () {
@@ -79,7 +98,7 @@ void main() {
 
       final pinning = SslPinning()
         ..enable()
-        ..addPin('localhost', pinOf(kPinningCertPem));
+        ..addPin('localhost', await servedPin(server.port));
 
       final body = await fetch(pinning.createPinnedClient(), server.port);
       expect(body, 'trusted but unpinned');
@@ -119,9 +138,10 @@ void main() {
     test('host without a configured pin still connects', () async {
       server = await startHttpsServer();
 
+      // پین واقعیِ گواهی سروشده، اما برای میزبانی دیگر ثبت شده است.
       final pinning = SslPinning()
         ..enable()
-        ..addPin('other.example.com', pinOf(kPinningCertPem));
+        ..addPin('other.example.com', await servedPin(server.port));
 
       final body = await fetch(pinning.createPinnedClient(), server.port);
       expect(body, 'trusted but unpinned');
