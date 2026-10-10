@@ -1,6 +1,7 @@
 // On-device end-to-end checks. Run on an Android emulator or device:
 //   flutter test integration_test/app_test.dart -d <device-id>
 
+// ignore_for_file: avoid_print
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:sweetmelon/app.dart';
@@ -25,7 +26,6 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
     expect(find.byType(WebViewHost), findsOneWidget);
     expect(tester.takeException(), isNull);
-    // ignore: avoid_print
     print('E2E_OK: app boots into the home screen with the WebView host');
   });
 
@@ -56,7 +56,6 @@ void main() {
       'args': {'path': '../../../etc/hosts'},
     }));
     expect(traversal.success, isFalse);
-    // ignore: avoid_print
     print('E2E_OK: storage round-trip and traversal rejection');
   });
 }

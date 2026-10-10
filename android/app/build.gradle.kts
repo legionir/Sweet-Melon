@@ -7,12 +7,15 @@ plugins {
 
 android {
     namespace = "com.example.sweet_melon"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 37
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+        // flutter_local_notifications (and other plugins) use core library
+        // APIs that require desugaring on minSdk < 26.
+        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
@@ -59,4 +62,18 @@ android {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    // Required by flutter_local_notifications on minSdk < 26.
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+
+    // Firebase (used by the firebase_* plugins and lib/main.dart init).
+    implementation(platform("com.google.firebase:firebase-bom:33.4.0"))
+    implementation("com.google.firebase:firebase-analytics")
+    implementation("com.google.firebase:firebase-crashlytics")
+    implementation("com.google.firebase:firebase-messaging")
+    implementation("com.google.firebase:firebase-config")
+    implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.android.gms:play-services-auth:21.2.0")
 }

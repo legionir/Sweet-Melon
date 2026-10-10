@@ -1,98 +1,35 @@
 import 'dart:async';
 
-import 'package:sweetmelon/packages/core/lib/src/protocol/message_protocol.dart'
-    show PluginErrorCode;
-
-// ============================================================
-// PLUGIN INTERFACE — the contract every native plugin implements
-// ============================================================
-
-/// Sends an event to JavaScript (bound to MessageBridge.emitEvent).
-typedef PluginEventEmitter = Future<void> Function(String event, Object? data);
-
 abstract class Plugin {
-  /// Unique plugin name (lower-case, [a-z][a-z0-9_]*).
   String get name;
-
-  /// Plugin version (semantic versioning).
   String get version;
-
-  /// Human-readable description.
   String get description => '';
-
-  /// Methods this plugin serves. Anything else is rejected with METHOD_NOT_FOUND.
   List<String> get supportedMethods;
-
-  /// Permissions that must be granted before any method is executed.
-  List<String> get requiredPermissions => const [];
-
-  /// Capabilities enforced by the plugin manager at runtime.
-  PluginCapabilities get capabilities => const PluginCapabilities.defaults();
-
-  /// Methods that start a stream of events. Requires
-  /// [PluginCapabilities.supportsStreaming].
-  Set<String> get streamingMethods => const {};
-
-  /// Methods whose successful results may be cached. Only read-only methods
-  /// should be listed here. Empty by default: nothing is cached unless a plugin
-  /// opts in explicitly.
-  Set<String> get cacheableMethods => const {};
-
-  /// TTL for cached results.
-  Duration get defaultCacheTtl => const Duration(seconds: 30);
-
-  /// Whether the plugin has completed [initialize].
+  List<String> get requiredPermissions => [];
+  bool get cacheable => false;
+  Duration get defaultCacheTtl => const Duration(minutes: 5);
   bool get isReady => _initialized;
   bool _initialized = false;
 
-  PluginEventEmitter? _emitter;
-
-  /// Called by the registry on registration. Events are delivered to JS only
-  /// through the bridge's emitEvent (validated name, encoded payload).
-  void attachEmitter(PluginEventEmitter emitter) => _emitter = emitter;
-
-  /// Emits an event to JavaScript. Dropped silently when no emitter is
-  /// attached (e.g. in unit tests) or after dispose.
-  void emit(String event, Object? data) {
-    final emitter = _emitter;
-    if (emitter == null || !_initialized) return;
-    unawaited(emitter('$name.$event', data));
-  }
-
-  /// Executes a method. Implementations may throw; the manager converts
-  /// exceptions to protocol errors without exposing internal details to JS.
   Future<dynamic> onCall(String method, Map<String, dynamic> args);
 
-  // ============================================================
-  // LIFECYCLE
-  // ============================================================
-
   Future<void> initialize() async {
+    if (_initialized) return; // جلوگیری از initialize دوباره
     await onInitialize();
     _initialized = true;
   }
 
   Future<void> dispose() async {
+    if (!_initialized) return;
     _initialized = false;
     await onDispose();
   }
 
-  /// Hook for subclasses.
   Future<void> onInitialize() async {}
-
-  /// Hook for subclasses. Must release streams, subscriptions and timers.
   Future<void> onDispose() async {}
-
-  // ============================================================
-  // VALIDATION
-  // ============================================================
-
+  Future<void> onPause() async {}
+  Future<void> onResume() async {}
   bool supportsMethod(String method) => supportedMethods.contains(method);
-
-  bool isCacheable(String method) =>
-      capabilities.supportsCache && cacheableMethods.contains(method);
-
-  /// Validates arguments before execution (override for custom validation).
   Future<ValidationResult> validateArgs(
     String method,
     Map<String, dynamic> args,
@@ -104,55 +41,83 @@ abstract class Plugin {
   String toString() => 'Plugin($name@$version)';
 }
 
-// ============================================================
-// PLUGIN EXCEPTION — a deliberate, user-safe error from a plugin
-// ============================================================
-
-/// Thrown by plugins for expected failures (e.g. user cancelled). The [message]
-/// is written by the plugin author and is safe to expose to JavaScript.
-/// Any other exception is reported to JS as a generic execution error.
-class PluginException implements Exception {
-  final PluginErrorCode code;
-  final String message;
-
-  const PluginException(this.code, this.message);
-
-  @override
-  String toString() => 'PluginException(${code.code}: $message)';
-}
-
-// ============================================================
-// VALIDATION RESULT
-// ============================================================
-
 class ValidationResult {
   final bool isValid;
   final String? errorMessage;
+  final List<String> warnings;
 
-  const ValidationResult({required this.isValid, this.errorMessage});
+  const ValidationResult({
+    required this.isValid,
+    this.errorMessage,
+    this.warnings = const [],
+  });
 
   factory ValidationResult.valid() => const ValidationResult(isValid: true);
 
-  factory ValidationResult.invalid(String message) =>
-      ValidationResult(isValid: false, errorMessage: message);
+  factory ValidationResult.invalid(String message) => ValidationResult(
+        isValid: false,
+        errorMessage: message,
+      );
+
+  factory ValidationResult.validWithWarnings(List<String> warnings) =>
+      ValidationResult(
+        isValid: true,
+        warnings: warnings,
+      );
 }
 
-// ============================================================
-// CAPABILITIES — enforced by PluginManager
-// ============================================================
+class PluginManifest {
+  final String name;
+  final String version;
+  final String description;
+  final List<String> methods;
+  final List<String> permissions;
+  final Map<String, dynamic> config;
+  final PluginCapabilities capabilities;
+
+  const PluginManifest({
+    required this.name,
+    required this.version,
+    required this.description,
+    required this.methods,
+    required this.permissions,
+    required this.config,
+    required this.capabilities,
+  });
+
+  factory PluginManifest.fromJson(Map<String, dynamic> json) {
+    return PluginManifest(
+      name: json['name'] as String,
+      version: json['version'] as String,
+      description: json['description'] as String? ?? '',
+      methods: List<String>.from(json['methods'] as List),
+      permissions: List<String>.from(
+        (json['permissions'] as List?) ?? [],
+      ),
+      config: (json['config'] as Map<String, dynamic>?) ?? {},
+      capabilities: json['capabilities'] != null
+          ? PluginCapabilities.fromJson(
+              json['capabilities'] as Map<String, dynamic>,
+            )
+          : PluginCapabilities.defaults(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'name': name,
+        'version': version,
+        'description': description,
+        'methods': methods,
+        'permissions': permissions,
+        'config': config,
+        'capabilities': capabilities.toJson(),
+      };
+}
 
 class PluginCapabilities {
-  /// Plugin emits events over time (e.g. location watch). Required for
-  /// methods that start a stream.
   final bool supportsStreaming;
-
-  /// Plugin may be invoked inside a batch request.
   final bool supportsBatch;
-
-  /// Plugin results may be cached (only for [Plugin.cacheableMethods]).
   final bool supportsCache;
-
-  /// Maximum number of simultaneous in-flight calls to this plugin.
   final int maxConcurrentCalls;
 
   const PluginCapabilities({
@@ -160,11 +125,28 @@ class PluginCapabilities {
     required this.supportsBatch,
     required this.supportsCache,
     required this.maxConcurrentCalls,
-  }) : assert(maxConcurrentCalls > 0);
+  });
 
-  const PluginCapabilities.defaults()
-      : supportsStreaming = false,
-        supportsBatch = true,
-        supportsCache = false,
-        maxConcurrentCalls = 8;
+  factory PluginCapabilities.defaults() => const PluginCapabilities(
+        supportsStreaming: false,
+        supportsBatch: true,
+        supportsCache: false,
+        maxConcurrentCalls: 10,
+      );
+
+  factory PluginCapabilities.fromJson(Map<String, dynamic> json) {
+    return PluginCapabilities(
+      supportsStreaming: json['supportsStreaming'] as bool? ?? false,
+      supportsBatch: json['supportsBatch'] as bool? ?? true,
+      supportsCache: json['supportsCache'] as bool? ?? false,
+      maxConcurrentCalls: json['maxConcurrentCalls'] as int? ?? 10,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'supportsStreaming': supportsStreaming,
+        'supportsBatch': supportsBatch,
+        'supportsCache': supportsCache,
+        'maxConcurrentCalls': maxConcurrentCalls,
+      };
 }

@@ -1,68 +1,30 @@
 import 'dart:async';
-
 import 'package:geolocator/geolocator.dart';
-import 'package:sweetmelon/packages/core/lib/src/protocol/message_protocol.dart';
 import 'package:sweetmelon/packages/plugin_engine/lib/plugin_engine.dart';
+import 'package:sweetmelon/packages/core/lib/core.dart';
 
-// ============================================================
-// GEOLOCATION PLUGIN
-// ============================================================
-//
-// * watchPosition starts a named watch and returns its watchId. Every position
-//   is delivered to JavaScript as a `geolocation.position` event carrying the
-//   watchId (BUG-005, SM-009). Errors arrive as `geolocation.error`.
-// * Several watches can run at once, up to [maxWatches]. Each watch is removed
-//   when cancelled, when its stream ends, or when the plugin is disposed, so
-//   no subscription outlives its owner (SM-011).
-
-typedef PositionStreamFactory = Stream<Position> Function(
-  LocationSettings settings,
-);
-
-const int kMaxWatches = 4;
-
-const List<String> kAccuracyLevels = [
-  'lowest',
-  'low',
-  'medium',
-  'high',
-  'best',
-  'bestForNavigation',
-];
+typedef PluginEventEmitter = Future<void> Function(String event, dynamic data);
 
 class GeolocationPlugin extends Plugin {
-  final PositionStreamFactory _positionStream;
-  final Map<int, StreamSubscription<Position>> _watches = {};
-  int _nextWatchId = 1;
+  StreamSubscription<Position>? _positionStream;
+  final PluginEventEmitter? eventEmitter;
 
-  GeolocationPlugin({PositionStreamFactory? positionStream})
-      : _positionStream = positionStream ??
-            ((settings) => Geolocator.getPositionStream(
-                  locationSettings: settings,
-                ));
+  GeolocationPlugin({this.eventEmitter});
 
   @override
   String get name => 'geolocation';
 
   @override
-  String get version => '1.1.0';
+  String get version => '1.0.0';
 
   @override
   String get description => 'Geolocation and GPS plugin';
 
   @override
-  PluginCapabilities get capabilities => const PluginCapabilities(
-        supportsStreaming: true,
-        supportsBatch: true,
-        supportsCache: false,
-        maxConcurrentCalls: 4,
-      );
+  bool get cacheable => false;
 
   @override
-  Set<String> get streamingMethods => const {'watchPosition'};
-
-  @override
-  List<String> get supportedMethods => const [
+  List<String> get supportedMethods => [
         'getCurrentPosition',
         'watchPosition',
         'clearWatch',
@@ -72,10 +34,7 @@ class GeolocationPlugin extends Plugin {
       ];
 
   @override
-  List<String> get requiredPermissions => const ['location'];
-
-  /// Number of active watches (for tests and diagnostics).
-  int get activeWatchCount => _watches.length;
+  List<String> get requiredPermissions => ['location'];
 
   @override
   Future<dynamic> onCall(String method, Map<String, dynamic> args) async {
@@ -85,18 +44,15 @@ class GeolocationPlugin extends Plugin {
       case 'watchPosition':
         return _watchPosition(args);
       case 'clearWatch':
-        return _clearWatch(args);
+        return _clearWatch();
       case 'checkPermission':
-        return (await Geolocator.checkPermission()).name;
+        return _checkPermission();
       case 'requestPermission':
-        return (await Geolocator.requestPermission()).name;
+        return _requestPermission();
       case 'isLocationEnabled':
-        return Geolocator.isLocationServiceEnabled();
+        return _isLocationEnabled();
       default:
-        throw const PluginException(
-          PluginErrorCode.methodNotFound,
-          'Method is not supported',
-        );
+        throw UnsupportedError('Method "$method" not supported');
     }
   }
 
@@ -104,87 +60,75 @@ class GeolocationPlugin extends Plugin {
     Map<String, dynamic> args,
   ) async {
     final accuracy = _parseAccuracy(args['accuracy'] as String? ?? 'high');
-    final timeoutMs = (args['timeoutMs'] as num?)?.toInt();
+
     final position = await Geolocator.getCurrentPosition(
       desiredAccuracy: accuracy,
-      timeLimit: timeoutMs == null ? null : Duration(milliseconds: timeoutMs),
     );
-    return positionToMap(position);
+
+    return _positionToMap(position);
   }
 
-  Map<String, dynamic> _watchPosition(Map<String, dynamic> args) {
-    if (_watches.length >= kMaxWatches) {
-      throw const PluginException(
-        PluginErrorCode.rateLimitExceeded,
-        'Too many active watches',
-      );
-    }
+  Future<String> _watchPosition(Map<String, dynamic> args) async {
     final accuracy = _parseAccuracy(args['accuracy'] as String? ?? 'high');
-    final distanceFilter = (args['distanceFilter'] as num?)?.toInt() ?? 10;
+    final distanceFilter = (args['distanceFilter'] as num?)?.toDouble() ?? 10;
 
-    final watchId = _nextWatchId++;
-    final timeoutMs = (args['timeoutMs'] as num?)?.toInt();
+    await _clearWatch();
+
     final settings = LocationSettings(
       accuracy: accuracy,
-      distanceFilter: distanceFilter,
-      timeLimit: timeoutMs == null ? null : Duration(milliseconds: timeoutMs),
+      distanceFilter: distanceFilter.toInt(),
     );
 
-    final subscription = _positionStream(settings).listen(
+    _positionStream = Geolocator.getPositionStream(
+      locationSettings: settings,
+    ).listen(
       (position) {
-        emit('position', {
-          'watchId': watchId,
-          ...positionToMap(position),
-        });
+        final data = _positionToMap(position);
+
+        if (eventEmitter != null) {
+          eventEmitter!('geolocation.position', data);
+        } else {
+          BridgeLogger.warn(
+            'Geolocation',
+            'No event emitter set, position update dropped',
+          );
+        }
       },
-      onError: (Object error) {
-        // Raw error text stays out of JS; only a stable code is sent.
-        emit('error', {
-          'watchId': watchId,
-          'code': 'LOCATION_ERROR',
-        });
-        _removeWatch(watchId);
+      onError: (error) {
+        BridgeLogger.error('Geolocation', 'Watch error: $error');
+
+        if (eventEmitter != null) {
+          eventEmitter!('geolocation.error', {
+            'message': error.toString(),
+          });
+        }
       },
-      onDone: () => _removeWatch(watchId),
-      cancelOnError: true,
     );
-    _watches[watchId] = subscription;
-    return {'watchId': watchId};
+
+    return 'watch_started';
   }
 
-  Future<Map<String, dynamic>> _clearWatch(Map<String, dynamic> args) async {
-    final watchId = args['watchId'];
-    if (watchId == null) {
-      final count = _watches.length;
-      await _cancelAll();
-      return {'cleared': count};
-    }
-    if (watchId is! int) {
-      throw const PluginException(
-        PluginErrorCode.invalidArgs,
-        'watchId must be an integer',
-      );
-    }
-    final cleared = await _removeWatch(watchId);
-    return {'cleared': cleared ? 1 : 0};
+  Future<String> _clearWatch() async {
+    await _positionStream?.cancel();
+    _positionStream = null;
+    return 'watch_cleared';
   }
 
-  Future<bool> _removeWatch(int watchId) async {
-    final subscription = _watches.remove(watchId);
-    if (subscription == null) return false;
-    await subscription.cancel();
-    return true;
+  Future<String> _checkPermission() async {
+    final permission = await Geolocator.checkPermission();
+    return permission.name;
   }
 
-  Future<void> _cancelAll() async {
-    final subscriptions = _watches.values.toList();
-    _watches.clear();
-    for (final s in subscriptions) {
-      await s.cancel();
-    }
+  Future<String> _requestPermission() async {
+    final permission = await Geolocator.requestPermission();
+    return permission.name;
   }
 
-  static LocationAccuracy _parseAccuracy(String accuracy) {
+  Future<bool> _isLocationEnabled() async {
+    return Geolocator.isLocationServiceEnabled();
+  }
+
+  LocationAccuracy _parseAccuracy(String accuracy) {
     switch (accuracy) {
       case 'lowest':
         return LocationAccuracy.lowest;
@@ -192,6 +136,8 @@ class GeolocationPlugin extends Plugin {
         return LocationAccuracy.low;
       case 'medium':
         return LocationAccuracy.medium;
+      case 'high':
+        return LocationAccuracy.high;
       case 'best':
         return LocationAccuracy.best;
       case 'bestForNavigation':
@@ -201,8 +147,7 @@ class GeolocationPlugin extends Plugin {
     }
   }
 
-  /// Converts a [Position] to a JSON-safe map.
-  static Map<String, dynamic> positionToMap(Position position) {
+  Map<String, dynamic> _positionToMap(Position position) {
     return {
       'latitude': position.latitude,
       'longitude': position.longitude,
@@ -223,57 +168,42 @@ class GeolocationPlugin extends Plugin {
     switch (method) {
       case 'getCurrentPosition':
       case 'watchPosition':
-        return validatePositionArgs(args);
-      case 'clearWatch':
-        final watchId = args['watchId'];
-        if (watchId != null && watchId is! int) {
-          return ValidationResult.invalid('watchId must be an integer');
-        }
-        return ValidationResult.valid();
+        return _validatePositionArgs(args);
       default:
         return ValidationResult.valid();
     }
   }
 
-  /// Validates accuracy and distanceFilter. Public for unit tests.
-  static ValidationResult validatePositionArgs(Map<String, dynamic> args) {
+  ValidationResult _validatePositionArgs(Map<String, dynamic> args) {
     final accuracy = args['accuracy'];
-    if (accuracy != null) {
-      if (accuracy is! String) {
-        return ValidationResult.invalid('accuracy must be a string');
-      }
-      if (!kAccuracyLevels.contains(accuracy)) {
-        return ValidationResult.invalid(
-          'accuracy must be one of: ${kAccuracyLevels.join(', ')}',
-        );
-      }
+    if (accuracy != null && accuracy is! String) {
+      return ValidationResult.invalid('accuracy must be a string');
     }
-    final timeoutMs = args['timeoutMs'];
-    if (timeoutMs != null) {
-      if (timeoutMs is! num) {
-        return ValidationResult.invalid('timeoutMs must be a number');
-      }
-      if (timeoutMs < 1 || timeoutMs > 60000) {
-        return ValidationResult.invalid(
-            'timeoutMs must be between 1 and 60000');
-      }
+
+    const validAccuracies = [
+      'lowest',
+      'low',
+      'medium',
+      'high',
+      'best',
+      'bestForNavigation',
+    ];
+    if (accuracy != null && !validAccuracies.contains(accuracy)) {
+      return ValidationResult.invalid(
+        'accuracy must be one of: ${validAccuracies.join(", ")}',
+      );
     }
+
     final distanceFilter = args['distanceFilter'];
-    if (distanceFilter != null) {
-      if (distanceFilter is! num) {
-        return ValidationResult.invalid('distanceFilter must be a number');
-      }
-      if (distanceFilter < 0 || distanceFilter > 100000) {
-        return ValidationResult.invalid(
-          'distanceFilter must be between 0 and 100000',
-        );
-      }
+    if (distanceFilter != null && distanceFilter is! num) {
+      return ValidationResult.invalid('distanceFilter must be a number');
     }
+
     return ValidationResult.valid();
   }
 
   @override
   Future<void> onDispose() async {
-    await _cancelAll();
+    await _clearWatch();
   }
 }

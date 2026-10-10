@@ -1,8 +1,6 @@
 import 'dart:async';
 
-// ============================================================
-// BRIDGE LOGGER — سیستم لاگ ساختارمند
-// ============================================================
+import 'package:flutter/foundation.dart';
 
 enum LogLevel {
   debug(0, 'DEBUG'),
@@ -50,10 +48,12 @@ class LogEntry {
 }
 
 class BridgeLogger {
-  static LogLevel _minLevel = LogLevel.debug;
+  static LogLevel _minLevel = kReleaseMode ? LogLevel.warn : LogLevel.debug;
   static final List<LogEntry> _history = [];
   static StreamController<LogEntry>? _controller;
-  static final List<LogSink> _sinks = [ConsoleSink()];
+  static final List<LogSink> _sinks = [
+    if (kDebugMode) DebugConsoleSink(),
+  ];
 
   static StreamController<LogEntry> get _streamController {
     _controller ??= StreamController<LogEntry>.broadcast();
@@ -65,7 +65,11 @@ class BridgeLogger {
 
   static void setMinLevel(LogLevel level) => _minLevel = level;
 
-  static void addSink(LogSink sink) => _sinks.add(sink);
+  static void addSink(LogSink sink) {
+    if (!_sinks.contains(sink)) {
+      _sinks.add(sink);
+    }
+  }
 
   static void removeSink(LogSink sink) => _sinks.remove(sink);
 
@@ -109,9 +113,15 @@ class BridgeLogger {
     }
 
     for (final sink in _sinks) {
-      sink.write(entry);
+      try {
+        sink.write(entry);
+      } catch (_) {
+        // Sink error should never crash the app
+      }
     }
   }
+
+  static void clear() => _history.clear();
 
   static void dispose() {
     _controller?.close();
@@ -119,18 +129,27 @@ class BridgeLogger {
   }
 }
 
-// ============================================================
-// SINKS
-// ============================================================
-
 abstract class LogSink {
   void write(LogEntry entry);
 }
 
-class ConsoleSink implements LogSink {
+/// استفاده از debugPrint به جای print
+class DebugConsoleSink implements LogSink {
   @override
   void write(LogEntry entry) {
-    // ignore: avoid_print
-    print(entry.toString());
+    debugPrint(entry.toString());
+  }
+}
+
+class MemorySink implements LogSink {
+  final List<LogEntry> entries = [];
+  final int maxEntries;
+
+  MemorySink({this.maxEntries = 500});
+
+  @override
+  void write(LogEntry entry) {
+    entries.add(entry);
+    if (entries.length > maxEntries) entries.removeAt(0);
   }
 }

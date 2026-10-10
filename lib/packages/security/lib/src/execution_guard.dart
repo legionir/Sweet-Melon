@@ -1,75 +1,158 @@
 import 'dart:async';
-
-// ============================================================
-// EXECUTION GUARD — timeout and in-flight tracking
-// ============================================================
-//
-// * Every execution has a timeout taken from the caller (no hard-coded value).
-// * In-flight request IDs are tracked; a duplicate ID is rejected while the
-//   first one is still running (prevents replay/confusion in the JS layer).
-// * [cancelAll] completes every pending execution with [ExecutionCancelled]
-//   so that nothing waits forever when the bridge is torn down.
-
-class ExecutionTimeoutException implements Exception {
-  final String requestId;
-  const ExecutionTimeoutException(this.requestId);
-  @override
-  String toString() => 'ExecutionTimeoutException($requestId)';
-}
-
-class ExecutionCancelled implements Exception {
-  const ExecutionCancelled();
-  @override
-  String toString() => 'ExecutionCancelled';
-}
-
-class DuplicateRequestException implements Exception {
-  final String requestId;
-  const DuplicateRequestException(this.requestId);
-  @override
-  String toString() => 'DuplicateRequestException($requestId)';
-}
+import 'package:sweetmelon/packages/core/lib/core.dart' hide TimeoutException;
 
 class ExecutionGuard {
-  final Map<String, Completer<void>> _active = {};
+  final int defaultTimeoutMs;
+  final Map<String, int> _activeExecutions = {};
 
-  int get activeCount => _active.length;
-  List<String> get activeRequests => List.unmodifiable(_active.keys);
+  ExecutionGuard({this.defaultTimeoutMs = 30000});
 
-  /// Runs [fn] with a timeout. Throws [ExecutionTimeoutException],
-  /// [ExecutionCancelled], [DuplicateRequestException] or the error from [fn].
-  Future<T> execute<T>({
+  Future<T?> execute<T>({
     required String requestId,
-    required Duration timeout,
     required Future<T> Function() fn,
+    int? timeoutMs,
   }) async {
-    if (_active.containsKey(requestId)) {
-      throw DuplicateRequestException(requestId);
+    final timeout = timeoutMs ?? defaultTimeoutMs;
+
+    if (_activeExecutions.containsKey(requestId)) {
+      BridgeLogger.warn(
+        'ExecutionGuard',
+        'Duplicate request detected: $requestId',
+      );
     }
-    final cancel = Completer<void>();
-    _active[requestId] = cancel;
+
+    _activeExecutions[requestId] = DateTime.now().millisecondsSinceEpoch;
+
     try {
-      final work = fn();
-      return await Future.any<T>([
-        work,
-        cancel.future.then<T>((_) => throw const ExecutionCancelled()),
-      ]).timeout(
-        timeout,
+      final result = await fn().timeout(
+        Duration(milliseconds: timeout),
         onTimeout: () {
-          throw ExecutionTimeoutException(requestId);
+          BridgeLogger.warn(
+            'ExecutionGuard',
+            'Timeout for: $requestId after ${timeout}ms',
+          );
+          throw TimeoutException(
+            'Execution timeout after ${timeout}ms',
+          );
         },
       );
+      return result;
     } finally {
-      _active.remove(requestId);
+      _activeExecutions.remove(requestId);
     }
   }
 
-  /// Cancels every in-flight execution.
-  void cancelAll() {
-    final pending = _active.values.toList();
-    _active.clear();
-    for (final c in pending) {
-      if (!c.isCompleted) c.complete();
+  int get activeCount => _activeExecutions.length;
+  List<String> get activeRequests => _activeExecutions.keys.toList();
+  bool isActive(String requestId) => _activeExecutions.containsKey(requestId);
+}
+
+class ArgsValidator {
+  static ArgsValidationResult validate(
+    Map<String, dynamic> args,
+    Map<String, ArgSchema> schema,
+  ) {
+    final warnings = <String>[];
+
+    for (final entry in schema.entries) {
+      final fieldName = entry.key;
+      final fieldSchema = entry.value;
+
+      if (fieldSchema.required && !args.containsKey(fieldName)) {
+        return ArgsValidationResult.invalid(
+          'Required field "$fieldName" is missing',
+        );
+      }
+
+      if (args.containsKey(fieldName)) {
+        final value = args[fieldName];
+
+        if (!fieldSchema.isValidType(value)) {
+          return ArgsValidationResult.invalid(
+            'Field "$fieldName" has invalid type. '
+            'Expected: ${fieldSchema.type}, '
+            'Got: ${value.runtimeType}',
+          );
+        }
+
+        if (fieldSchema.validator != null) {
+          final error = fieldSchema.validator!(value);
+          if (error != null) {
+            return ArgsValidationResult.invalid(error);
+          }
+        }
+      }
+    }
+
+    for (final key in args.keys) {
+      if (!schema.containsKey(key)) {
+        warnings.add('Unknown field: "$key"');
+      }
+    }
+
+    if (warnings.isNotEmpty) {
+      return ArgsValidationResult.validWithWarnings(warnings);
+    }
+
+    return ArgsValidationResult.valid();
+  }
+}
+
+class ArgSchema {
+  final String type;
+  final bool required;
+  final dynamic defaultValue;
+  final String? Function(dynamic value)? validator;
+
+  const ArgSchema({
+    required this.type,
+    this.required = false,
+    this.defaultValue,
+    this.validator,
+  });
+
+  bool isValidType(dynamic value) {
+    if (value == null) return !required;
+    switch (type) {
+      case 'string':
+        return value is String;
+      case 'int':
+        return value is int;
+      case 'double':
+        return value is double || value is int;
+      case 'num':
+        return value is num;
+      case 'bool':
+        return value is bool;
+      case 'list':
+        return value is List;
+      case 'map':
+        return value is Map;
+      case 'any':
+        return true;
+      default:
+        return true;
     }
   }
+}
+
+class ArgsValidationResult {
+  final bool isValid;
+  final String? errorMessage;
+  final List<String> warnings;
+
+  const ArgsValidationResult({
+    required this.isValid,
+    this.errorMessage,
+    this.warnings = const [],
+  });
+
+  factory ArgsValidationResult.valid() =>
+      const ArgsValidationResult(isValid: true);
+
+  factory ArgsValidationResult.invalid(String message) =>
+      ArgsValidationResult(isValid: false, errorMessage: message);
+
+  factory ArgsValidationResult.validWithWarnings(List<String> warnings) =>
+      ArgsValidationResult(isValid: true, warnings: warnings);
 }
