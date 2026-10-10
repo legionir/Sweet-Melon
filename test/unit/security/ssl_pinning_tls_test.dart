@@ -49,7 +49,7 @@ void main() {
   }
 
   String pinOf(String certPem) {
-    final cert = X509Certificate.fromBuffer(utf8.encode(certPem));
+    final cert = X509Certificate.fromData(data: utf8.encode(certPem));
     return sha256.convert(cert.der).toString();
   }
 
