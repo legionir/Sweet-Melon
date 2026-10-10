@@ -17,6 +17,10 @@ class _Reply {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  // The test binding stubs HttpClient with a client that answers 400 to every
+  // request; restore the real one so the tests can reach the local server.
+  HttpOverrides.global = null;
+
   const manifest = <String, dynamic>{
     'assets/www/': <String>['assets/www/'],
     'assets/www/index.html': <String>['assets/www/index.html'],

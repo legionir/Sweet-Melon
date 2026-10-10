@@ -29,7 +29,13 @@ void main() {
     // fallback path is exercised.
     await pumpApp(tester);
 
-    AppContext().showSnackBar(const SnackBar(content: Text('fallback-snack')));
+    AppContext().showSnackBar(
+      SnackBar(
+        content: const Text('fallback-snack'),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+      ),
+    );
     await tester.pump();
 
     expect(find.text('fallback-snack'), findsOneWidget);
@@ -128,7 +134,13 @@ void main() {
       ),
     );
 
-    AppContext().showSnackBar(const SnackBar(content: Text('direct-snack')));
+    AppContext().showSnackBar(
+      SnackBar(
+        content: const Text('direct-snack'),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+      ),
+    );
     await tester.pump();
 
     expect(find.text('direct-snack'), findsOneWidget);
