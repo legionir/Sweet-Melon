@@ -102,5 +102,11 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  # ورودی‌های دایرکتوری در Flutter فقط فایل‌های «مستقیمِ» همان پوشه را بسته‌بندی
+  # می‌کنند؛ زیرپوشه‌ها باید جداگانه فهرست شوند. بدون این دو ورودی،
+  # css/styles.css و js/*.js که در index.html ارجاع شده‌اند هرگز به باندل
+  # نمی‌رسند و سرور محلی به‌جای آن‌ها صفحهٔ ایندکس را برمی‌گرداند.
   assets:
     - assets/www/
+    - assets/www/css/
+    - assets/www/js/
