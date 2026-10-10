@@ -100,8 +100,7 @@ void main() {
     final tempDir = await getTemporaryDirectory();
     final wwwDir = Directory('${tempDir.path}/www_server');
     final tree = await extractedTree(wwwDir);
-    final diag =
-        'manifest=${manifestKeys.join(',')} | '
+    final diag = 'manifest=${manifestKeys.join(',')} | '
         'nestedLoad=$nestedProbe | '
         'extracted=${tree.join(',')}';
 
